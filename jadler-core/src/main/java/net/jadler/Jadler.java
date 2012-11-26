@@ -1,0 +1,179 @@
+package net.jadler;
+
+import net.jadler.stubbing.RequestStubbing;
+import net.jadler.httpmocker.HttpMocker;
+import net.jadler.httpmocker.HttpMockerImpl;
+import net.jadler.server.MockHttpServer;
+import net.jadler.server.jetty.JettyMockHttpServer;
+import net.jadler.stubbing.ResponseStubbing;
+import org.apache.commons.collections.MultiMap;
+import org.apache.commons.collections.map.MultiValueMap;
+import org.apache.commons.lang.Validate;
+
+
+/**
+ * This class is a gateway to the whole jadler library.
+ * 
+ * TODO huge doc/examples
+ */
+public final class Jadler {
+    
+    private static ThreadLocal<OngoingConfiguration> builderContainer = new ThreadLocal<>();
+    private static ThreadLocal<HttpMocker> mockerContainer = new ThreadLocal<>();
+
+    private Jadler() {
+        //gtfo
+    }
+    
+    
+    /**
+     * Starts configuring jadler. This method should be preferably called in
+     * a <i>before<i> phase of every test.
+     * @return ongoing configuration instance to continue configuring
+     */
+    public static OngoingConfiguration initJadlerThat() {
+          //bind the current thread 
+        builderContainer.set(new OngoingConfiguration());
+        
+          //clear the previously created http mocker instance if necessary
+        final HttpMocker mocker = mockerContainer.get();
+        if (mocker != null) {
+            if (mocker.isStarted()) {
+                mocker.stop();
+            }
+            mockerContainer.set(null);
+        }
+        
+        return builderContainer.get();
+    }
+    
+    
+    /**
+     * Starts the underlying http mock server. This should be preferably called
+     * in the <i>before</i> phase of a test.
+     */
+    public static void startMockServer() {
+        createMockerIfNotExists();
+        
+        final HttpMocker mocker =  mockerContainer.get();
+        if (!mocker.isStarted()) {
+            mocker.start();
+        }
+    }
+    
+    
+    /**
+     * Stops the underlying http mock server. This should be preferably called
+     * in the <i>after</i> phase of a test.
+     */
+    public static void stopMockServer() {
+        final HttpMocker mocker =  mockerContainer.get();
+        if (mocker != null && mocker.isStarted()) {
+            mocker.stop();
+        }
+    }
+    
+    
+    /**
+     * Starts new http stubbing (defining new <i>WHEN</i>-<i>THEN</i> rule).
+     * @return stubbing object for ongoing stubbing 
+     */
+    public static RequestStubbing onRequest() {
+        createMockerIfNotExists();
+        return mockerContainer.get().onRequest();
+    }
+    
+    
+    private static void createMockerIfNotExists() {
+        if (mockerContainer.get() == null) {
+        
+            if (builderContainer.get() == null) {
+                throw new IllegalStateException("The HttpMocker instance has not been configured yet, "
+                        + "call initHttpMocking first.");
+            }
+        
+            mockerContainer.set(builderContainer.get().build());
+        }
+    }
+    
+    
+    /**
+     * Builder for constructing HttpMocker instances in a fluid way
+     */
+    public static class OngoingConfiguration {
+        private MockHttpServer mockHttpServer;
+        private Integer defaultStatus;
+        private MultiMap defaultHeaders = new MultiValueMap();
+        
+        
+        /**
+         * Configures the new HttpMocker instance to use the default mock server implementation (jetty based).
+         * This is the preferred way to use Jadler. The mock http server will be listening on the given port.
+         * Use {@link #usesCustomServer(net.jadler.server.MockHttpServer)} if you want to use
+         * a custom mock server implementation.
+         * 
+         * @param port port the http mock server will be listening on
+         * @return this ongoing configuration
+         */
+        public OngoingConfiguration usesStandardServerListeningOn(final int port) {
+            this.mockHttpServer = new JettyMockHttpServer(port);
+            return this;
+        }
+        
+        
+        /**
+         * Configures the new HttpMocker instance to use a custom mock server implementation. Godspeed you, brave developer!
+         * 
+         * Consider using {@link #usesStandardServerListeningOn(int)} if you want to use the default mock server
+         * implementation instead.
+         * @param mockHttpServer mock server implementation
+         * @return this ongoing configuration
+         */
+        public OngoingConfiguration usesCustomServer(final MockHttpServer mockHttpServer) {
+            Validate.notNull(mockHttpServer, "mockHttpServer cannot be null");
+            
+            this.mockHttpServer = mockHttpServer;
+            return this;
+        }
+        
+        
+        /**
+         * Sets the default http response status. This value will be used for all stub responses with no
+         * specific http status defined. (see {@link ResponseStubbing#withStatus(int)})
+         * @param defaultStatus default http response status
+         * @return this ongoing configuration
+         */
+        public OngoingConfiguration respondsWithDefaultStatus(final int defaultStatus) {
+            this.defaultStatus = defaultStatus;
+            return this;
+        }
+        
+        
+        /**
+         * Defines a response header that will be sent in every http mock response.
+         * Can be called repeatedly to define more headers.
+         * @param name name of the header
+         * @param value header value
+         * @return this ongoing configuration
+         */
+        public OngoingConfiguration respondsWithDefaultHeader(final String name, final String value) {
+            Validate.notEmpty(name, "header name cannot be empty");
+            this.defaultHeaders.put(name, value);
+            return this;
+        }
+        
+        
+        /**
+         * @return a newly constructed HttpMocker instance.
+         */
+        private HttpMocker build() {
+            final HttpMockerImpl res = new HttpMockerImpl(this.mockHttpServer);
+            this.mockHttpServer.registerResponseProvider(res);
+            if (this.defaultStatus != null) {
+                res.setDefaultStatus(this.defaultStatus);
+            }
+            res.addDefaultHeaders(this.defaultHeaders);
+            return res;
+        }
+    }
+}
