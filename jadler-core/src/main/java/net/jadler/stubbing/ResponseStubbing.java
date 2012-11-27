@@ -49,7 +49,7 @@ public interface ResponseStubbing {
     /**
      * Sets the response body from the given reader.Calling this method overrides any previous calls of this or
      * {@link #withBody(java.lang.String)} method.
-     * @param responseBody response body
+     * @param reader response body
      * @return this stubbing
      */
     ResponseStubbing withBody(Reader reader);
