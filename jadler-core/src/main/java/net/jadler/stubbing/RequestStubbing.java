@@ -1,8 +1,9 @@
 package net.jadler.stubbing;
 
-import java.util.List;
-import javax.servlet.http.HttpServletRequest;
 import org.hamcrest.Matcher;
+
+import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 /**
  * This interface defines methods for the <i>WHEN</i> part of this http stubbing. These methods provides
@@ -72,7 +73,7 @@ public interface RequestStubbing {
     /**
      * The query string (as retrieved by {@link HttpServletRequest#getQueryString()})
      * must be equal to the given value in order to apply this mock rule.
-     * @param requestBody expected query string of the incoming http request
+     * @param queryString expected query string of the incoming http request
      * @return this stubbing 
      */
     RequestStubbing havingQueryStringEqualTo(String queryString);
@@ -99,7 +100,8 @@ public interface RequestStubbing {
     
     /**
      * The parameter with the given name must match the given matcher in order to apply this mock rule.
-     * @param pred matcher to be applied on the parameter values
+     * @param name parameter name
+     * @param matcher matcher to be applied on the parameter values
      * @return this stubbing
      */
     RequestStubbing havingParameter(String name, Matcher<? super List<String>> matcher);
@@ -133,7 +135,8 @@ public interface RequestStubbing {
 
     /**
      * The given request header must match the given matcher in order to apply this mock rule.
-     * @param pred matcher to be applied on the header values
+     * @param name parameter name
+     * @param matcher matcher to be applied on the header values
      * @return this stubbing
      */
     RequestStubbing havingHeader(String name, Matcher<? super List<String>> matcher);
