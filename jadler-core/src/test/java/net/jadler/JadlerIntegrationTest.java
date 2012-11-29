@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 public class JadlerIntegrationTest {
     
     private static final int PORT = 44532;
-    private static final String UNICODE_BODY = "ěščřřžýááíé";
+    private static final String UNICODE_BODY = "\u011b\u0161\u010d\u0159\u0159\u017e\u00fd\u00e1\u00e1\u00ed\u00e9";
     private static final int DEFAULT_STATUS = 409;
     private static final String DEFAULT_HEADER1_NAME = "default_header";
     private static final String DEFAULT_HEADER1_VALUE1 = "value1";
