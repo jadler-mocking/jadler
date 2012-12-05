@@ -1,5 +1,6 @@
 package net.jadler;
 
+import java.nio.charset.Charset;
 import net.jadler.stubbing.RequestStubbing;
 import net.jadler.httpmocker.HttpMocker;
 import net.jadler.httpmocker.HttpMockerImpl;
@@ -104,6 +105,7 @@ public final class Jadler {
         private MockHttpServer mockHttpServer;
         private Integer defaultStatus;
         private MultiMap defaultHeaders = new MultiValueMap();
+        private Charset defaultEncoding;
         
         
         /**
@@ -164,15 +166,46 @@ public final class Jadler {
         
         
         /**
+         * Defines a default encoding of every stub http response. This value will be used for all stub responses
+         * with no specific encoding defined. (see {@link ResponseStubbing#withEncoding(java.nio.charset.Charset)})
+         * @param defaultEncoding 
+         * @return this ongoing configuration
+         */
+        public OngoingConfiguration respondsWithDefaultEncoding(final Charset defaultEncoding) {
+            this.defaultEncoding = defaultEncoding;
+            return this;
+        }
+        
+        
+        /**
+         * Defines a default content type of every stub http response. This value will be used for all stub responses
+         * with no specific content type defined. (see {@link ResponseStubbing#withContentType(java.lang.String)})
+         * 
+         * Calling this method is equivalent with calling
+         * respondsWithDefaultHeader("Content-Type", defaultContentType)
+         * @param defaultEncoding 
+         * @return this ongoing configuration
+         */
+        public OngoingConfiguration respondsWithDefaultContentType(final String defaultContentType) {
+            return this.respondsWithDefaultHeader("Content-Type", defaultContentType);
+        }
+        
+        
+        /**
          * @return a newly constructed HttpMocker instance.
          */
         private HttpMocker build() {
             final HttpMockerImpl res = new HttpMockerImpl(this.mockHttpServer);
             this.mockHttpServer.registerResponseProvider(res);
+
+            if (this.defaultEncoding != null) {
+                res.setDefaultEncoding(defaultEncoding);
+            }
             if (this.defaultStatus != null) {
                 res.setDefaultStatus(this.defaultStatus);
             }
-            res.addDefaultHeaders(this.defaultHeaders);
+            res.setDefaultHeaders(this.defaultHeaders);
+
             return res;
         }
     }

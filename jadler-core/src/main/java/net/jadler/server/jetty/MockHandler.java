@@ -6,7 +6,6 @@ import net.jadler.server.MultipleReadsHttpServletRequest;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
-
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -19,7 +18,6 @@ import org.apache.commons.collections.MultiMap;
 
 public class MockHandler extends AbstractHandler {
 
-    private static final String RESPONSE_ENCODING = "UTF-8";
     private final ResponseProvider ruleProvider;
 
     public MockHandler(final ResponseProvider ruleProvider) {
@@ -39,13 +37,13 @@ public class MockHandler extends AbstractHandler {
 
         final MultipleReadsHttpServletRequest multiReadsRequest = new MultipleReadsHttpServletRequest(request);
         final HttpMockResponse mockResponse = this.ruleProvider.provideResponseFor(multiReadsRequest);
-        if (mockResponse != null) {
+        if (mockResponse != null) {            
+            response.setCharacterEncoding(mockResponse.getEncoding().name());
             setResponseHeaders(mockResponse.getHeaders(), response);
             setStatus(mockResponse.getStatus(), response);
-            baseRequest.setHandled(true);
-            response.setCharacterEncoding(RESPONSE_ENCODING);
             processTimeout(mockResponse.getTimeout());
             writeResponseBody(mockResponse.getBody(), response);
+            baseRequest.setHandled(true);
         } else {
             final String queryString;
             if (StringUtils.isNotBlank(request.getQueryString())) {

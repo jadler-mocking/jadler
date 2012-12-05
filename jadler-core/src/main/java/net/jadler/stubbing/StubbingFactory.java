@@ -1,5 +1,6 @@
 package net.jadler.stubbing;
 
+import java.nio.charset.Charset;
 import org.apache.commons.collections.MultiMap;
 
 
@@ -9,11 +10,16 @@ import org.apache.commons.collections.MultiMap;
 public class StubbingFactory {
     
     /**
-     * @param defaultHeaders default response headers to be returned with every mock response
-     * @param defaultStatus default http status to be returned with every mock response
+     * @param defaultContentType default content type of every stub http response (null or empty string
+     * for none default value)
+     * @param defaultEncoding default encoding of every stub http response
+     * @param defaultStatus default http status to be returned with every stub http response
+     * @param defaultHeaders default response headers to be returned with every stub http response
      * @return new Stubbing instance.
      */
-    public Stubbing createStubbing(final MultiMap defaultHeaders, final int defaultStatus) {
-        return new Stubbing(defaultHeaders, defaultStatus);
+    public Stubbing createStubbing(final Charset defaultEncoding, final int defaultStatus,
+            final MultiMap defaultHeaders) {
+        
+        return new Stubbing(defaultEncoding, defaultStatus, defaultHeaders);
     }
 }

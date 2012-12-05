@@ -1,5 +1,6 @@
 package net.jadler.stubbing;
 
+import java.nio.charset.Charset;
 import net.jadler.matchers.BodyRequestMatcher;
 import net.jadler.matchers.MethodRequestMatcher;
 import net.jadler.matchers.QueryStringRequestMatcher;
@@ -29,7 +30,7 @@ public class StubbingTest {
     
     @Before
     public void setUp() {
-        this.stubbing = new Stubbing(new MultiValueMap(), 200);
+        this.stubbing = new Stubbing(Charset.forName("UTF-8"), 200, new MultiValueMap());
     }
     
     
