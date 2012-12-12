@@ -1,6 +1,11 @@
 package net.jadler.server;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.Collection;
 import java.util.Collections;
@@ -133,7 +138,7 @@ public class MultipleReadsHttpServletRequest extends HttpServletRequestWrapper {
     
 
     private MultiMap readParametersFromBody() throws IOException {
-        return this.readParametersFromString(IOUtils.toString(this.body, "utf-8"));
+        return this.readParametersFromString(IOUtils.toString(this.body, getEncodingInternal()));
     }
     
     
