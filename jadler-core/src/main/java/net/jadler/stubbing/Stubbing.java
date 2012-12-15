@@ -11,6 +11,9 @@ import org.hamcrest.Matcher;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.io.Reader;
+import java.nio.charset.Charset;
+import net.jadler.Jadler;
+import net.jadler.httpmocker.HttpMocker;
 import org.apache.commons.collections.MultiMap;
 import org.apache.commons.collections.map.MultiValueMap;
 import org.apache.commons.lang.Validate;
@@ -30,26 +33,32 @@ import static net.jadler.matchers.ParameterRequestMatcher.requestParameter;
  * {@link Jadler#onRequest()} for more information on creating instances of this class.
  */
 public class Stubbing implements RequestStubbing, ResponseStubbing {
+    
+    private static final String CONTENT_TYPE_HEADER = "Content-Type";
 
     private final List<Matcher<? super HttpServletRequest>> matchers;
     private final List<HttpMockResponse> responses;
     private final MultiMap defaultHeaders;
     private final int defaultStatus;
+    private final Charset defaultEncoding;
     
-
+    
     /**
      * Package private constructor, you should never create new instance of this class on your own,
      * use {@link HttpMocker#onRequest()} instead.
      * @param defaultHeaders default headers to be added to every mock response
      * @param defaultStatus default http status of every mock response (can be overwritten for a particular response)
+     * @param defaultEncoding default encoding of every stub response (can be overwritten in particular stub)
      */
     @SuppressWarnings("unchecked")
-    Stubbing(final MultiMap defaultHeaders, final int defaultStatus) {
+    Stubbing(final Charset defaultEncoding, final int defaultStatus, final MultiMap defaultHeaders) {
+        
         this.matchers = new ArrayList<>();
         this.responses = new ArrayList<>();
         this.defaultHeaders = new MultiValueMap();
         this.defaultHeaders.putAll(defaultHeaders);
         this.defaultStatus = defaultStatus;
+        this.defaultEncoding = defaultEncoding;
     }
 
     
@@ -237,14 +246,37 @@ public class Stubbing implements RequestStubbing, ResponseStubbing {
         
         response.addHeaders(defaultHeaders);
         response.setStatus(defaultStatus);
+        response.setEncoding(defaultEncoding);
+        response.setBody("");
+        
         responses.add(response);
+        return this;
+    }
+    
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ResponseStubbing withContentType(final String contentType) {
+        currentResponse().setHeaderCaseInsensitive(CONTENT_TYPE_HEADER, contentType);
+        return this;
+    }
+    
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ResponseStubbing withEncoding(final Charset encoding) {
+        currentResponse().setEncoding(encoding);
         return this;
     }
 
 
     /**
      * {@inheritDoc}
-     */    
+     */
     @Override
     public ResponseStubbing withBody(final String responseBody) {
         currentResponse().setBody(responseBody);

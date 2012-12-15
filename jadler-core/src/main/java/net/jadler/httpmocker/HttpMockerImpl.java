@@ -1,5 +1,6 @@
 package net.jadler.httpmocker;
 
+import java.nio.charset.Charset;
 import net.jadler.stubbing.RequestStubbing;
 import net.jadler.stubbing.StubbingFactory;
 import net.jadler.stubbing.Stubbing;
@@ -29,9 +30,12 @@ public class HttpMockerImpl implements HttpMocker, ResponseProvider {
     private final MockHttpServer server;
     private final StubbingFactory stubbingFactory;
     private final List<Stubbing> stubbings;
-    private final MultiMap defaultHeaders;
     private List<HttpMockRule> httpMockRules;
+    
+    private MultiMap defaultHeaders;
     private int defaultStatus;
+    private Charset defaultEncoding;
+    
     private boolean started = false;
     private boolean configurable = true;
     
@@ -62,6 +66,7 @@ public class HttpMockerImpl implements HttpMocker, ResponseProvider {
         this.stubbings = new ArrayList<>();
         this.defaultHeaders = new MultiValueMap();
         this.defaultStatus = HttpServletResponse.SC_OK;
+        this.defaultEncoding =  Charset.forName("UTF-8");
         
         Validate.notNull(stubbingFactory, "stubbingFactory cannot be null");
         this.stubbingFactory = stubbingFactory;
@@ -124,9 +129,10 @@ public class HttpMockerImpl implements HttpMocker, ResponseProvider {
      * @param defaultHeaders default headers to be added to every mock http response 
      */
     @SuppressWarnings("unchecked")
-    public void addDefaultHeaders(final MultiMap defaultHeaders) {
+    public void setDefaultHeaders(final MultiMap defaultHeaders) {
         Validate.notNull(defaultHeaders, "defaultHeaders cannot be null, use an empty map instead");
         this.checkConfigurable();
+        this.defaultHeaders = new MultiValueMap();
         this.defaultHeaders.putAll(defaultHeaders);
     }
     
@@ -134,12 +140,23 @@ public class HttpMockerImpl implements HttpMocker, ResponseProvider {
     /**
      * Defines default status to be returned in every mock http response (if not redefined in the
      * particular rule)
-     * @param defaultStatus status to be returned in every mock http response. Must be at least 1.
+     * @param defaultStatus status to be returned in every mock http response. Must be at least 0.
      */
     public void setDefaultStatus(final int defaultStatus) {
         Validate.isTrue(defaultStatus >= 0, "defaultStatus mustn't be negative");
         this.checkConfigurable();
         this.defaultStatus = defaultStatus;
+    }
+    
+    
+    /**
+     * Defines default charset of every stub http response (if not redefined in the particular stub)
+     * @param defaultEncoding default encoding of every stub http response
+     */
+    public void setDefaultEncoding(final Charset defaultEncoding) {
+        Validate.notNull(defaultEncoding, "defaultEncoding cannot be null");
+        this.checkConfigurable();
+        this.defaultEncoding = defaultEncoding;
     }
 
 
@@ -151,7 +168,7 @@ public class HttpMockerImpl implements HttpMocker, ResponseProvider {
         logger.debug("adding new stubbing...");
         this.checkConfigurable();
         
-        final Stubbing stubbing = this.stubbingFactory.createStubbing(defaultHeaders, defaultStatus);
+        final Stubbing stubbing = this.stubbingFactory.createStubbing(defaultEncoding, defaultStatus, defaultHeaders);
         stubbings.add(stubbing);
         return stubbing;
     }

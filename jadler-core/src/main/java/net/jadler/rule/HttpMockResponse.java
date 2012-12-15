@@ -1,9 +1,9 @@
 package net.jadler.rule;
 
+import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map.Entry;
-import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.collections.MultiMap;
 import org.apache.commons.collections.map.MultiValueMap;
 import org.apache.commons.lang.Validate;
@@ -20,6 +20,7 @@ import static org.apache.commons.lang.StringUtils.abbreviate;
  * One should never create new instances of this class directly, see {@link HttpMockers} for explanation and tutorial.
  */
 public class HttpMockResponse {
+    private Charset encoding;
     private final MultiMap headers;
     private String body;
     private int status;
@@ -27,12 +28,10 @@ public class HttpMockResponse {
 
     
     /**
-     * Creates new empty http response definition with http status code 200, no headers, empty body and no timeout.
+     * Creates new empty http stub response definition.
      */
     public HttpMockResponse() {
         this.headers = new MultiValueMap();
-        this.body = "";
-        this.status = HttpServletResponse.SC_OK;
     }
 
     
@@ -43,12 +42,14 @@ public class HttpMockResponse {
         return this.status;
     }
     
+    
     /**
      * @param status http status of this response
      */
     public void setStatus(final int status) {
         this.status = status;
     }
+    
     
     /**
      * @return body of this response
@@ -57,6 +58,7 @@ public class HttpMockResponse {
         return this.body;
     }
     
+    
     /**
      * @param body body of this response (cannot be null)
      */
@@ -64,6 +66,7 @@ public class HttpMockResponse {
         Validate.notNull(body, "body cannot be null, use an empty string instead.");
         this.body = body;
     }
+    
     
     /**
      * @return response headers
@@ -76,6 +79,7 @@ public class HttpMockResponse {
         return res;
     }
     
+    
     /**
      * Adds new header to this response.
      * @param name name of the header
@@ -85,24 +89,53 @@ public class HttpMockResponse {
         this.headers.put(name, value);
     }
     
+    
     @SuppressWarnings("unchecked")
     public void addHeaders(final MultiMap headers) {
         this.headers.putAll(headers);
     }
     
+    
+    public void setHeaderCaseInsensitive(final String name, final String value) {
+        
+          //remove all occurrencies of the given header first
+        for (final Object o: this.headers.keySet()) {
+            final String key = (String) o; //f*cking non-generics MultiMap
+            if (name.equalsIgnoreCase(key)) {
+                headers.remove(key);
+            }
+        }
+        
+        this.addHeader(name, value);
+    }
+    
+    
     public long getTimeout() {
         return this.timeout;
     }
-
+    
+    
     public void setTimeout(long timeout) {
         this.timeout = timeout;
     }
-    
 
+    
+    public Charset getEncoding() {
+        return encoding;
+    }
+
+    
+    public void setEncoding(Charset encoding) {
+        this.encoding = encoding;
+    }
+    
+    
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder()
-                .append("status=")
+                .append("encoding=")
+                .append(this.encoding)
+                .append(", status=")
                 .append(this.status)
                 .append(", body=")
                 .append(isBlank(this.body) ? "<empty>" : abbreviate(body, 13))
@@ -112,7 +145,7 @@ public class HttpMockResponse {
                 = this.headers.entrySet().iterator(); it.hasNext();) {
             final Entry<String, Collection<String>> e = it.next();
             
-            for (final Iterator<String> it2 = e.getValue().iterator(); it.hasNext();) {
+            for (final Iterator<String> it2 = e.getValue().iterator(); it2.hasNext();) {
                 sb.append(e.getKey()).append(": ").append(it2.next());
                 if (it2.hasNext()) {
                     sb.append(", ");
