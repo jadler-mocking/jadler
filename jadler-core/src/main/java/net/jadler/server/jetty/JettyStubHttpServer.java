@@ -1,7 +1,7 @@
 package net.jadler.server.jetty;
 
 import net.jadler.httpmocker.ResponseProvider;
-import net.jadler.server.MockHttpServer;
+import net.jadler.server.StubHttpServer;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.DefaultHandler;
@@ -19,13 +19,13 @@ import org.eclipse.jetty.server.Connector;
  *
  * Jetty server created by this class runs in embedded mode.
  */
-public class JettyMockHttpServer implements MockHttpServer {
+public class JettyStubHttpServer implements StubHttpServer {
 
-    private static final Logger logger = LoggerFactory.getLogger(JettyMockHttpServer.class);
+    private static final Logger logger = LoggerFactory.getLogger(JettyStubHttpServer.class);
     private final Server server;
 
 
-    public JettyMockHttpServer(final int port) {
+    public JettyStubHttpServer(final int port) {
         this.server = new Server();
         final Connector connector = new SelectChannelConnector();
         connector.setPort(port);
@@ -41,7 +41,7 @@ public class JettyMockHttpServer implements MockHttpServer {
         Validate.notNull(ruleProvider, "ruleProvider cannot be null");
         
         final HandlerList handlers = new HandlerList();
-        handlers.setHandlers(new Handler[] {new MockHandler(ruleProvider), new DefaultHandler() });
+        handlers.setHandlers(new Handler[] {new StubHandler(ruleProvider), new DefaultHandler() });
         server.setHandler(handlers);
     }
     

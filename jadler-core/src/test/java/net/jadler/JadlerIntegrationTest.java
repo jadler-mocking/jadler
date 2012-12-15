@@ -51,7 +51,7 @@ public class JadlerIntegrationTest {
                 .respondsWithDefaultEncoding(Charset.forName("UTF-8"))
                 .respondsWithDefaultContentType(UTF_8_TYPE);
         
-        startMockServer();
+        startStubServer();
         
         this.client = new HttpClient();
     }
@@ -59,7 +59,7 @@ public class JadlerIntegrationTest {
     
     @After
     public void tearDown() {
-        stopMockServer();
+        stopStubServer();
     }
     
     

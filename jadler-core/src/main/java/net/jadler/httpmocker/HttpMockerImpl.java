@@ -4,10 +4,10 @@ import java.nio.charset.Charset;
 import net.jadler.stubbing.RequestStubbing;
 import net.jadler.stubbing.StubbingFactory;
 import net.jadler.stubbing.Stubbing;
-import net.jadler.rule.HttpMockResponse;
-import net.jadler.rule.HttpMockRule;
+import net.jadler.stubbing.StubResponse;
+import net.jadler.stubbing.StubRule;
 import net.jadler.exception.JadlerException;
-import net.jadler.server.MockHttpServer;
+import net.jadler.server.StubHttpServer;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,10 +27,10 @@ import org.slf4j.LoggerFactory;
  */
 public class HttpMockerImpl implements HttpMocker, ResponseProvider {
 
-    private final MockHttpServer server;
+    private final StubHttpServer server;
     private final StubbingFactory stubbingFactory;
     private final List<Stubbing> stubbings;
-    private List<HttpMockRule> httpMockRules;
+    private List<StubRule> httpMockRules;
     
     private MultiMap defaultHeaders;
     private int defaultStatus;
@@ -48,7 +48,7 @@ public class HttpMockerImpl implements HttpMocker, ResponseProvider {
      * 
      * @param server mock http server instance this mocker should use
      */
-    public HttpMockerImpl(final MockHttpServer server) {
+    public HttpMockerImpl(final StubHttpServer server) {
         this(server, new StubbingFactory());
     }
     
@@ -59,7 +59,7 @@ public class HttpMockerImpl implements HttpMocker, ResponseProvider {
      * @param server mock http server instance this mocker should use
      * @param stubbingFactory a factory to create stubbing instances
      */
-    HttpMockerImpl(final MockHttpServer server, final StubbingFactory stubbingFactory) {
+    HttpMockerImpl(final StubHttpServer server, final StubbingFactory stubbingFactory) {
         Validate.notNull(server, "server cannot be null");
         this.server = server;
         
@@ -178,7 +178,7 @@ public class HttpMockerImpl implements HttpMocker, ResponseProvider {
      * {@inheritDoc} 
      */
     @Override
-    public HttpMockResponse provideResponseFor(final HttpServletRequest req) {
+    public StubResponse provideResponseFor(final HttpServletRequest req) {
         
         synchronized(this) {
             if (this.configurable) {
@@ -187,8 +187,8 @@ public class HttpMockerImpl implements HttpMocker, ResponseProvider {
             }
         }
         
-        for (final HttpMockRule rule : this.httpMockRules) {
-            if (rule.matches(req)) {
+        for (final StubRule rule : this.httpMockRules) {
+            if (rule.matchedBy(req)) {
                 final StringBuilder sb = new StringBuilder();
                 sb.append("Following rule will be applied:\n");
                 sb.append(rule);
@@ -200,7 +200,7 @@ public class HttpMockerImpl implements HttpMocker, ResponseProvider {
         
         final StringBuilder sb = new StringBuilder();
         sb.append("No suitable rule found. Reason:\n");
-        for (final HttpMockRule rule: this.httpMockRules) {
+        for (final StubRule rule: this.httpMockRules) {
             sb.append("The rule '");
             sb.append(rule);
             sb.append("' cannot be applied. Mismatch:\n");
@@ -217,13 +217,13 @@ public class HttpMockerImpl implements HttpMocker, ResponseProvider {
      * package private getter useful for testing
      * @return list of created http mock rules
      */
-    List<HttpMockRule> getHttpMockRules() {
+    List<StubRule> getHttpMockRules() {
         return httpMockRules;
     }
     
     
-    private List<HttpMockRule> createRules() {
-        final List<HttpMockRule> rules = new ArrayList<>();
+    private List<StubRule> createRules() {
+        final List<StubRule> rules = new ArrayList<>();
         for (final Stubbing stub : stubbings) {
             rules.add(stub.createRule());
         }

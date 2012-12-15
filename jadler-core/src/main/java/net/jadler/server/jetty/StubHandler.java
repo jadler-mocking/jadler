@@ -1,6 +1,6 @@
 package net.jadler.server.jetty;
 
-import net.jadler.rule.HttpMockResponse;
+import net.jadler.stubbing.StubResponse;
 import net.jadler.httpmocker.ResponseProvider;
 import net.jadler.server.MultipleReadsHttpServletRequest;
 import org.apache.commons.lang.StringUtils;
@@ -16,11 +16,11 @@ import java.util.Map.Entry;
 import org.apache.commons.collections.MultiMap;
 
 
-public class MockHandler extends AbstractHandler {
+public class StubHandler extends AbstractHandler {
 
     private final ResponseProvider ruleProvider;
 
-    public MockHandler(final ResponseProvider ruleProvider) {
+    public StubHandler(final ResponseProvider ruleProvider) {
         this.ruleProvider = ruleProvider;
     }
 
@@ -36,13 +36,14 @@ public class MockHandler extends AbstractHandler {
             throws IOException, ServletException {
 
         final MultipleReadsHttpServletRequest multiReadsRequest = new MultipleReadsHttpServletRequest(request);
-        final HttpMockResponse mockResponse = this.ruleProvider.provideResponseFor(multiReadsRequest);
-        if (mockResponse != null) {            
-            response.setCharacterEncoding(mockResponse.getEncoding().name());
-            setResponseHeaders(mockResponse.getHeaders(), response);
-            setStatus(mockResponse.getStatus(), response);
-            processTimeout(mockResponse.getTimeout());
-            writeResponseBody(mockResponse.getBody(), response);
+        final StubResponse stubResponse = this.ruleProvider.provideResponseFor(multiReadsRequest);
+        if (stubResponse != null) {           
+            response.setCharacterEncoding(stubResponse.getEncoding().name());
+            setResponseHeaders(stubResponse.getHeaders(), response);
+            setStatus(stubResponse.getStatus(), response);
+            processTimeout(stubResponse.getTimeout());
+            writeResponseBody(stubResponse.getBody(), response);
+            
             baseRequest.setHandled(true);
         } else {
             final String queryString;

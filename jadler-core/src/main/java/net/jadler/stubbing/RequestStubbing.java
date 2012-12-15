@@ -1,166 +1,168 @@
 package net.jadler.stubbing;
 
 import org.hamcrest.Matcher;
-
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
+
 /**
- * This interface defines methods for the <i>WHEN</i> part of this http stubbing. These methods provides
- * a way to define rules the incoming http request is matched against. If the request matches, a response defined
- * by this stubbing is returned.
+ * This interface defines methods for the http stubbing <i>WHEN</i> part. These methods provides
+ * a way to define predicates (in form of Hamcrest matchers) the incoming http request must fulfill in order to
+ * return a stub response (defined by methods of {@link ResponseStubbing}).
  */
 public interface RequestStubbing {
 
     /**
-     * Adds a general hamcrest matcher to define the <i>WHEN</i> part of this http stubbing.
-     * @param matcher to be added to the <i>WHEN</i> part of this http stubbing
-     * @return this stubbing
+     * Adds a request predicate to define the <i>WHEN</i> part of this stubbing.
+     * @param predicate request predicate to be added to the <i>WHEN</i> part of this stubbing
+     * @return this ongoing stubbing
      */
-    RequestStubbing that(Matcher<? super HttpServletRequest> matcher);
+    RequestStubbing that(Matcher<? super HttpServletRequest> predicate);
 
 
     /**
-     * The request method must be equal (ignore case) to the given value in order to apply this mock rule.
+     * Adds a request method predicate. The request method must be equal (case insensitive) to the given value. 
      * @param method expected http method of the incoming http request
-     * @return this stubbing 
+     * @return this ongoing stubbing 
      */
     RequestStubbing havingMethodEqualTo(String method);
 
 
     /**
-     * The request method must match the given matcher in order to apply this mock rule.
-     * @param pred matcher to be applied on the request method value
-     * @return this stubbing
+     * Adds a request method predicate.
+     * @param predicate request method predicate
+     * @return this ongoing stubbing
      */
-    RequestStubbing havingMethod(Matcher<? super String> pred);
+    RequestStubbing havingMethod(Matcher<? super String> predicate);
 
 
     /**
-     * The request body must be equal to the given value in order to apply this mock rule.
+     * Adds a request body predicate. The request body must be equal to the given value. 
      * @param requestBody expected body of the incoming http request
-     * @return this stubbing 
+     * @return this ongoing stubbing 
      */
     RequestStubbing havingBodyEqualTo(String requestBody);
 
     
     /**
-     * The request body must match the given matcher in order to apply this mock rule.
-     * @param pred matcher to be applied on the request body
-     * @return this stubbing
+     * Adds a request body predicate.
+     * @param predicate request body predicate
+     * @return this ongoing stubbing
      */
-    RequestStubbing havingBody(Matcher<? super String> pred);
+    RequestStubbing havingBody(Matcher<? super String> predicate);
 
 
     /**
-     * The request URI (as retrieved by {@link HttpServletRequest#getRequestURI()})
-     * must match the given matcher in order to apply this mock rule.
+     * Adds a request URI (as retrieved by {@link HttpServletRequest#getRequestURI()}) predicate.
+     * The request URI must be equal to the given value. 
      * @param uri expected URI of the incoming http request
-     * @return this stubbing
+     * @return this ongoing stubbing
      */
     RequestStubbing havingURIEqualTo(String uri);
 
 
     /**
-     * The request URI (as retrieved by {@link HttpServletRequest#getRequestURI()})
-     * must match the given matcher in order to apply this mock rule.
-     * @param pred matcher to be applied on the request URI
-     * @return this stubbing
+     * Adds a request URI (as retrieved by {@link HttpServletRequest#getRequestURI()}) predicate.
+     * @param predicate request URI predicate
+     * @return this ongoing stubbing
      */
-    RequestStubbing havingURI(Matcher<? super String> pred);
+    RequestStubbing havingURI(Matcher<? super String> predicate);
     
     
     /**
-     * The query string (as retrieved by {@link HttpServletRequest#getQueryString()})
-     * must be equal to the given value in order to apply this mock rule.
+     * Adds a query string (as retrieved by {@link HttpServletRequest#getQueryString()}) predicate.
+     * The query string value must be equal to the given value. 
      * @param queryString expected query string of the incoming http request
-     * @return this stubbing 
+     * @return this ongoing stubbing 
      */
     RequestStubbing havingQueryStringEqualTo(String queryString);
 
 
     /**
-     * The query string (as retrieved by {@link HttpServletRequest#getQueryString()})
-     * must match the given matcher in order to apply this mock rule.
-     * @param pred matcher to be applied on the query string
-     * @return this stubbing
+     * Adds a query string (as retrieved by {@link HttpServletRequest#getQueryString()}) predicate.
+     * @param predicate query string predicate
+     * @return this ongoing stubbing
      */
-    RequestStubbing havingQueryString(Matcher<? super String> pred);
+    RequestStubbing havingQueryString(Matcher<? super String> predicate);
     
 
     /**
-     * The given http parameter must be present in the request body and one of its values
-     * must be equal to the given value in order to apply this mock rule.
+     * Adds a request parameter predicate. The given http parameter must be present
+     * in the request body and at least one of its values must be equal to the given value.
      * @param name parameter name
      * @param value expected parameter value
-     * @return this stubbing 
+     * @return this ongoing stubbing 
      */
     RequestStubbing havingParameterEqualTo(String name, String value);
 
     
     /**
-     * The parameter with the given name must match the given matcher in order to apply this mock rule.
+     * Adds a request parameter predicate. 
      * @param name parameter name
-     * @param matcher matcher to be applied on the parameter values
-     * @return this stubbing
+     * @param predicate parameter predicate
+     * @return this ongoing stubbing
      */
-    RequestStubbing havingParameter(String name, Matcher<? super List<String>> matcher);
+    RequestStubbing havingParameter(String name, Matcher<? super List<String>> predicate);
 
 
     /**
-     * The parameter with the given name must exist in order to apply this mock rule.
+     * Adds a request parameter existence predicate. The given http parameter must be present
+     * in the request body
      * @param name parameter name
-     * @return this stubbing
+     * @return this ongoing stubbing
      */
     RequestStubbing havingParameter(String name);
 
 
     /**
-     * The given parameters must exist in order to apply this mock rule.
+     * Adds a request parameters existence predicate. All of the given http parameters must be present
+     * in the request body.
      * @param names parameter names
-     * @return this stubbing
+     * @return this ongoing stubbing
      */
     RequestStubbing havingParameters(String... names);
 
 
     /**
-     * The given request header must be present in the request body and one of its values
-     * must be equal to the given value in order to apply this mock rule.
+     * Adds a request header predicate. The given http header must be present
+     * in the request body and at least one of its values must be equal to the given value.
      * @param name header name
      * @param value expected header value
-     * @return this stubbing 
+     * @return this ongoing stubbing 
      */
     RequestStubbing havingHeaderEqualTo(String name, String value);
 
 
     /**
-     * The given request header must match the given matcher in order to apply this mock rule.
-     * @param name parameter name
-     * @param matcher matcher to be applied on the header values
-     * @return this stubbing
+     * Adds a request header predicate. 
+     * @param name header name
+     * @param predicate header predicate
+     * @return this ongoing stubbing
      */
-    RequestStubbing havingHeader(String name, Matcher<? super List<String>> matcher);
+    RequestStubbing havingHeader(String name, Matcher<? super List<String>> predicate);
 
 
     /**
-     * The request header with the given name must exist in order to apply this mock rule.
+     * Adds a request header existence predicate. The given http header must be present
+     * in the request body
      * @param name header name
-     * @return this stubbing
+     * @return this ongoing stubbing
      */
     RequestStubbing havingHeader(final String name);
 
 
     /**
-     * The given headers must exist in order to apply this mock rule.
-     * @param names header names
-     * @return this stubbing
+     * Adds a request headers existence predicate. All of the given http headers must be present
+     * in the request body.
+     * @param names headers names
+     * @return this ongoing stubbing
      */
     RequestStubbing havingHeaders(String... names);
 
 
     /**
-     * Finish the <i>WHEN</i> part of the stubbing and start the <i>THEN</i> part.
-     * @return response stubbing instance to continue the stubbing
+     * Finishes the <i>WHEN</i> part of this stubbing and starts the <i>THEN</i> part.
+     * @return response stubbing instance to continue this stubbing
      */
     ResponseStubbing respond();
 }

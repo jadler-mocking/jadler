@@ -5,17 +5,16 @@ import org.apache.commons.collections.MultiMap;
 
 
 /**
- * Used internally, instances should never be created from outside.
+ * Factory class for creating {@link Stubbing} instances.
  */
 public class StubbingFactory {
     
     /**
-     * @param defaultContentType default content type of every stub http response (null or empty string
-     * for none default value)
-     * @param defaultEncoding default encoding of every stub http response
-     * @param defaultStatus default http status to be returned with every stub http response
-     * @param defaultHeaders default response headers to be returned with every stub http response
-     * @return new Stubbing instance.
+     * Creates new stubbing instance.
+     * @param defaultEncoding default encoding of every stub response body
+     * @param defaultStatus default http status of every stub response
+     * @param defaultHeaders default response headers of every stub response
+     * @return new {@link Stubbing} instance
      */
     public Stubbing createStubbing(final Charset defaultEncoding, final int defaultStatus,
             final MultiMap defaultHeaders) {
