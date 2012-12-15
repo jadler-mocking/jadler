@@ -1,6 +1,7 @@
 package net.jadler.stubbing;
 
 import java.io.Reader;
+import java.nio.charset.Charset;
 import java.util.concurrent.TimeUnit;
 
 
@@ -14,6 +15,28 @@ import java.util.concurrent.TimeUnit;
  * scenario, this response will be used for every request that meets the <i>WHEN</i> part).
  */
 public interface ResponseStubbing {
+    
+    /**
+     * Sets the content type of the stub http response. Calling this method overrides any previous calls or the default
+     * content type.
+     * @param contentType response content type
+     * @return this stubbing
+     */
+    ResponseStubbing withContentType(String contentType);
+    
+    /**
+     * Sets the encoding of the http response. Calling this method overrides any previous calls or the default
+     * encoding defined for the http mocker instance.
+     * 
+     * This method sets the encoding of the response body. Since http protocol communicates the response encoding
+     * via the Content-Type header, the encoding value will be sent in the response
+     * (as a part of the <i>Content-Type</i> header) if and only if the stub response
+     * content type was defined by calling either {@link #withContentType(java.lang.String)}
+     * or {@link #withHeader(java.lang.String, java.lang.String)} with <i>Content-Type</i> header name.
+     * @param encoding response encoding
+     * @return this stubbing
+     */
+    ResponseStubbing withEncoding(Charset encoding);
 
     /**
      * Sets status on HTTP response. Calling this method overrides any previous calls or the default status defined
