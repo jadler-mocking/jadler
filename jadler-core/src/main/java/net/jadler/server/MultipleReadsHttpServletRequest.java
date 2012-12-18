@@ -4,7 +4,7 @@ import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.StringReader;
+import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.Collection;
@@ -16,6 +16,7 @@ import java.util.Map.Entry;
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
+
 import org.apache.commons.collections.MultiMap;
 import org.apache.commons.collections.map.MultiValueMap;
 import org.apache.commons.io.IOUtils;
@@ -24,7 +25,7 @@ import org.apache.commons.lang.StringUtils;
 
 public class MultipleReadsHttpServletRequest extends HttpServletRequestWrapper {
     
-    private String body;
+    private byte[] body;
     
     private Map<String, String[]> parameters;
 
@@ -40,8 +41,8 @@ public class MultipleReadsHttpServletRequest extends HttpServletRequestWrapper {
 
     @Override
     public ServletInputStream getInputStream() throws IOException {
-        final InputStream res = new ByteArrayInputStream(this.body.getBytes(this.getEncodingInternal()));
-        
+        final InputStream res = new ByteArrayInputStream(this.body);
+
         return new ServletInputStream() {
             @Override
             public int read() throws IOException {
@@ -53,7 +54,7 @@ public class MultipleReadsHttpServletRequest extends HttpServletRequestWrapper {
 
     @Override
     public BufferedReader getReader() throws IOException {
-        return new BufferedReader(new StringReader(this.body));
+        return new BufferedReader(new InputStreamReader(new ByteArrayInputStream(body), getEncodingInternal()));
     }
     
 
@@ -88,13 +89,13 @@ public class MultipleReadsHttpServletRequest extends HttpServletRequestWrapper {
     private void initBody() throws IOException {
         synchronized (this.getRequest()) {
             if (this.body == null) {
-                this.body = IOUtils.toString(super.getReader());
+                this.body = IOUtils.toByteArray(super.getInputStream());
             }
         }
     }
     
     
-    private void initParameters() {
+    private void initParameters() throws IOException {
         synchronized (this.getRequest()) {
             if (this.parameters == null) {
                 this.parameters = this.readParameters();
@@ -109,7 +110,7 @@ public class MultipleReadsHttpServletRequest extends HttpServletRequestWrapper {
     
     
     @SuppressWarnings("unchecked")
-    private Map<String, String[]> readParameters() {
+    private Map<String, String[]> readParameters() throws IOException {
         final MultiMap params = readParametersFromQueryString(); 
         
           //shitty attempt to check whether the body contains html form data. Please refactor.
@@ -136,8 +137,8 @@ public class MultipleReadsHttpServletRequest extends HttpServletRequestWrapper {
     }
     
 
-    private MultiMap readParametersFromBody() {
-        return this.readParametersFromString(this.body);
+    private MultiMap readParametersFromBody() throws IOException {
+        return this.readParametersFromString(IOUtils.toString(this.body, getEncodingInternal()));
     }
     
     
