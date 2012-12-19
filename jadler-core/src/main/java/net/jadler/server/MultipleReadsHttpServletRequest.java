@@ -4,9 +4,10 @@ import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.StringReader;
+import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -24,7 +25,7 @@ import org.apache.commons.lang.StringUtils;
 
 public class MultipleReadsHttpServletRequest extends HttpServletRequestWrapper {
     
-    private String body;
+    private byte[] body;
     
     private Map<String, String[]> parameters;
 
@@ -32,15 +33,17 @@ public class MultipleReadsHttpServletRequest extends HttpServletRequestWrapper {
     public MultipleReadsHttpServletRequest(HttpServletRequest request) throws IOException {
         super(request);
         
-        this.initBody();
-          //initParameters must be called after initBody since it uses the request body
-        this.initParameters();
+        this.body = IOUtils.toByteArray(this.getRequest().getInputStream());
+
+          //parameters must be initialized after the request body is read
+          //(since params can be read from the body as well)
+        this.parameters = this.readParameters();
     }
     
 
     @Override
     public ServletInputStream getInputStream() throws IOException {
-        final InputStream res = new ByteArrayInputStream(this.body.getBytes(this.getEncodingInternal()));
+        final InputStream res = new ByteArrayInputStream(this.body);
         
         return new ServletInputStream() {
             @Override
@@ -53,7 +56,7 @@ public class MultipleReadsHttpServletRequest extends HttpServletRequestWrapper {
 
     @Override
     public BufferedReader getReader() throws IOException {
-        return new BufferedReader(new StringReader(this.body));
+        return new BufferedReader(new InputStreamReader(this.getInputStream(), this.getEncodingInternal()));
     }
     
 
@@ -85,34 +88,16 @@ public class MultipleReadsHttpServletRequest extends HttpServletRequestWrapper {
     }
     
     
-    private void initBody() throws IOException {
-        synchronized (this.getRequest()) {
-            if (this.body == null) {
-                this.body = IOUtils.toString(super.getReader());
-            }
-        }
-    }
-    
-    
-    private void initParameters() {
-        synchronized (this.getRequest()) {
-            if (this.parameters == null) {
-                this.parameters = this.readParameters();
-            }
-        }
-    }
-    
-    
     private String getEncodingInternal() {
-        return this.getCharacterEncoding() == null ? "UTF-8" : this.getCharacterEncoding();
+        return this.getCharacterEncoding() == null ? Charset.defaultCharset().name() : this.getCharacterEncoding();
     }
     
     
     @SuppressWarnings("unchecked")
-    private Map<String, String[]> readParameters() {
+    private Map<String, String[]> readParameters() throws IOException {
         final MultiMap params = readParametersFromQueryString(); 
         
-          //shitty attempt to check whether the body contains html form data. Please refactor.
+          //TODO: shitty attempt to check whether the body contains html form data. Please refactor.
         if (!StringUtils.isBlank(this.getContentType()) &&
             this.getContentType().contains("application/x-www-form-urlencoded")) {
             
@@ -136,8 +121,8 @@ public class MultipleReadsHttpServletRequest extends HttpServletRequestWrapper {
     }
     
 
-    private MultiMap readParametersFromBody() {
-        return this.readParametersFromString(this.body);
+    private MultiMap readParametersFromBody() throws IOException {
+        return this.readParametersFromString(new String(this.body, this.getEncodingInternal()));
     }
     
     
