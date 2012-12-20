@@ -2,10 +2,10 @@ package net.jadler.httpmocker;
 
 import java.nio.charset.Charset;
 import net.jadler.stubbing.Stubbing;
-import net.jadler.rule.HttpMockRule;
-import net.jadler.rule.HttpMockResponse;
+import net.jadler.stubbing.StubRule;
+import net.jadler.stubbing.StubResponse;
 import net.jadler.stubbing.StubbingFactory;
-import net.jadler.server.jetty.JettyMockHttpServer;
+import net.jadler.server.jetty.JettyStubHttpServer;
 import java.util.Arrays;
 import java.util.Collections;
 import javax.servlet.http.HttpServletRequest;
@@ -54,13 +54,13 @@ public class HttpMockerImplTest {
     
     @Test
     public void constructor2() {
-        new HttpMockerImpl(mock(JettyMockHttpServer.class));
+        new HttpMockerImpl(mock(JettyStubHttpServer.class));
     }
     
     
     @Test(expected=IllegalStateException.class)
     public void startTwice() {
-        final HttpMockerImpl mocker = new HttpMockerImpl(mock(JettyMockHttpServer.class));
+        final HttpMockerImpl mocker = new HttpMockerImpl(mock(JettyStubHttpServer.class));
         
         mocker.start();
         mocker.start();
@@ -71,7 +71,7 @@ public class HttpMockerImplTest {
     
     @Test(expected=JadlerException.class)
     public void startException() throws Exception {
-        final JettyMockHttpServer server = mock(JettyMockHttpServer.class);
+        final JettyStubHttpServer server = mock(JettyStubHttpServer.class);
         doThrow(new Exception()).when(server).start();
         new HttpMockerImpl(server).start();
         fail("server threw an exception");
@@ -80,7 +80,7 @@ public class HttpMockerImplTest {
     
     @Test
     public void start() throws Exception {
-        final JettyMockHttpServer server = mock(JettyMockHttpServer.class);
+        final JettyStubHttpServer server = mock(JettyStubHttpServer.class);
         new HttpMockerImpl(server).start();
         
         verify(server, times(1)).start();
@@ -90,14 +90,14 @@ public class HttpMockerImplTest {
     
     @Test(expected=IllegalStateException.class)
     public void stopNotStarted() {
-        new HttpMockerImpl(mock(JettyMockHttpServer.class)).stop();
+        new HttpMockerImpl(mock(JettyStubHttpServer.class)).stop();
         fail("mocker cannot be stopped without being started");
     }
     
     
     @Test(expected=IllegalStateException.class)
     public void stopTwice() {
-        final HttpMockerImpl mocker = new HttpMockerImpl(mock(JettyMockHttpServer.class));
+        final HttpMockerImpl mocker = new HttpMockerImpl(mock(JettyStubHttpServer.class));
         
         mocker.start();
         mocker.stop();
@@ -108,7 +108,7 @@ public class HttpMockerImplTest {
     
     @Test(expected=JadlerException.class)
     public void stopException() throws Exception {
-        final JettyMockHttpServer server = mock(JettyMockHttpServer.class);
+        final JettyStubHttpServer server = mock(JettyStubHttpServer.class);
         doThrow(new Exception()).when(server).start();
         final HttpMocker mocker = new HttpMockerImpl(server);
         
@@ -121,7 +121,7 @@ public class HttpMockerImplTest {
     
     @Test
     public void stop() throws Exception {
-        final JettyMockHttpServer server = mock(JettyMockHttpServer.class);
+        final JettyStubHttpServer server = mock(JettyStubHttpServer.class);
         final HttpMockerImpl mocker = new HttpMockerImpl(server);
         
         mocker.start();
@@ -133,7 +133,7 @@ public class HttpMockerImplTest {
     
     @Test
     public void isStarted() throws Exception {
-        final JettyMockHttpServer server = mock(JettyMockHttpServer.class);
+        final JettyStubHttpServer server = mock(JettyStubHttpServer.class);
         final HttpMockerImpl mocker = new HttpMockerImpl(server);
         
         assertThat(mocker.isStarted(), is(false));
@@ -146,14 +146,14 @@ public class HttpMockerImplTest {
     
     @Test(expected=IllegalArgumentException.class)
     public void setDefaultHeadersWrongParam() {
-        new HttpMockerImpl(mock(JettyMockHttpServer.class)).setDefaultHeaders(null);
+        new HttpMockerImpl(mock(JettyStubHttpServer.class)).setDefaultHeaders(null);
         fail("defaultHeaders cannot be null");
     }
     
     
     @Test(expected=IllegalStateException.class)
     public void setDefaultHeadersWrongState() {
-        final HttpMockerImpl mocker = new HttpMockerImpl(mock(JettyMockHttpServer.class));
+        final HttpMockerImpl mocker = new HttpMockerImpl(mock(JettyStubHttpServer.class));
         mocker.provideResponseFor(new MockHttpServletRequest());
         mocker.setDefaultHeaders(new MultiValueMap());
         fail("addDefaultHeaders cannot be called after provideResponseFor");
@@ -162,14 +162,14 @@ public class HttpMockerImplTest {
     
     @Test(expected=IllegalArgumentException.class)
     public void setDefaultStatusWrongParam() {
-        new HttpMockerImpl(mock(JettyMockHttpServer.class)).setDefaultStatus(-1);
+        new HttpMockerImpl(mock(JettyStubHttpServer.class)).setDefaultStatus(-1);
         fail("defaultStatus must be at least 0");
     }
     
     
     @Test(expected=IllegalStateException.class)
     public void setDefaultStatusWrongState() {
-        final HttpMockerImpl mocker = new HttpMockerImpl(mock(JettyMockHttpServer.class));
+        final HttpMockerImpl mocker = new HttpMockerImpl(mock(JettyStubHttpServer.class));
         mocker.provideResponseFor(new MockHttpServletRequest());
         mocker.setDefaultStatus(200);
         fail("setDefaultStatus cannot be called after provideResponseFor");
@@ -178,14 +178,14 @@ public class HttpMockerImplTest {
     
     @Test(expected=IllegalArgumentException.class)
     public void setDefaultEncodingWrongParam() {
-        new HttpMockerImpl(mock(JettyMockHttpServer.class)).setDefaultEncoding(null);
+        new HttpMockerImpl(mock(JettyStubHttpServer.class)).setDefaultEncoding(null);
         fail("defaultEncoding mustn't be null");
     }
     
     
     @Test(expected=IllegalStateException.class)
     public void setDefaultEncodingWrongState() {
-        final HttpMockerImpl mocker = new HttpMockerImpl(mock(JettyMockHttpServer.class));
+        final HttpMockerImpl mocker = new HttpMockerImpl(mock(JettyStubHttpServer.class));
         mocker.provideResponseFor(new MockHttpServletRequest());
         mocker.setDefaultEncoding(Charset.forName("UTF-8"));
         fail("setDefaultStatus cannot be called after provideResponseFor");
@@ -194,7 +194,7 @@ public class HttpMockerImplTest {
     
     @Test(expected=IllegalStateException.class)
     public void onRequestAfterFirstProvision() {
-        final HttpMockerImpl mocker = new HttpMockerImpl(mock(JettyMockHttpServer.class));
+        final HttpMockerImpl mocker = new HttpMockerImpl(mock(JettyStubHttpServer.class));
         
         mocker.provideResponseFor(new MockHttpServletRequest());
         mocker.onRequest();
@@ -204,20 +204,20 @@ public class HttpMockerImplTest {
     
     @Test
     public void onRequest() {
-        final HttpMockRule rule1 = new HttpMockRule(Collections.<Matcher<? super HttpServletRequest>>emptyList(),
-                Arrays.asList(new HttpMockResponse()));
+        final StubRule rule1 = new StubRule(Collections.<Matcher<? super HttpServletRequest>>emptyList(),
+                Arrays.asList(new StubResponse()));
         final Stubbing stubbing1 = mock(Stubbing.class);
         when(stubbing1.createRule()).thenReturn(rule1);
         
-        final HttpMockRule rule2 = new HttpMockRule(Collections.<Matcher<? super HttpServletRequest>>emptyList(),
-                Arrays.asList(new HttpMockResponse()));
+        final StubRule rule2 = new StubRule(Collections.<Matcher<? super HttpServletRequest>>emptyList(),
+                Arrays.asList(new StubResponse()));
         final Stubbing stubbing2 = mock(Stubbing.class);
         when(stubbing2.createRule()).thenReturn(rule2);
         
         final StubbingFactory sf = mock(StubbingFactory.class);
         when(sf.createStubbing(any(Charset.class), anyInt(), any(MultiMap.class))).thenReturn(stubbing1, stubbing2);
         
-        final JettyMockHttpServer server = mock(JettyMockHttpServer.class);
+        final JettyStubHttpServer server = mock(JettyStubHttpServer.class);
         final HttpMockerImpl mocker = new HttpMockerImpl(server, sf);
         
           //calling the onRequest twice so stubbing1 and stubbing2 are created in the HttpMocker instance
@@ -232,7 +232,7 @@ public class HttpMockerImplTest {
     
     @Test
     public void onRequestWithDefaults() {
-        final JettyMockHttpServer server = mock(JettyMockHttpServer.class);
+        final JettyStubHttpServer server = mock(JettyStubHttpServer.class);
         final StubbingFactory sf = spy(new StubbingFactory());
         
         final HttpMockerImpl mocker = new HttpMockerImpl(server, sf);
@@ -258,7 +258,7 @@ public class HttpMockerImplTest {
     
     @Test
     public void onRequestNoDefaultStatus() {
-        final JettyMockHttpServer server = mock(JettyMockHttpServer.class);
+        final JettyStubHttpServer server = mock(JettyStubHttpServer.class);
         final StubbingFactory sf = spy(new StubbingFactory());
         
         final HttpMockerImpl mocker = new HttpMockerImpl(server, sf);
@@ -275,7 +275,7 @@ public class HttpMockerImplTest {
     
     @Test
     public void onRequestNoDefaultEncoding() {
-        final JettyMockHttpServer server = mock(JettyMockHttpServer.class);
+        final JettyStubHttpServer server = mock(JettyStubHttpServer.class);
         final StubbingFactory sf = spy(new StubbingFactory());
         
         final HttpMockerImpl mocker = new HttpMockerImpl(server, sf);
@@ -292,7 +292,7 @@ public class HttpMockerImplTest {
     
     @Test
     public void onRequestNoDefaultHeaders() {
-        final JettyMockHttpServer server = mock(JettyMockHttpServer.class);
+        final JettyStubHttpServer server = mock(JettyStubHttpServer.class);
         final StubbingFactory sf = spy(new StubbingFactory());
         
         final HttpMockerImpl mocker = new HttpMockerImpl(server, sf);
@@ -312,23 +312,23 @@ public class HttpMockerImplTest {
         final MockHttpServletRequest req = new MockHttpServletRequest();
     
           //exactly 1 rule matches
-        final HttpMockRule rule1 = mock(HttpMockRule.class);
+        final StubRule rule1 = mock(StubRule.class);
         final Stubbing stubbing1 = mock(Stubbing.class);
         when(stubbing1.createRule()).thenReturn(rule1);
-        when(rule1.matches(eq(req))).thenReturn(true);
-        final HttpMockResponse resp1 = new HttpMockResponse();
+        when(rule1.matchedBy(eq(req))).thenReturn(true);
+        final StubResponse resp1 = new StubResponse();
         when(rule1.nextResponse()).thenReturn(resp1);
         
-        final HttpMockRule rule2  = mock(HttpMockRule.class);
+        final StubRule rule2  = mock(StubRule.class);
         final Stubbing stubbing2 = mock(Stubbing.class);
         when(stubbing2.createRule()).thenReturn(rule2);
-        when(rule2.matches(eq(req))).thenReturn(false);
+        when(rule2.matchedBy(eq(req))).thenReturn(false);
         
         final StubbingFactory sf = mock(StubbingFactory.class);
         when(sf.createStubbing(any(Charset.class), anyInt(), any(MultiMap.class)))
                 .thenReturn(stubbing1, stubbing2);
         
-        final JettyMockHttpServer server = mock(JettyMockHttpServer.class);
+        final JettyStubHttpServer server = mock(JettyStubHttpServer.class);
         final HttpMockerImpl mocker = new HttpMockerImpl(server, sf);
         
           //calling the onRequest twice so stubbing1 and stubbing2 are created in the HttpMocker instance
@@ -344,22 +344,22 @@ public class HttpMockerImplTest {
         final MockHttpServletRequest req = new MockHttpServletRequest();
         
           //no rule matches
-        final HttpMockRule rule1 = mock(HttpMockRule.class);
+        final StubRule rule1 = mock(StubRule.class);
         final Stubbing stubbing1 = mock(Stubbing.class);
         when(stubbing1.createRule()).thenReturn(rule1);
-        when(rule1.matches(eq(req))).thenReturn(false);
+        when(rule1.matchedBy(eq(req))).thenReturn(false);
         
         
-        final HttpMockRule rule2  = mock(HttpMockRule.class);
+        final StubRule rule2  = mock(StubRule.class);
         final Stubbing stubbing2 = mock(Stubbing.class);
         when(stubbing2.createRule()).thenReturn(rule2);
-        when(rule2.matches(eq(req))).thenReturn(false);
+        when(rule2.matchedBy(eq(req))).thenReturn(false);
         
         final StubbingFactory sf = mock(StubbingFactory.class);
         when(sf.createStubbing(any(Charset.class), anyInt(), any(MultiMap.class)))
                 .thenReturn(stubbing1, stubbing2);
         
-        final JettyMockHttpServer server = mock(JettyMockHttpServer.class);
+        final JettyStubHttpServer server = mock(JettyStubHttpServer.class);
         final HttpMockerImpl mocker = new HttpMockerImpl(server, sf);
         
           //calling the onRequest twice so stubbing1 and stubbing2 are created in the HttpMocker instance
@@ -375,25 +375,25 @@ public class HttpMockerImplTest {
         final MockHttpServletRequest req = new MockHttpServletRequest();
         
           //two rules matches, the first one must be provided
-        final HttpMockRule rule1 = mock(HttpMockRule.class);
+        final StubRule rule1 = mock(StubRule.class);
         final Stubbing stubbing1 = mock(Stubbing.class);
         when(stubbing1.createRule()).thenReturn(rule1);
-        when(rule1.matches(eq(req))).thenReturn(true);
-        final HttpMockResponse resp1 = new HttpMockResponse();
+        when(rule1.matchedBy(eq(req))).thenReturn(true);
+        final StubResponse resp1 = new StubResponse();
         when(rule1.nextResponse()).thenReturn(resp1);
         
-        final HttpMockRule rule2  = mock(HttpMockRule.class);
+        final StubRule rule2  = mock(StubRule.class);
         final Stubbing stubbing2 = mock(Stubbing.class);
         when(stubbing2.createRule()).thenReturn(rule2);
-        when(rule2.matches(eq(req))).thenReturn(true);
-        final HttpMockResponse resp2 = new HttpMockResponse();
+        when(rule2.matchedBy(eq(req))).thenReturn(true);
+        final StubResponse resp2 = new StubResponse();
         when(rule2.nextResponse()).thenReturn(resp2);
         
         final StubbingFactory sf = mock(StubbingFactory.class);
         when(sf.createStubbing(any(Charset.class), anyInt(), any(MultiMap.class)))
                 .thenReturn(stubbing1, stubbing2);
         
-        final JettyMockHttpServer server = mock(JettyMockHttpServer.class);
+        final JettyStubHttpServer server = mock(JettyStubHttpServer.class);
         final HttpMockerImpl mocker = new HttpMockerImpl(server, sf);
         
           //calling the onRequest twice so stubbing1 and stubbing2 are created in the HttpMocker instance

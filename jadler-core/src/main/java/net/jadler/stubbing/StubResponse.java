@@ -1,4 +1,4 @@
-package net.jadler.rule;
+package net.jadler.stubbing;
 
 import java.nio.charset.Charset;
 import java.util.Collection;
@@ -13,13 +13,13 @@ import static org.apache.commons.lang.StringUtils.abbreviate;
 
 
 /**
- * A definition of one http response. Contains a definition of the response body, status and headers as well as
- * a timeout the response will be returned after. Instances of this class are mutable so the response definition
+ * A definition of a stub http response. Defines the response status, encoding, body and headers as well as
+ * a timeout the response will be returned after. Instances of this class are mutable so the stub response definition
  * can be constructed on the fly.
  * 
- * One should never create new instances of this class directly, see {@link HttpMockers} for explanation and tutorial.
+ * One should never create new instances of this class directly, see {@link Jadler} for explanation and tutorial.
  */
-public class HttpMockResponse {
+public class StubResponse {
     private Charset encoding;
     private final MultiMap headers;
     private String body;
@@ -28,15 +28,31 @@ public class HttpMockResponse {
 
     
     /**
-     * Creates new empty http stub response definition.
+     * Creates new empty stub http response definition.
      */
-    public HttpMockResponse() {
+    public StubResponse() {
         this.headers = new MultiValueMap();
+    }
+    
+    
+    /**
+     * @return encoding of the stub response body
+     */
+    public Charset getEncoding() {
+        return encoding;
     }
 
     
     /**
-     * @return http status of this response
+     * @param encoding encoding of the stub response body
+     */
+    public void setEncoding(final Charset encoding) {
+        this.encoding = encoding;
+    }
+
+    
+    /**
+     * @return http status of the stub response
      */
     public int getStatus() {
         return this.status;
@@ -44,7 +60,7 @@ public class HttpMockResponse {
     
     
     /**
-     * @param status http status of this response
+     * @param status http status of the stub response
      */
     public void setStatus(final int status) {
         this.status = status;
@@ -52,7 +68,7 @@ public class HttpMockResponse {
     
     
     /**
-     * @return body of this response
+     * @return stub response body
      */
     public String getBody() {
         return this.body;
@@ -60,7 +76,7 @@ public class HttpMockResponse {
     
     
     /**
-     * @param body body of this response (cannot be null)
+     * @param body stub response body (cannot be null)
      */
     public void setBody(final String body) {
         Validate.notNull(body, "body cannot be null, use an empty string instead.");
@@ -69,7 +85,7 @@ public class HttpMockResponse {
     
     
     /**
-     * @return response headers
+     * @return stub response headers
      */
     @SuppressWarnings("unchecked")
     public MultiMap getHeaders() {
@@ -81,8 +97,9 @@ public class HttpMockResponse {
     
     
     /**
-     * Adds new header to this response.
-     * @param name name of the header
+     * Adds a new header to this stub response. If there already exists a header with this name
+     * in this stub response, multiple values will be sent.
+     * @param name header name
      * @param value header value
      */
     public void addHeader(final String name, final String value) {
@@ -90,17 +107,28 @@ public class HttpMockResponse {
     }
     
     
+    /**
+     * Adds headers to this stub response. If there already exists a header with a same name
+     * in this stub response, multiple values will be sent.
+     * @param headers response headers (both keys and values must be of type String)
+     */
     @SuppressWarnings("unchecked")
     public void addHeaders(final MultiMap headers) {
         this.headers.putAll(headers);
     }
     
     
+    /**
+     * Removes all occurrences of the given header in this stub response (using a case insensitive search)
+     * and sets its single value.
+     * @param name header name
+     * @param value header value
+     */
     public void setHeaderCaseInsensitive(final String name, final String value) {
         
           //remove all occurrencies of the given header first
         for (final Object o: this.headers.keySet()) {
-            final String key = (String) o; //f*cking non-generics MultiMap
+            final String key = (String) o; //fucking non-generics MultiMap
             if (name.equalsIgnoreCase(key)) {
                 headers.remove(key);
             }
@@ -110,23 +138,19 @@ public class HttpMockResponse {
     }
     
     
+    /**
+     * @return a timeout (in millis) this stub response will be returned after
+     */
     public long getTimeout() {
         return this.timeout;
     }
     
     
-    public void setTimeout(long timeout) {
+    /**
+     * @param timeout a timeout (in millis) this stub response will be returned after 
+     */
+    public void setTimeout(final long timeout) {
         this.timeout = timeout;
-    }
-
-    
-    public Charset getEncoding() {
-        return encoding;
-    }
-
-    
-    public void setEncoding(Charset encoding) {
-        this.encoding = encoding;
     }
     
     

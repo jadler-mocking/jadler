@@ -1,7 +1,5 @@
 package net.jadler.stubbing;
 
-import net.jadler.rule.HttpMockResponse;
-import net.jadler.rule.HttpMockRule;
 import net.jadler.exception.JadlerException;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,7 +11,6 @@ import java.io.IOException;
 import java.io.Reader;
 import java.nio.charset.Charset;
 import net.jadler.Jadler;
-import net.jadler.httpmocker.HttpMocker;
 import org.apache.commons.collections.MultiMap;
 import org.apache.commons.collections.map.MultiValueMap;
 import org.apache.commons.lang.Validate;
@@ -27,34 +24,33 @@ import static net.jadler.matchers.HeaderRequestMatcher.requestHeader;
 import static net.jadler.matchers.ParameterRequestMatcher.requestParameter;
 
 
-
 /**
- * Package private class for defining stubs in a fluid fashion. See {@link HttpMocker#onRequest()},
- * {@link Jadler#onRequest()} for more information on creating instances of this class.
+ * Internal class for defining http stubs in a fluid fashion. You shouldn't create instances
+ * of this class on your own, please see {@link Jadler#onRequest()}
+ * for more information on creating instances of this class.
  */
 public class Stubbing implements RequestStubbing, ResponseStubbing {
     
     private static final String CONTENT_TYPE_HEADER = "Content-Type";
 
-    private final List<Matcher<? super HttpServletRequest>> matchers;
-    private final List<HttpMockResponse> responses;
+    private final List<Matcher<? super HttpServletRequest>> predicates;
+    private final List<StubResponse> stubResponses;
     private final MultiMap defaultHeaders;
     private final int defaultStatus;
     private final Charset defaultEncoding;
     
     
     /**
-     * Package private constructor, you should never create new instance of this class on your own,
-     * use {@link HttpMocker#onRequest()} instead.
-     * @param defaultHeaders default headers to be added to every mock response
-     * @param defaultStatus default http status of every mock response (can be overwritten for a particular response)
-     * @param defaultEncoding default encoding of every stub response (can be overwritten in particular stub)
+     * @param defaultHeaders default headers to be present in every http stub response
+     * @param defaultStatus default http status of every http stub response 
+     * (can be overridden in the particular stub)
+     * @param defaultEncoding default encoding of every stub response body (can be overridden in the particular stub)
      */
     @SuppressWarnings("unchecked")
     Stubbing(final Charset defaultEncoding, final int defaultStatus, final MultiMap defaultHeaders) {
         
-        this.matchers = new ArrayList<>();
-        this.responses = new ArrayList<>();
+        this.predicates = new ArrayList<>();
+        this.stubResponses = new ArrayList<>();
         this.defaultHeaders = new MultiValueMap();
         this.defaultHeaders.putAll(defaultHeaders);
         this.defaultStatus = defaultStatus;
@@ -66,10 +62,10 @@ public class Stubbing implements RequestStubbing, ResponseStubbing {
      * {@inheritDoc}
      */
     @Override
-    public RequestStubbing that(final Matcher<? super HttpServletRequest> matcher) {
-        Validate.notNull(matcher, "matcher cannot be null");
+    public RequestStubbing that(final Matcher<? super HttpServletRequest> predicate) {
+        Validate.notNull(predicate, "predicate cannot be null");
         
-        this.matchers.add(matcher);
+        this.predicates.add(predicate);
         return this;
     }
     
@@ -87,8 +83,8 @@ public class Stubbing implements RequestStubbing, ResponseStubbing {
      * {@inheritDoc}
      */    
     @Override
-    public RequestStubbing havingMethod(final Matcher<? super String> pred) {
-        return that(requestMethod(pred));
+    public RequestStubbing havingMethod(final Matcher<? super String> predicate) {
+        return that(requestMethod(predicate));
     }
     
 
@@ -105,8 +101,8 @@ public class Stubbing implements RequestStubbing, ResponseStubbing {
      * {@inheritDoc}
      */    
     @Override
-    public RequestStubbing havingBody(final Matcher<? super String> pred) {
-        return that(requestBody(pred));
+    public RequestStubbing havingBody(final Matcher<? super String> predicate) {
+        return that(requestBody(predicate));
     }
 
 
@@ -124,8 +120,8 @@ public class Stubbing implements RequestStubbing, ResponseStubbing {
      * {@inheritDoc}
      */    
     @Override
-    public RequestStubbing havingURI(final Matcher<? super String> pred) {
-        return that(requestURI(pred));
+    public RequestStubbing havingURI(final Matcher<? super String> predicate) {
+        return that(requestURI(predicate));
     }
     
     
@@ -142,8 +138,8 @@ public class Stubbing implements RequestStubbing, ResponseStubbing {
      * {@inheritDoc}
      */    
     @Override
-    public RequestStubbing havingQueryString(final Matcher<? super String> pred) {
-        return that(requestQueryString(pred));
+    public RequestStubbing havingQueryString(final Matcher<? super String> predicate) {
+        return that(requestQueryString(predicate));
     }
     
 
@@ -160,8 +156,8 @@ public class Stubbing implements RequestStubbing, ResponseStubbing {
      * {@inheritDoc}
      */    
     @Override
-    public RequestStubbing havingParameter(final String name, final Matcher<? super List<String>> matcher) {
-        return that(requestParameter(name, matcher));
+    public RequestStubbing havingParameter(final String name, final Matcher<? super List<String>> predicate) {
+        return that(requestParameter(name, predicate));
     }
     
 
@@ -201,8 +197,8 @@ public class Stubbing implements RequestStubbing, ResponseStubbing {
      * {@inheritDoc}
      */    
     @Override
-    public RequestStubbing havingHeader(final String name, final Matcher<? super List<String>> pred) {
-        return that(requestHeader(name, pred));
+    public RequestStubbing havingHeader(final String name, final Matcher<? super List<String>> predicate) {
+        return that(requestHeader(name, predicate));
     }
 
 
@@ -242,14 +238,14 @@ public class Stubbing implements RequestStubbing, ResponseStubbing {
      */
     @Override
     public ResponseStubbing thenRespond() {
-        final HttpMockResponse response = new HttpMockResponse();
+        final StubResponse response = new StubResponse();
         
         response.addHeaders(defaultHeaders);
         response.setStatus(defaultStatus);
         response.setEncoding(defaultEncoding);
         response.setBody("");
         
-        responses.add(response);
+        stubResponses.add(response);
         return this;
     }
     
@@ -338,33 +334,34 @@ public class Stubbing implements RequestStubbing, ResponseStubbing {
     
     
     /**
-     * Creates HttpMockRule instance from this Stubbing instance.
-     * @return HttpMockRule instance configured using values from this Stubbing
+     * Creates a {@link StubRule} instance from this Stubbing instance.
+     * Must be called once this stubbing has been finished.
+     * @return {@link StubRule} instance configured using values from this stubbing
      */
-    public HttpMockRule createRule() {
-        return new HttpMockRule(matchers, responses);
+    public StubRule createRule() {
+        return new StubRule(predicates, stubResponses);
     }
 
     
     /**
      * package private getter for testing purposes
-     * @return all registered matchers
+     * @return all registered predicates
      */
-    List<Matcher<? super HttpServletRequest>> getMatchers() {
-        return new ArrayList<>(this.matchers);
+    List<Matcher<? super HttpServletRequest>> getPredicates() {
+        return new ArrayList<>(this.predicates);
     }
     
     
     /**
      * package private getter for testing purposes
-     * @return all defined responses
+     * @return all defined stub responses
      */
-    List<HttpMockResponse> getResponses() {
-        return new ArrayList<>(this.responses);
+    List<StubResponse> getStubResponses() {
+        return new ArrayList<>(this.stubResponses);
     }
     
 
-    private HttpMockResponse currentResponse() {
-        return responses.get(responses.size() - 1);
+    private StubResponse currentResponse() {
+        return stubResponses.get(stubResponses.size() - 1);
     }
 }

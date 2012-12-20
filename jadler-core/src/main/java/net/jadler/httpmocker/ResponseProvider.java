@@ -1,6 +1,6 @@
 package net.jadler.httpmocker;
 
-import net.jadler.rule.HttpMockResponse;
+import net.jadler.stubbing.StubResponse;
 import javax.servlet.http.HttpServletRequest;
 
 
@@ -14,5 +14,5 @@ public interface ResponseProvider {
      * @return definition of a mock response to be returned for the given request or null,
      * if no response is defined for this request
      */
-    HttpMockResponse provideResponseFor(HttpServletRequest req);
+    StubResponse provideResponseFor(HttpServletRequest req);
 }

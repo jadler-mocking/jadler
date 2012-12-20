@@ -1,4 +1,4 @@
-package net.jadler.rule;
+package net.jadler.stubbing;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -16,57 +16,53 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.anything;
 
 
-
-public class HttpMockRuleTest {
+public class StubRuleTest {
     
-    private static final List<HttpMockResponse> DUMB_RESPONSE = Arrays.asList(new HttpMockResponse());
+    private static final List<StubResponse> DUMB_RESPONSE = Arrays.asList(new StubResponse());
     
 
     @Test(expected=IllegalArgumentException.class)
     public void constructor1() {
-        new HttpMockRule(null, DUMB_RESPONSE);
-        fail("matchers cannot be null");
+        new StubRule(null, DUMB_RESPONSE);
+        fail("predicates cannot be null");
     }
     
     
     @Test(expected=IllegalArgumentException.class)
     public void constructor2() {
-        new HttpMockRule(Collections.<Matcher<? super HttpServletRequest>>emptyList(),
-                Collections.<HttpMockResponse>emptyList());
-        fail("responses cannot be empty");
+        new StubRule(Collections.<Matcher<? super HttpServletRequest>>emptyList(),
+                Collections.<StubResponse>emptyList());
+        fail("stubResponses cannot be empty");
     }
     
     
     @Test
     public void constructor3() {
-        new HttpMockRule(Collections.<Matcher<? super HttpServletRequest>>emptyList(), DUMB_RESPONSE);
+        new StubRule(Collections.<Matcher<? super HttpServletRequest>>emptyList(), DUMB_RESPONSE);
     }
     
     
     @Test
-    public void matches() {
+    public void matchedBy() {
         @SuppressWarnings("unchecked")
         final Matcher<? super HttpServletRequest> m1 = mock(Matcher.class);
         
         when(m1.matches(any())).thenReturn(false);
         
-        final HttpMockRule rule = new HttpMockRule(
+        final StubRule rule = new StubRule(
                 Arrays.<Matcher<? super HttpServletRequest>>asList(anything(), m1, anything()), DUMB_RESPONSE);
         
           //one matcher returns false, this rule is not applicable
-        assertThat(rule.matches(mock(HttpServletRequest.class)), is(false));
+        assertThat(rule.matchedBy(mock(HttpServletRequest.class)), is(false));
     }
     
     
     @Test
     public void nextResponse() {
-        final HttpMockResponse r1 = new HttpMockResponse();
-        r1.setTimeout(100);
+        final StubResponse r1 = new StubResponse();
+        final StubResponse r2 = new StubResponse();
         
-        final HttpMockResponse r2 = new HttpMockResponse();
-        r2.setTimeout(200);
-        
-        final HttpMockRule rule = new HttpMockRule(Collections.<Matcher<? super HttpServletRequest>>emptyList(),
+        final StubRule rule = new StubRule(Collections.<Matcher<? super HttpServletRequest>>emptyList(),
                 Arrays.asList(r1, r2));
         
         assertThat(rule.nextResponse(), is(r1));

@@ -1,23 +1,22 @@
 package net.jadler.server;
 
-import net.jadler.rule.HttpMockResponse;
 import net.jadler.httpmocker.ResponseProvider;
-import net.jadler.server.jetty.JettyMockHttpServer;
 
 
 /**
- * Interface for a mock http server component. This component represents a server (usually listening on
- * some port) which can respond to various http requests according to rules provided by a {@link ResponseProvider}
- * instance.
+ * Interface for a stub http server component.
  * 
- * Jadler provides a default implementation of this interface {@link JettyMockHttpServer}, which
- * is based on a embedded jetty server.
+ * This component represents an http server which waits for http requests and returns stub http responses
+ * according to a {@link ResponseProvider} instance.
+ * 
+ * Jadler provides a default implementation of this interface {@link JettyStubHttpServer} based on
+ * an embedded jetty server.
  */
-public interface MockHttpServer {
+public interface StubHttpServer {
 
     /**
      * Registers a response provider. This component provides a response prescription (in form
-     * of a {@link HttpMockResponse} instance for a given http request.
+     * of a {@link HttpMockResponse} instance) for a given http request.
      * @param responseProvider response provider to use to retrieve response prescriptions.
      */
     void registerResponseProvider(ResponseProvider responseProvider);

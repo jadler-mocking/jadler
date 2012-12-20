@@ -4,8 +4,8 @@ import java.nio.charset.Charset;
 import net.jadler.stubbing.RequestStubbing;
 import net.jadler.httpmocker.HttpMocker;
 import net.jadler.httpmocker.HttpMockerImpl;
-import net.jadler.server.MockHttpServer;
-import net.jadler.server.jetty.JettyMockHttpServer;
+import net.jadler.server.StubHttpServer;
+import net.jadler.server.jetty.JettyStubHttpServer;
 import net.jadler.stubbing.ResponseStubbing;
 import org.apache.commons.collections.MultiMap;
 import org.apache.commons.collections.map.MultiValueMap;
@@ -53,7 +53,7 @@ public final class Jadler {
      * Starts the underlying http mock server. This should be preferably called
      * in the <i>before</i> phase of a test.
      */
-    public static void startMockServer() {
+    public static void startStubServer() {
         createMockerIfNotExists();
         
         final HttpMocker mocker =  mockerContainer.get();
@@ -67,7 +67,7 @@ public final class Jadler {
      * Stops the underlying http mock server. This should be preferably called
      * in the <i>after</i> phase of a test.
      */
-    public static void stopMockServer() {
+    public static void stopStubServer() {
         final HttpMocker mocker =  mockerContainer.get();
         if (mocker != null && mocker.isStarted()) {
             mocker.stop();
@@ -102,7 +102,7 @@ public final class Jadler {
      * Builder for constructing HttpMocker instances in a fluid way
      */
     public static class OngoingConfiguration {
-        private MockHttpServer mockHttpServer;
+        private StubHttpServer mockHttpServer;
         private Integer defaultStatus;
         private MultiMap defaultHeaders = new MultiValueMap();
         private Charset defaultEncoding;
@@ -118,7 +118,7 @@ public final class Jadler {
          * @return this ongoing configuration
          */
         public OngoingConfiguration usesStandardServerListeningOn(final int port) {
-            this.mockHttpServer = new JettyMockHttpServer(port);
+            this.mockHttpServer = new JettyStubHttpServer(port);
             return this;
         }
         
@@ -131,7 +131,7 @@ public final class Jadler {
          * @param mockHttpServer mock server implementation
          * @return this ongoing configuration
          */
-        public OngoingConfiguration usesCustomServer(final MockHttpServer mockHttpServer) {
+        public OngoingConfiguration usesCustomServer(final StubHttpServer mockHttpServer) {
             Validate.notNull(mockHttpServer, "mockHttpServer cannot be null");
             
             this.mockHttpServer = mockHttpServer;

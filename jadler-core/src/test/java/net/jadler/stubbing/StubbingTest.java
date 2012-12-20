@@ -7,8 +7,6 @@ import net.jadler.matchers.MethodRequestMatcher;
 import net.jadler.matchers.ParameterRequestMatcher;
 import net.jadler.matchers.QueryStringRequestMatcher;
 import net.jadler.matchers.URIRequestMatcher;
-import net.jadler.rule.HttpMockResponse;
-import net.jadler.rule.HttpMockRule;
 import org.apache.commons.collections.MultiMap;
 import org.apache.commons.collections.map.MultiValueMap;
 import org.hamcrest.Matcher;
@@ -154,11 +152,11 @@ public class StubbingTest {
     @Test
     public void havingParameters() {
         this.stubbing.havingParameters("name1", "name2");
-        assertThat(this.stubbing.getMatchers(), is(notNullValue()));
-        assertThat(this.stubbing.getMatchers(), hasSize(2));
+        assertThat(this.stubbing.getPredicates(), is(notNullValue()));
+        assertThat(this.stubbing.getPredicates(), hasSize(2));
 
-        assertThat(this.stubbing.getMatchers().get(0), is(instanceOf(ParameterRequestMatcher.class)));
-        assertThat(this.stubbing.getMatchers().get(1), is(instanceOf(ParameterRequestMatcher.class)));
+        assertThat(this.stubbing.getPredicates().get(0), is(instanceOf(ParameterRequestMatcher.class)));
+        assertThat(this.stubbing.getPredicates().get(1), is(instanceOf(ParameterRequestMatcher.class)));
     }
 
 
@@ -186,11 +184,11 @@ public class StubbingTest {
     @Test
     public void havingHeaders() {
         this.stubbing.havingHeaders("name1", "name2");
-        assertThat(this.stubbing.getMatchers(), is(notNullValue()));
-        assertThat(this.stubbing.getMatchers(), hasSize(2));
+        assertThat(this.stubbing.getPredicates(), is(notNullValue()));
+        assertThat(this.stubbing.getPredicates(), hasSize(2));
 
-        assertThat(this.stubbing.getMatchers().get(0), is(instanceOf(HeaderRequestMatcher.class)));
-        assertThat(this.stubbing.getMatchers().get(1), is(instanceOf(HeaderRequestMatcher.class)));
+        assertThat(this.stubbing.getPredicates().get(0), is(instanceOf(HeaderRequestMatcher.class)));
+        assertThat(this.stubbing.getPredicates().get(1), is(instanceOf(HeaderRequestMatcher.class)));
     }
 
 
@@ -213,7 +211,7 @@ public class StubbingTest {
         final String body = "body";
         this.stubbing.respond().withBody(body);
 
-        final HttpMockResponse response = assertAndGetOneResponse();
+        final StubResponse response = assertAndGetOneResponse();
         assertThat(response.getBody(), equalTo(body));
     }
 
@@ -224,7 +222,7 @@ public class StubbingTest {
         final Reader reader = spy(new StringReader(body));
         this.stubbing.respond().withBody(reader);
 
-        final HttpMockResponse response = assertAndGetOneResponse();
+        final StubResponse response = assertAndGetOneResponse();
         assertThat(response.getBody(), equalTo(body));
         verify(reader).close();
     }
@@ -250,7 +248,7 @@ public class StubbingTest {
         final String value = "value";
         this.stubbing.respond().withHeader(name, value);
 
-        final HttpMockResponse response = assertAndGetOneResponse();
+        final StubResponse response = assertAndGetOneResponse();
         assertThat(response.getHeaders(), is(notNullValue()));
         assertThat(response.getHeaders().size(), is(1));
         assertThat(response.getHeaders().containsKey(name), is(true));
@@ -265,7 +263,7 @@ public class StubbingTest {
         final int status = 2;
         this.stubbing.respond().withStatus(status);
 
-        final HttpMockResponse response = assertAndGetOneResponse();
+        final StubResponse response = assertAndGetOneResponse();
         assertThat(response.getStatus(), is(status));
     }
 
@@ -275,7 +273,7 @@ public class StubbingTest {
         final long timeout = 2;
         this.stubbing.respond().withTimeout(timeout, TimeUnit.MILLISECONDS);
 
-        final HttpMockResponse response = assertAndGetOneResponse();
+        final StubResponse response = assertAndGetOneResponse();
         assertThat(response.getTimeout(), is(timeout));
     }
 
@@ -283,7 +281,7 @@ public class StubbingTest {
     @Test
     public void createRule() {
         this.stubbing.thenRespond();
-        final HttpMockRule rule = this.stubbing.createRule();
+        final StubRule rule = this.stubbing.createRule();
 
         assertThat(rule, is(notNullValue()));
     }
@@ -292,28 +290,28 @@ public class StubbingTest {
     // helper methods
 
     private void assertOneDefaultResponse() {
-        assertThat(this.stubbing.getResponses(), is(notNullValue()));
-        assertThat(this.stubbing.getResponses(), hasSize(1));
+        assertThat(this.stubbing.getStubResponses(), is(notNullValue()));
+        assertThat(this.stubbing.getStubResponses(), hasSize(1));
 
-        assertThat(this.stubbing.getResponses().get(0), is(instanceOf(HttpMockResponse.class)));
-        assertThat(this.stubbing.getResponses().get(0).getHeaders(), equalTo((MultiMap) DEFAULT_HEADERS));
-        assertThat(this.stubbing.getResponses().get(0).getStatus(), equalTo(DEFAULT_STATUS));
+        assertThat(this.stubbing.getStubResponses().get(0), is(instanceOf(StubResponse.class)));
+        assertThat(this.stubbing.getStubResponses().get(0).getHeaders(), equalTo((MultiMap) DEFAULT_HEADERS));
+        assertThat(this.stubbing.getStubResponses().get(0).getStatus(), equalTo(DEFAULT_STATUS));
     }
 
 
-    private HttpMockResponse assertAndGetOneResponse() {
-        assertThat(this.stubbing.getResponses(), is(notNullValue()));
-        assertThat(this.stubbing.getResponses(), hasSize(1));
+    private StubResponse assertAndGetOneResponse() {
+        assertThat(this.stubbing.getStubResponses(), is(notNullValue()));
+        assertThat(this.stubbing.getStubResponses(), hasSize(1));
 
-        assertThat(this.stubbing.getResponses().get(0), is(instanceOf(HttpMockResponse.class)));
-        return this.stubbing.getResponses().get(0);
+        assertThat(this.stubbing.getStubResponses().get(0), is(instanceOf(StubResponse.class)));
+        return this.stubbing.getStubResponses().get(0);
     }
 
 
     private void assertOneMatcher(final Matcher<? super Matcher<? super HttpServletRequest>> matcher) {
-        assertThat(this.stubbing.getMatchers(), is(notNullValue()));
-        assertThat(this.stubbing.getMatchers(), hasSize(1));
+        assertThat(this.stubbing.getPredicates(), is(notNullValue()));
+        assertThat(this.stubbing.getPredicates(), hasSize(1));
 
-        assertThat(this.stubbing.getMatchers().get(0), matcher);
+        assertThat(this.stubbing.getPredicates().get(0), matcher);
     }
 }
