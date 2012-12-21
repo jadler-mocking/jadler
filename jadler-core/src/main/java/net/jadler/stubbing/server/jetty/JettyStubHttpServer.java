@@ -2,10 +2,10 @@
  * Copyright (c) 2012 Jadler contributors
  * This program is made available under the terms of the MIT License.
  */
-package net.jadler.server.jetty;
+package net.jadler.stubbing.server.jetty;
 
-import net.jadler.httpmocker.ResponseProvider;
-import net.jadler.server.StubHttpServer;
+import net.jadler.stubbing.StubResponseProvider;
+import net.jadler.stubbing.server.StubHttpServer;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.DefaultHandler;
@@ -41,7 +41,7 @@ public class JettyStubHttpServer implements StubHttpServer {
      * {@inheritDoc}
      */
     @Override
-    public void registerResponseProvider(final ResponseProvider ruleProvider) {
+    public void registerResponseProvider(final StubResponseProvider ruleProvider) {
         Validate.notNull(ruleProvider, "ruleProvider cannot be null");
         
         final HandlerList handlers = new HandlerList();

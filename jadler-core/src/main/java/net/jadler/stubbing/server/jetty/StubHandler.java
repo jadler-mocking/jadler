@@ -2,11 +2,11 @@
  * Copyright (c) 2012 Jadler contributors
  * This program is made available under the terms of the MIT License.
  */
-package net.jadler.server.jetty;
+package net.jadler.stubbing.server.jetty;
 
 import net.jadler.stubbing.StubResponse;
-import net.jadler.httpmocker.ResponseProvider;
-import net.jadler.server.MultipleReadsHttpServletRequest;
+import net.jadler.stubbing.StubResponseProvider;
+import net.jadler.stubbing.server.MultipleReadsHttpServletRequest;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
@@ -22,9 +22,9 @@ import org.apache.commons.collections.MultiMap;
 
 public class StubHandler extends AbstractHandler {
 
-    private final ResponseProvider ruleProvider;
+    private final StubResponseProvider ruleProvider;
 
-    public StubHandler(final ResponseProvider ruleProvider) {
+    public StubHandler(final StubResponseProvider ruleProvider) {
         this.ruleProvider = ruleProvider;
     }
 
@@ -40,7 +40,7 @@ public class StubHandler extends AbstractHandler {
             throws IOException, ServletException {
 
         final MultipleReadsHttpServletRequest multiReadsRequest = new MultipleReadsHttpServletRequest(request);
-        final StubResponse stubResponse = this.ruleProvider.provideResponseFor(multiReadsRequest);
+        final StubResponse stubResponse = this.ruleProvider.provideStubResponseFor(multiReadsRequest);
         if (stubResponse != null) {           
             response.setCharacterEncoding(stubResponse.getEncoding().name());
             setResponseHeaders(stubResponse.getHeaders(), response);

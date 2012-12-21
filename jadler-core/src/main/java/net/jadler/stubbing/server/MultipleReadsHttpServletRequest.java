@@ -2,7 +2,7 @@
  * Copyright (c) 2012 Jadler contributors
  * This program is made available under the terms of the MIT License.
  */
-package net.jadler.server;
+package net.jadler.stubbing.server;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
