@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map.Entry;
+import javax.servlet.ServletOutputStream;
 import org.apache.commons.collections.MultiMap;
 
 
@@ -42,7 +43,7 @@ public class StubHandler extends AbstractHandler {
         final MultipleReadsHttpServletRequest multiReadsRequest = new MultipleReadsHttpServletRequest(request);
         final StubResponse stubResponse = this.ruleProvider.provideStubResponseFor(multiReadsRequest);
         if (stubResponse != null) {           
-            response.setCharacterEncoding(stubResponse.getEncoding().name());
+            //response.setCharacterEncoding(stubResponse.getEncoding().name());
             setResponseHeaders(stubResponse.getHeaders(), response);
             setStatus(stubResponse.getStatus(), response);
             processTimeout(stubResponse.getTimeout());
@@ -62,9 +63,12 @@ public class StubHandler extends AbstractHandler {
         }
     }
 
-    private void writeResponseBody(final String body, final HttpServletResponse response) throws IOException {
-        if (StringUtils.isNotBlank(body)) {
-            response.getWriter().print(body);
+    private void writeResponseBody(final byte[] body, final HttpServletResponse response) throws IOException {
+        if (body.length > 0) {
+            final ServletOutputStream os = response.getOutputStream();
+            os.write(body);
+            os.flush();
+            os.close();
         }
     }
 

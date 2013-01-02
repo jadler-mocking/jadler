@@ -54,6 +54,14 @@ public interface RequestStubbing {
      * @return this ongoing stubbing
      */
     RequestStubbing havingBody(Matcher<? super String> predicate);
+    
+    
+    /**
+     * Adds a request body predicate. The request body must be equal to the given value.
+     * @param requestBody expected body of the incoming http request
+     * @return this ongoing stubbing
+     */
+    RequestStubbing havingRawBodyEqualTo(byte[] requestBody);
 
 
     /**

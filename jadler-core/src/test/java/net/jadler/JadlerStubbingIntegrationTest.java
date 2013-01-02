@@ -4,6 +4,7 @@
  */
 package net.jadler;
 
+import java.io.ByteArrayInputStream;
 import java.nio.charset.Charset;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -16,6 +17,8 @@ import org.junit.Before;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.Reader;
+import java.io.StringReader;
 import java.net.Socket;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.io.IOUtils;
@@ -24,9 +27,15 @@ import org.junit.Ignore;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
 import static net.jadler.Jadler.*;
+import org.apache.commons.httpclient.methods.ByteArrayRequestEntity;
 
 
-public class JadlerIntegrationTest {
+/**
+ * Suite of several integration tests for the stubbing part of the Jadler library.
+ * Each test configures the stub server and tests either the <i>WHEN<i/> or <i>THEN</i> part of http stubbing using
+ * an http client.
+ */
+public class JadlerStubbingIntegrationTest {
     
     private static final int PORT = 44532;
     private static final int DEFAULT_STATUS = 409;
@@ -39,8 +48,13 @@ public class JadlerIntegrationTest {
             {(byte)0xC3, (byte)0xA1, (byte)0xC5, (byte)0x99, (byte)0xC5, (byte)0xBE};
     private static final byte[] ISO_8859_2_REPRESENTATION = {(byte)0xE1, (byte)0xF8, (byte)0xBE};
     
+    private static final byte[] BINARY_BODY = {1, 2, 3};
+    
     private static final String UTF_8_TYPE = "text/html; charset=UTF-8";
+    private static final Charset UTF_8_CHARSET = Charset.forName("UTF-8");
     private static final String ISO_8859_2_TYPE = "text/html; charset=ISO-8859-2";
+    private static final Charset ISO_8859_2_CHARSET = Charset.forName("ISO-8859-2");
+    
     
     private HttpClient client;
     
@@ -52,7 +66,7 @@ public class JadlerIntegrationTest {
                 .respondsWithDefaultStatus(DEFAULT_STATUS)
                 .respondsWithDefaultHeader(DEFAULT_HEADER1_NAME, DEFAULT_HEADER1_VALUE1)
                 .respondsWithDefaultHeader(DEFAULT_HEADER1_NAME, DEFAULT_HEADER1_VALUE2)
-                .respondsWithDefaultEncoding(Charset.forName("UTF-8"))
+                .respondsWithDefaultEncoding(UTF_8_CHARSET)
                 .respondsWithDefaultContentType(UTF_8_TYPE);
         
         startStubServer();
@@ -67,6 +81,9 @@ public class JadlerIntegrationTest {
     }
     
     
+    /*
+     * Tests the <tt>havingBody</tt> methods.
+     */
     @Test
     public void havingBody() throws Exception {
         onRequest()
@@ -84,6 +101,9 @@ public class JadlerIntegrationTest {
     }
     
     
+    /*
+     * An empty string (not null) is matched for an empty http request.
+     */
     @Test
     public void havingEmptyBody() throws Exception {
         onRequest()
@@ -101,6 +121,44 @@ public class JadlerIntegrationTest {
     }
     
     
+    /*
+     * Tests the <tt>havingRawBody</tt> method
+     */
+    @Test
+    public void havingRawBody() throws IOException {
+        onRequest()
+            .havingRawBodyEqualTo(BINARY_BODY)
+        .respond()
+            .withStatus(201);
+        
+        final PostMethod method = new PostMethod("http://localhost:" + PORT);
+        method.setRequestEntity(new ByteArrayRequestEntity(BINARY_BODY));
+        
+        final int status = client.executeMethod(method);
+        assertThat(status, is(201));
+    }
+    
+    
+    /*
+     * An empty array (not null) is matched for an empty http request.
+     */
+    @Test
+    public void havingRawEmptyBody() throws IOException {
+        onRequest()
+            .havingRawBodyEqualTo(new byte[]{})
+        .respond()
+            .withStatus(201);
+        
+        final PostMethod method = new PostMethod("http://localhost:" + PORT);
+        
+        final int status = client.executeMethod(method);
+        assertThat(status, is(201));
+    }
+    
+    
+    /*
+     * Matches a request with a text body encoded using UTF-8.
+     */
     @Test
     public void havingUTF8Body() throws Exception {
         
@@ -111,13 +169,16 @@ public class JadlerIntegrationTest {
         
         final PostMethod method = new PostMethod("http://localhost:" + PORT);
         method.setRequestEntity(
-                new StringRequestEntity(STRING_WITH_DIACRITICS, "text/plain", Charset.forName("UTF-8").name()));
+                new StringRequestEntity(STRING_WITH_DIACRITICS, "text/plain", UTF_8_CHARSET.name()));
 
         int status = client.executeMethod(method);
         assertThat(status, is(201));
     }
     
     
+    /*
+     * Matches a request with a text body encoded using ISO-8859-2.
+     */
     @Test
     public void havingISOBody() throws Exception {
         
@@ -128,13 +189,16 @@ public class JadlerIntegrationTest {
         
         final PostMethod method = new PostMethod("http://localhost:" + PORT);
         method.setRequestEntity(
-                new StringRequestEntity(STRING_WITH_DIACRITICS, "text/plain", Charset.forName("ISO-8859-2").name()));
+                new StringRequestEntity(STRING_WITH_DIACRITICS, "text/plain", ISO_8859_2_CHARSET.name()));
 
         int status = client.executeMethod(method);
         assertThat(status, is(201));
     }
     
     
+    /*
+     * Tests a combination of the <tt>havingHeader</tt> methods.
+     */
     @Test
     public void havingHeader() throws Exception {
         
@@ -164,10 +228,14 @@ public class JadlerIntegrationTest {
     }
     
     
+    /*
+     * Tests the <tt>havingMethod</tt> methods.
+     */
     @Test
     public void havingMethod() throws Exception {
         onRequest()
             .havingMethodEqualTo("POST")
+                //the comparison must be case insensitive
             .havingMethodEqualTo("poSt")
             .havingMethod(not(isEmptyOrNullString()))
             .havingMethod(anything())
@@ -181,6 +249,10 @@ public class JadlerIntegrationTest {
     }
     
     
+    /*
+     * Tests the <tt>havingParameter</tt> methods for a GET http request. Only query string values
+     * are considered http parameters for a GET http request.
+     */
     @Test
     public void havingParameterGET() throws Exception {
         
@@ -213,6 +285,15 @@ public class JadlerIntegrationTest {
     }
     
     
+    /*
+     * Tests the <tt>havingParameter</tt> methods for a POST http request with the
+     * <tt>application/x-www-form-urlencoded</tt> content type. Both query string and request body values
+     * are considered http parameters for such an http request.
+     * 
+     * This test also tests a combination of <tt>havingParameter</tt> and <tt>havingBody</tt> methods
+     * since both of these require an access to the request body (which causes troubles in the servlet specification
+     * addressed by the {@link MultipleReadsHttpServletRequest} wrapper).
+     */
     @Test
     public void havingParameterPOST() throws Exception {
         final String body = "p1=p1v1&p2=p2v1&p2=p2v2&p3=&p4";
@@ -249,6 +330,9 @@ public class JadlerIntegrationTest {
     }
     
     
+    /*
+     * Tests the <tt>havingQueryString</tt> methods. 
+     */
     @Test
     public void havingQueryString() throws Exception {
         onRequest()
@@ -265,10 +349,14 @@ public class JadlerIntegrationTest {
     }
     
     
+    /*
+     * Null value is matched for an empty http request.
+     */
     @Test
     public void havingNoQueryString() throws Exception {
         onRequest()
             .havingQueryString(nullValue())
+            .havingQueryString(not(equalTo("")))
         .respond()
             .withStatus(201);
         
@@ -279,6 +367,9 @@ public class JadlerIntegrationTest {
     }
     
     
+    /*
+     * Tests the <tt>havingURI</tt> methods.
+     */
     @Test
     public void havingURI() throws Exception {
         onRequest()
@@ -294,21 +385,48 @@ public class JadlerIntegrationTest {
     }
     
     
+    /*
+     * Tests the <tt>havingURI</tt> methods for a root URI.
+     */
     @Test
-    public void havingEmptyURI() throws IOException {
+    public void havingRootURI() throws IOException {
         onRequest()
             .havingURI(equalTo("/"))
             .havingURI(not(isEmptyOrNullString()))
         .respond()
             .withStatus(201);
         
-        final GetMethod method = new GetMethod("http://localhost:" + PORT);
+          //if there was no slash at the end, the GetMethod constructor would add it automatically
+        final GetMethod method = new GetMethod("http://localhost:" + PORT + "/");
 
         final int status = client.executeMethod(method);
         assertThat(status, is(201));        
     }
     
     
+    @Test @Ignore
+    public void havingURISockets() throws IOException {
+        onRequest().havingURIEqualTo("/").respond().withStatus(201);
+        
+        final Socket sock = new Socket("localhost", PORT);
+        final OutputStream out = sock.getOutputStream();
+        out.write("GET / HTTP/1.1\r\nHost:localhost\r\n\r\n".getBytes());
+        
+        InputStream in = sock.getInputStream();
+        
+        int b;
+        while ((b = in.read()) != -1) {
+            char res= (char) b;
+            System.out.print(res);
+        }
+    }
+    
+    
+    /*
+     * Tests the <tt>withBody(String)</tt> method in connection with the default body encoding (UTF-8).
+     * Retrieves the response body as an array of bytes and checks that it's exactly the same as
+     * the UTF-8 representation of the string.
+     */
     @Test
     public void withDefaultEncoding() throws IOException {
         onRequest().respond().withBody(STRING_WITH_DIACRITICS);
@@ -323,10 +441,15 @@ public class JadlerIntegrationTest {
     }
     
     
+    /*
+     * Tests the <tt>withBody(String)</tt> method in connection with the <tt>withEncoding</tt> method.
+     * Retrieves the response body as an array of bytes and checks that it's exactly the same as
+     * the ISO-8859-2 representation of the string.
+     */
     @Test
     public void withEncoding() throws IOException {
         onRequest().respond()
-                .withEncoding(Charset.forName("ISO-8859-2"))
+                .withEncoding(ISO_8859_2_CHARSET)
                 .withBody(STRING_WITH_DIACRITICS);
         
         final GetMethod method = new GetMethod("http://localhost:" + PORT);
@@ -339,6 +462,11 @@ public class JadlerIntegrationTest {
     }    
     
 
+    /*
+     * Tests the <tt>withBody(String)</tt> method in connection with the default content type
+     * (which is set to text/html; charset=UTF-8). Checks the content type was set to the stub response
+     * and the body is readable to the http client.
+     */
     @Test
     public void withDefaultContentType() throws IOException {
         onRequest().respond().withBody(STRING_WITH_DIACRITICS);
@@ -346,82 +474,135 @@ public class JadlerIntegrationTest {
         final GetMethod method = new GetMethod("http://localhost:" + PORT);
 
         client.executeMethod(method);
+        
+          //the content type header set to the default value
+        assertThat(method.getResponseHeader("Content-Type").getValue(), is(UTF_8_TYPE));
 
-          //the content-type header charset was set to UTF-8
-        assertThat(method.getResponseCharSet(), is("UTF-8"));
+          //the http client was able to retrieve the charset portion of the content type header
+        assertThat(method.getResponseCharSet(), is(UTF_8_CHARSET.name()));
+        
           //since the body was encoded in UTF-8 and content type charset was set to UTF-8,
-          //the client should be able to read it correctly
+          //the http client should be able to read it correctly
         assertThat(method.getResponseBodyAsString(), is(STRING_WITH_DIACRITICS));
     }
     
     
+    /*
+     * Tests the <tt>withBody(String)</tt> method in connection with the <tt>withEncoding</tt> and
+     * <tt>withContentType</tt> methods. Both body encoding and the content type header are set
+     * to ISO-8859-2. Checks the content type was set to the stub response and the body is readable to the http client.
+     */
     @Test
     public void withContentType() throws IOException {
         onRequest().respond()
-                .withEncoding(Charset.forName("ISO-8859-2"))
+                .withEncoding(ISO_8859_2_CHARSET)
                 .withContentType(ISO_8859_2_TYPE)
-                .withBody(STRING_WITH_DIACRITICS)
-                .withStatus(201);
+                .withBody(STRING_WITH_DIACRITICS);
         
         final GetMethod method = new GetMethod("http://localhost:" + PORT);
 
-        final int status = client.executeMethod(method);
-        assertThat(status, is(201));
+        client.executeMethod(method);
+        
+          //the content type header set to the specified value
+        assertThat(method.getResponseHeader("Content-Type").getValue(), is(ISO_8859_2_TYPE));
 
-          //the content-type header charset was set to "ISO-8859-2"
-        assertThat(method.getResponseCharSet(), is("ISO-8859-2"));
+          //the http client was able to retrieve the charset portion of the content type header
+        assertThat(method.getResponseCharSet(), is(ISO_8859_2_CHARSET.name()));
+          
           //since the body was encoded in "ISO-8859-2" and content type charset was set to "ISO-8859-2",
           //the client should be able to read it correctly
         assertThat(method.getResponseBodyAsString(), is(STRING_WITH_DIACRITICS));
     }
     
 
+    /*
+     * Tests a mismatch between body encoding and the encoding stated in the content type header.
+     * Body is encoded using ISO-8859-2, however the content type header states it's encoded
+     * using UTF-8.
+     */
     @Test
     public void withContentTypeEncodingMismatch() throws IOException {
         onRequest().respond()
-                .withEncoding(Charset.forName("ISO-8859-2"))
+                .withEncoding(ISO_8859_2_CHARSET)
                 .withContentType(UTF_8_TYPE)
-                .withBody(STRING_WITH_DIACRITICS)
-                .withStatus(201);
+                .withBody(STRING_WITH_DIACRITICS);
         
         final GetMethod method = new GetMethod("http://localhost:" + PORT);
 
-        final int status = client.executeMethod(method);
-        assertThat(status, is(201));
+        client.executeMethod(method);
+        
+          //the content type header set to the specified value
+        assertThat(method.getResponseHeader("Content-Type").getValue(), is(UTF_8_TYPE));
 
-          //the content-type header charset was set to "UTF-8"
-        assertThat(method.getResponseCharSet(), is("UTF-8"));
+          //the http client was able to retrieve the charset portion of the content type header
+        assertThat(method.getResponseCharSet(), is(UTF_8_CHARSET.name()));
+        
           //however the applied encoding is ISO-8859-2
         final byte[] body = IOUtils.toByteArray(method.getResponseBodyAsStream());
         assertThat(body, is(ISO_8859_2_REPRESENTATION));
     }
     
     
-    @Test @Ignore
-    public void withEncodingSockets() throws IOException {
+    /*
+     * Tests the <tt>withBody(Reader)</tt> method. The reader content is encoded using the ISO-8859-2 encoding
+     * and then retrieved.
+     */
+    @Test
+    public void withBodyReader() throws IOException {
+        final Reader r = new StringReader(STRING_WITH_DIACRITICS);
+        
         onRequest().respond()
-                .withEncoding(Charset.forName("ISO-8859-2"))
-                .withContentType(ISO_8859_2_TYPE)
-                .withBody(STRING_WITH_DIACRITICS)
-                .withStatus(201);
+                .withBody(r)
+                .withEncoding(ISO_8859_2_CHARSET)
+                .withContentType(ISO_8859_2_TYPE);
         
-        final Socket sock = new Socket("localhost", PORT);
-        final OutputStream out = sock.getOutputStream();
-        out.write("GET / HTTP/1.1\r\nHost:localhost\r\n\r\n".getBytes());
-        
-        InputStream in = sock.getInputStream();
-        
-        int b;
-        while ((b = in.read()) != -1) {
-            System.out.print((char) b);
-        }
+        final GetMethod method = new GetMethod("http://localhost:" + PORT);
+        client.executeMethod(method);
+
+        final byte[] resultBody = IOUtils.toByteArray(method.getResponseBodyAsStream());
+        assertThat(resultBody, is(ISO_8859_2_REPRESENTATION));
     }
     
     
+    /*
+     * Tests the <tt>withBody(InputStream)</tt> method. The stream content is used straight as the response body
+     * and then retrieved.
+     */
+    @Test
+    public void withBodyInputStream() throws IOException {
+        final InputStream is = new ByteArrayInputStream(BINARY_BODY);
+        
+        onRequest().respond().withBody(is);
+        
+        final GetMethod method = new GetMethod("http://localhost:" + PORT);
+        client.executeMethod(method);
+
+        final byte[] resultBody = IOUtils.toByteArray(method.getResponseBodyAsStream());
+        assertThat(resultBody, is(BINARY_BODY));
+    }
+    
+    
+    /*
+     * Tests the <tt>withBody(byte[])</tt> method. The byte array is used straight as the response body
+     * and then retrieved.
+     */
+    @Test
+    public void withBodyArrayOfBytes() throws IOException { 
+        onRequest().respond().withBody(BINARY_BODY);
+        
+        final GetMethod method = new GetMethod("http://localhost:" + PORT);
+        client.executeMethod(method);
+
+        final byte[] resultBody = IOUtils.toByteArray(method.getResponseBodyAsStream());
+        assertThat(resultBody, is(BINARY_BODY));
+    }
+    
+    
+    /*
+     * Tests that for more matching stub rules the first one is applied.
+     */
     @Test
     public void rulesOrdering() throws IOException {
-          //this rule is never matched
-        onRequest().that(is(not(anything()))).respond().withStatus(200);
           //these 3 rules are always matched, the first one must be applied
         onRequest().that(is(anything())).respond().withStatus(201);
         onRequest().that(is(anything())).respond().withStatus(202);
@@ -429,10 +610,13 @@ public class JadlerIntegrationTest {
         
         final GetMethod method = new GetMethod("http://localhost:" + PORT);
         final int status = client.executeMethod(method);
-        assertThat(status, is(201));        
+        assertThat(status, is(201));
     }
     
     
+    /*
+     * Tests that 500 status and an empty body is returned when no stub rule matches.
+     */
     @Test
     public void noRuleApplicable() throws IOException {
         onRequest().that(is(not(anything()))).respond();
@@ -444,6 +628,9 @@ public class JadlerIntegrationTest {
     }
     
     
+    /*
+     * Tests default status and response headers 
+     */
     @Test
     public void defaults() throws Exception {
         onRequest().respond();
@@ -462,6 +649,9 @@ public class JadlerIntegrationTest {
     }
     
     
+    /*
+     * Tests overriding the default status during stubbing
+     */
     @Test
     public void overridenDefaultStatus() throws Exception {
         onRequest().respond().withStatus(201);
@@ -472,6 +662,11 @@ public class JadlerIntegrationTest {
     }
     
     
+    /*
+     * Tests overriding default headers. The header DEFAULT_HEADER1_NAME is already defined with two default values.
+     * This particular stubbing adds a third value. This test checks that all three values
+     * are sent in the stub response.
+     */
     @Test
     public void overridenDefaultHeader() throws Exception {
         onRequest().respond().withHeader(DEFAULT_HEADER1_NAME, "value3");
@@ -493,6 +688,9 @@ public class JadlerIntegrationTest {
     }
     
     
+    /*
+     * Tests the stub response is returned after at least three seconds as set during the stubbing
+     */
     @Test
     public void timeout() throws IOException {
         onRequest().respond().withTimeout(3, TimeUnit.SECONDS);
