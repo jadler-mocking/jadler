@@ -4,6 +4,7 @@
  */
 package net.jadler.httpmocker;
 
+import net.jadler.stubbing.StubResponseProvider;
 import java.nio.charset.Charset;
 import net.jadler.stubbing.RequestStubbing;
 import net.jadler.stubbing.StubbingFactory;
@@ -11,7 +12,7 @@ import net.jadler.stubbing.Stubbing;
 import net.jadler.stubbing.StubResponse;
 import net.jadler.stubbing.StubRule;
 import net.jadler.exception.JadlerException;
-import net.jadler.server.StubHttpServer;
+import net.jadler.stubbing.server.StubHttpServer;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,12 +30,12 @@ import org.slf4j.LoggerFactory;
  * 
  * This class is stateful and thread-safe.
  */
-public class HttpMockerImpl implements HttpMocker, ResponseProvider {
+public class HttpMockerImpl implements HttpMocker, StubResponseProvider {
 
     private final StubHttpServer server;
     private final StubbingFactory stubbingFactory;
     private final List<Stubbing> stubbings;
-    private List<StubRule> httpMockRules;
+    private List<StubRule> httpStubRules;
     
     private MultiMap defaultHeaders;
     private int defaultStatus;
@@ -47,10 +48,10 @@ public class HttpMockerImpl implements HttpMocker, ResponseProvider {
 
     
     /**
-     * Creates new HttpMocker instance using the given http mock server.
+     * Creates new HttpMocker instance using the given http stub server.
      * Instances of this class should never be created directly, see {@link Jadler} for explanation and tutorial.
      * 
-     * @param server mock http server instance this mocker should use
+     * @param server stub http server instance this mocker should use
      */
     public HttpMockerImpl(final StubHttpServer server) {
         this(server, new StubbingFactory());
@@ -60,7 +61,7 @@ public class HttpMockerImpl implements HttpMocker, ResponseProvider {
     /**
      * Package private constructor, for testing purposes only! Allows to define a StubbingFactory instance
      * as well.
-     * @param server mock http server instance this mocker should use
+     * @param server stub http server instance this mocker should use
      * @param stubbingFactory a factory to create stubbing instances
      */
     HttpMockerImpl(final StubHttpServer server, final StubbingFactory stubbingFactory) {
@@ -75,7 +76,7 @@ public class HttpMockerImpl implements HttpMocker, ResponseProvider {
         Validate.notNull(stubbingFactory, "stubbingFactory cannot be null");
         this.stubbingFactory = stubbingFactory;
         
-        this.httpMockRules = new ArrayList<>();
+        this.httpStubRules = new ArrayList<>();
     }
     
     
@@ -85,15 +86,15 @@ public class HttpMockerImpl implements HttpMocker, ResponseProvider {
     @Override
     public void start() {
         if (this.started){
-            throw new IllegalStateException("The mock server has been started already.");
+            throw new IllegalStateException("The stub server has been started already.");
         }
         
-        logger.debug("starting the underlying mock server...");
+        logger.debug("starting the underlying stub server...");
 
         try {
             server.start();
         } catch (final Exception ex) {
-            throw new JadlerException("Mock http server start failure", ex);
+            throw new JadlerException("Stub http server start failure", ex);
         }
         this.started = true;
     }
@@ -105,15 +106,15 @@ public class HttpMockerImpl implements HttpMocker, ResponseProvider {
     @Override
     public void stop() {
         if (!this.started) {
-            throw new IllegalStateException("The mock server hasn't been started yet.");
+            throw new IllegalStateException("The stub server hasn't been started yet.");
         }
         
-        logger.debug("stopping the underlying mock server...");
+        logger.debug("stopping the underlying stub server...");
         
         try {
             server.stop();
         } catch (final Exception ex) {
-            throw new JadlerException("Mock http server shutdown failure", ex);
+            throw new JadlerException("Stub http server shutdown failure", ex);
         }
         this.started = false;
     }
@@ -129,8 +130,8 @@ public class HttpMockerImpl implements HttpMocker, ResponseProvider {
 
 
     /**
-     * Defines default headers to be added to every mock http response
-     * @param defaultHeaders default headers to be added to every mock http response 
+     * Defines default headers to be added to every stub http response
+     * @param defaultHeaders default headers to be added to every stub http response 
      */
     @SuppressWarnings("unchecked")
     public void setDefaultHeaders(final MultiMap defaultHeaders) {
@@ -142,9 +143,9 @@ public class HttpMockerImpl implements HttpMocker, ResponseProvider {
     
 
     /**
-     * Defines default status to be returned in every mock http response (if not redefined in the
-     * particular rule)
-     * @param defaultStatus status to be returned in every mock http response. Must be at least 0.
+     * Defines a default status to be returned in every stub http response (if not redefined in the
+     * particular stub rule)
+     * @param defaultStatus status to be returned in every stub http response. Must be at least 0.
      */
     public void setDefaultStatus(final int defaultStatus) {
         Validate.isTrue(defaultStatus >= 0, "defaultStatus mustn't be negative");
@@ -182,16 +183,16 @@ public class HttpMockerImpl implements HttpMocker, ResponseProvider {
      * {@inheritDoc} 
      */
     @Override
-    public StubResponse provideResponseFor(final HttpServletRequest req) {
+    public StubResponse provideStubResponseFor(final HttpServletRequest req) {
         
         synchronized(this) {
             if (this.configurable) {
                 this.configurable = false;
-                this.httpMockRules = this.createRules();
+                this.httpStubRules = this.createRules();
             }
         }
         
-        for (final StubRule rule : this.httpMockRules) {
+        for (final StubRule rule : this.httpStubRules) {
             if (rule.matchedBy(req)) {
                 final StringBuilder sb = new StringBuilder();
                 sb.append("Following rule will be applied:\n");
@@ -204,7 +205,7 @@ public class HttpMockerImpl implements HttpMocker, ResponseProvider {
         
         final StringBuilder sb = new StringBuilder();
         sb.append("No suitable rule found. Reason:\n");
-        for (final StubRule rule: this.httpMockRules) {
+        for (final StubRule rule: this.httpStubRules) {
             sb.append("The rule '");
             sb.append(rule);
             sb.append("' cannot be applied. Mismatch:\n");
@@ -219,10 +220,10 @@ public class HttpMockerImpl implements HttpMocker, ResponseProvider {
     
     /**
      * package private getter useful for testing
-     * @return list of created http mock rules
+     * @return list of created http stub rules
      */
     List<StubRule> getHttpMockRules() {
-        return httpMockRules;
+        return httpStubRules;
     }
     
     

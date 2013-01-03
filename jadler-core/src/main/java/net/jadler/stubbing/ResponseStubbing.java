@@ -4,6 +4,7 @@
  */
 package net.jadler.stubbing;
 
+import java.io.InputStream;
 import java.io.Reader;
 import java.nio.charset.Charset;
 import java.util.concurrent.TimeUnit;
@@ -70,8 +71,9 @@ public interface ResponseStubbing {
     
 
     /**
-     * Sets the stub http response body. Calling this method overrides any previous calls of this or
-     * {@link #withBody(java.io.Reader)} method.
+     * Sets the stub http response body as a string. This string will be encoded using an encoding
+     * set by {@link #withEncoding(java.nio.charset.Charset) } 
+     * Calling this method overrides any previous calls of this or any other <tt>withBody</tt> method.
      * @param responseBody response body
      * @return this ongoing stubbing
      */
@@ -79,12 +81,35 @@ public interface ResponseStubbing {
 
 
     /**
-     * Sets the stub http response body as the content of the given reader. Calling this method overrides any previous calls of this or
-     * {@link #withBody(java.lang.String)} method.
+     * Sets the stub http response body as the content of the given reader. The string retrieved
+     * from the given reader will be encoded using an encoding set by {@link #withEncoding(java.nio.charset.Charset) }
+     * Calling this method overrides any previous calls of this or any other <tt>withBody</tt> method.
      * @param reader response body source
      * @return this ongoing stubbing
      */
     ResponseStubbing withBody(Reader reader);
+    
+    
+    /**
+     * Sets the stub http response body as the content of the given input stream. The source input stream
+     * is copied to the stub response body as-is, it is not affected by the encoding set by
+     * {@link #withEncoding(java.nio.charset.Charset)} in any way.
+     * Calling this method overrides any previous calls of this or any other <tt>withBody</tt> method.
+     * @param is response body source
+     * @return this ongoing stubbing
+     */
+    ResponseStubbing withBody(InputStream is);
+    
+    
+    /**
+     * Sets the stub http response body as an array of bytes. The given array of bytes
+     * is used as the stub response body as-is, it is not affected by the encoding set by
+     * {@link #withEncoding(java.nio.charset.Charset)} in any way.
+     * Calling this method overrides any previous calls of this or any other <tt>withBody</tt> method.
+     * @param is response body
+     * @return this ongoing stubbing
+     */
+    ResponseStubbing withBody(byte[] responseBody);
 
     
     /**

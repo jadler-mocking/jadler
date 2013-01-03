@@ -2,9 +2,9 @@
  * Copyright (c) 2012 Jadler contributors
  * This program is made available under the terms of the MIT License.
  */
-package net.jadler.server;
+package net.jadler.stubbing.server;
 
-import net.jadler.httpmocker.ResponseProvider;
+import net.jadler.stubbing.StubResponseProvider;
 
 
 /**
@@ -23,7 +23,7 @@ public interface StubHttpServer {
      * of a {@link HttpMockResponse} instance) for a given http request.
      * @param responseProvider response provider to use to retrieve response prescriptions.
      */
-    void registerResponseProvider(ResponseProvider responseProvider);
+    void registerResponseProvider(StubResponseProvider responseProvider);
     
     /**
      * Starts the underlying http server. From now, the server must be able to respond

@@ -26,7 +26,8 @@ import static org.apache.commons.lang.StringUtils.abbreviate;
 public class StubResponse {
     private Charset encoding;
     private final MultiMap headers;
-    private String body;
+    private String stringBody;
+    private byte[] rawBody;
     private int status;
     private long timeout;
 
@@ -72,19 +73,45 @@ public class StubResponse {
     
     
     /**
-     * @return stub response body
-     */
-    public String getBody() {
-        return this.body;
-    }
-    
-    
-    /**
+     * Sets the stub response body as a string.
+     * Calling this method also resets any previous calls of {@link #setRawBody(byte[]) }
      * @param body stub response body (cannot be null)
      */
     public void setBody(final String body) {
         Validate.notNull(body, "body cannot be null, use an empty string instead.");
-        this.body = body;
+        this.stringBody = body;
+        this.rawBody = null;
+    }
+
+    
+    /**
+     * Sets the stub response body as an array of bytes.
+     * Calling this method also resets any previous calls of {@link #setStringBody(java.lang.String)}
+     * @param stringBody stub response body (cannot be null)
+     */
+    public void setBody(byte[] body) {
+        Validate.notNull(body, "body cannot be null, use an empty array instead.");
+        this.rawBody = body;
+        this.stringBody = null;
+    }
+    
+    
+    public byte[] getBody() {
+        if (this.rawBody != null) {
+            return this.rawBody;
+        }
+        else if (stringBody != null) {
+            if (this.encoding != null) {
+                return this.stringBody.getBytes(this.encoding);
+            }
+            else {
+                throw new IllegalStateException("The response body encoding has not been set yet, "
+                        + "cannot return the response body as an array of bytes.");
+            }
+        }
+        else {
+            throw new IllegalStateException("The response body has not been set yet.");
+        }
     }
     
     
@@ -165,10 +192,18 @@ public class StubResponse {
                 .append(this.encoding)
                 .append(", status=")
                 .append(this.status)
-                .append(", body=")
-                .append(isBlank(this.body) ? "<empty>" : abbreviate(body, 13))
-                .append(", headers=(");
-        
+                .append(", body=");
+        if (!isBlank(this.stringBody)) {
+            sb.append(abbreviate(this.stringBody, 13));
+        }
+        else if (this.rawBody != null && this.rawBody.length > 0) {
+            sb.append("<binary>");
+        }
+        else {
+            sb.append("<empty>");
+        }
+
+        sb.append(", headers=(");
         for (@SuppressWarnings("unchecked")final Iterator<Entry<String, Collection<String>>> it
                 = this.headers.entrySet().iterator(); it.hasNext();) {
             final Entry<String, Collection<String>> e = it.next();

@@ -8,8 +8,8 @@ import java.nio.charset.Charset;
 import net.jadler.stubbing.RequestStubbing;
 import net.jadler.httpmocker.HttpMocker;
 import net.jadler.httpmocker.HttpMockerImpl;
-import net.jadler.server.StubHttpServer;
-import net.jadler.server.jetty.JettyStubHttpServer;
+import net.jadler.stubbing.server.StubHttpServer;
+import net.jadler.stubbing.server.jetty.JettyStubHttpServer;
 import net.jadler.stubbing.ResponseStubbing;
 import org.apache.commons.collections.MultiMap;
 import org.apache.commons.collections.map.MultiValueMap;
@@ -54,7 +54,7 @@ public final class Jadler {
     
     
     /**
-     * Starts the underlying http mock server. This should be preferably called
+     * Starts the underlying http stub server. This should be preferably called
      * in the <i>before</i> phase of a test.
      */
     public static void startStubServer() {
@@ -68,7 +68,7 @@ public final class Jadler {
     
     
     /**
-     * Stops the underlying http mock server. This should be preferably called
+     * Stops the underlying http stub server. This should be preferably called
      * in the <i>after</i> phase of a test.
      */
     public static void stopStubServer() {
@@ -106,39 +106,40 @@ public final class Jadler {
      * Builder for constructing HttpMocker instances in a fluid way
      */
     public static class OngoingConfiguration {
-        private StubHttpServer mockHttpServer;
+        private StubHttpServer stubHttpServer;
         private Integer defaultStatus;
         private MultiMap defaultHeaders = new MultiValueMap();
         private Charset defaultEncoding;
         
         
         /**
-         * Configures the new HttpMocker instance to use the default mock server implementation (jetty based).
-         * This is the preferred way to use Jadler. The mock http server will be listening on the given port.
-         * Use {@link #usesCustomServer(net.jadler.server.MockHttpServer)} if you want to use
-         * a custom mock server implementation.
+         * Configures the new HttpMocker instance to use the default stub server implementation (jetty based).
+         * This is the preferred way to use Jadler. The stub http server will be listening on the given port.
+         * Use {@link #usesCustomServer(net.jadler.stubbing.server.StubHttpServer) } if you want to use
+         * a custom stub server implementation.
          * 
-         * @param port port the http mock server will be listening on
+         * @param port port the http stub server will be listening on
          * @return this ongoing configuration
          */
         public OngoingConfiguration usesStandardServerListeningOn(final int port) {
-            this.mockHttpServer = new JettyStubHttpServer(port);
+            this.stubHttpServer = new JettyStubHttpServer(port);
             return this;
         }
         
         
         /**
-         * Configures the new HttpMocker instance to use a custom mock server implementation. Godspeed you, brave developer!
+         * Configures the new HttpMocker instance to use a custom stub server implementation.
+         * Godspeed you, brave developer!
          * 
-         * Consider using {@link #usesStandardServerListeningOn(int)} if you want to use the default mock server
+         * Consider using {@link #usesStandardServerListeningOn(int)} if you want to use the default stub server
          * implementation instead.
-         * @param mockHttpServer mock server implementation
+         * @param stubHttpServer stub server implementation
          * @return this ongoing configuration
          */
-        public OngoingConfiguration usesCustomServer(final StubHttpServer mockHttpServer) {
-            Validate.notNull(mockHttpServer, "mockHttpServer cannot be null");
+        public OngoingConfiguration usesCustomServer(final StubHttpServer stubHttpServer) {
+            Validate.notNull(stubHttpServer, "stubHttpServer cannot be null");
             
-            this.mockHttpServer = mockHttpServer;
+            this.stubHttpServer = stubHttpServer;
             return this;
         }
         
@@ -156,7 +157,7 @@ public final class Jadler {
         
         
         /**
-         * Defines a response header that will be sent in every http mock response.
+         * Defines a response header that will be sent in every http stub response.
          * Can be called repeatedly to define more headers.
          * @param name name of the header
          * @param value header value
@@ -199,8 +200,8 @@ public final class Jadler {
          * @return a newly constructed HttpMocker instance.
          */
         private HttpMocker build() {
-            final HttpMockerImpl res = new HttpMockerImpl(this.mockHttpServer);
-            this.mockHttpServer.registerResponseProvider(res);
+            final HttpMockerImpl res = new HttpMockerImpl(this.stubHttpServer);
+            this.stubHttpServer.registerResponseProvider(res);
 
             if (this.defaultEncoding != null) {
                 res.setDefaultEncoding(defaultEncoding);
