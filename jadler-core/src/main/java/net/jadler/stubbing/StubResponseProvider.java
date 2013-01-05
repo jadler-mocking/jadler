@@ -14,8 +14,7 @@ public interface StubResponseProvider {
     
     /**
      * @param req http request to return a stub response for
-     * @return definition of a stub response to be returned for the given request or null,
-     * if no response is defined for this request
+     * @return definition of a stub response to be returned by the stub http server (never returns <tt>null</tt>)
      */
     StubResponse provideStubResponseFor(HttpServletRequest req);
 }

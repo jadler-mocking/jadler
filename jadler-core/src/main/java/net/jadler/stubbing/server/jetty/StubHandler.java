@@ -6,8 +6,6 @@ package net.jadler.stubbing.server.jetty;
 
 import net.jadler.stubbing.StubResponse;
 import net.jadler.stubbing.StubResponseProvider;
-import net.jadler.stubbing.server.MultipleReadsHttpServletRequest;
-import org.apache.commons.lang.StringUtils;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 import javax.servlet.ServletException;
@@ -29,52 +27,34 @@ public class StubHandler extends AbstractHandler {
         this.ruleProvider = ruleProvider;
     }
 
-    /**
-     * This method handles incoming HTTP request, then consults list of
-     * registered rules and generates response.
-     *
-     * @throws IllegalArgumentException when no suitable rule found
-     */
+
     @Override
     public void handle(String target, Request baseRequest,
                        HttpServletRequest request, HttpServletResponse response)
             throws IOException, ServletException {
 
-        final MultipleReadsHttpServletRequest multiReadsRequest = new MultipleReadsHttpServletRequest(request);
-        final StubResponse stubResponse = this.ruleProvider.provideStubResponseFor(multiReadsRequest);
-        if (stubResponse != null) {           
-            //response.setCharacterEncoding(stubResponse.getEncoding().name());
-            setResponseHeaders(stubResponse.getHeaders(), response);
-            setStatus(stubResponse.getStatus(), response);
-            processTimeout(stubResponse.getTimeout());
-            writeResponseBody(stubResponse.getBody(), response);
-            
-            baseRequest.setHandled(true);
-        } else {
-            final String queryString;
-            if (StringUtils.isNotBlank(request.getQueryString())) {
-                queryString = "?" + request.getQueryString();
-            } else {
-                queryString = "";
-            }
+        final StubResponse stubResponse = this.ruleProvider.provideStubResponseFor(request);
+        setResponseHeaders(stubResponse.getHeaders(), response);
+        setStatus(stubResponse.getStatus(), response);
+        processTimeout(stubResponse.getTimeout());
+        writeResponseBody(stubResponse.getBody(), response);
 
-            throw new IllegalArgumentException("No suitable rule found for request: " + request.getMethod()
-                    + " " + request.getRequestURI() + queryString);
-        }
+        baseRequest.setHandled(true);
     }
 
+    
     private void writeResponseBody(final byte[] body, final HttpServletResponse response) throws IOException {
         if (body.length > 0) {
             final ServletOutputStream os = response.getOutputStream();
             os.write(body);
-            os.flush();
-            os.close();
         }
     }
+    
 
     private void setStatus(final int status, final HttpServletResponse response) {
             response.setStatus(status);
     }
+    
     
     private void setResponseHeaders(final MultiMap headers, final HttpServletResponse response) {
         for (@SuppressWarnings("unchecked") final Iterator<Entry<String, Collection<String>>> it 
