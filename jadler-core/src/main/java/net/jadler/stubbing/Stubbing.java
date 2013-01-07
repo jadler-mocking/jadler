@@ -12,6 +12,7 @@ import org.apache.commons.io.IOUtils;
 import org.hamcrest.Matcher;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Reader;
 import java.nio.charset.Charset;
 import net.jadler.Jadler;
@@ -23,6 +24,7 @@ import static org.hamcrest.Matchers.*;
 import static net.jadler.matchers.QueryStringRequestMatcher.requestQueryString;
 import static net.jadler.matchers.MethodRequestMatcher.requestMethod;
 import static net.jadler.matchers.BodyRequestMatcher.requestBody;
+import static net.jadler.matchers.RawBodyRequestMatcher.requestRawBody;
 import static net.jadler.matchers.URIRequestMatcher.requestURI;
 import static net.jadler.matchers.HeaderRequestMatcher.requestHeader;
 import static net.jadler.matchers.ParameterRequestMatcher.requestParameter;
@@ -108,8 +110,17 @@ public class Stubbing implements RequestStubbing, ResponseStubbing {
     public RequestStubbing havingBody(final Matcher<? super String> predicate) {
         return that(requestBody(predicate));
     }
-
-
+    
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public RequestStubbing havingRawBodyEqualTo(byte[] requestBody) {
+        return that(requestRawBody(equalTo(requestBody)));
+    }
+    
+    
     /**
      * {@inheritDoc}
      */    
@@ -294,7 +305,7 @@ public class Stubbing implements RequestStubbing, ResponseStubbing {
             
             try {
                 responseBody = IOUtils.toString(reader);
-            } catch (IOException ex) {
+            } catch (final IOException ex) {
                 throw new JadlerException("An error ocurred while reading the response body from "
                         + "the given Reader instance.", ex);
             }
@@ -304,6 +315,33 @@ public class Stubbing implements RequestStubbing, ResponseStubbing {
         finally {
             IOUtils.closeQuietly(reader);
         }
+    }
+    
+    
+    @Override
+    public ResponseStubbing withBody(final InputStream is) {
+        try {
+            final byte[] responseBody;
+        
+            try {
+                responseBody = IOUtils.toByteArray(is);
+            }
+            catch (final IOException e) {
+                throw new JadlerException("ERROR");
+            }
+        
+            return this.withBody(responseBody);
+        }
+        finally {
+            IOUtils.closeQuietly(is);
+        }
+    }
+
+    
+    @Override
+    public ResponseStubbing withBody(final byte[] responseBody) {
+        currentResponse().setBody(responseBody);
+        return this;
     }
 
     

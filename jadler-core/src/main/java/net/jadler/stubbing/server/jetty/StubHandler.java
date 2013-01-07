@@ -2,11 +2,11 @@
  * Copyright (c) 2012 Jadler contributors
  * This program is made available under the terms of the MIT License.
  */
-package net.jadler.server.jetty;
+package net.jadler.stubbing.server.jetty;
 
 import net.jadler.stubbing.StubResponse;
-import net.jadler.httpmocker.ResponseProvider;
-import net.jadler.server.MultipleReadsHttpServletRequest;
+import net.jadler.stubbing.StubResponseProvider;
+import net.jadler.stubbing.server.MultipleReadsHttpServletRequest;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
@@ -17,14 +17,15 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map.Entry;
+import javax.servlet.ServletOutputStream;
 import org.apache.commons.collections.MultiMap;
 
 
 public class StubHandler extends AbstractHandler {
 
-    private final ResponseProvider ruleProvider;
+    private final StubResponseProvider ruleProvider;
 
-    public StubHandler(final ResponseProvider ruleProvider) {
+    public StubHandler(final StubResponseProvider ruleProvider) {
         this.ruleProvider = ruleProvider;
     }
 
@@ -40,9 +41,9 @@ public class StubHandler extends AbstractHandler {
             throws IOException, ServletException {
 
         final MultipleReadsHttpServletRequest multiReadsRequest = new MultipleReadsHttpServletRequest(request);
-        final StubResponse stubResponse = this.ruleProvider.provideResponseFor(multiReadsRequest);
+        final StubResponse stubResponse = this.ruleProvider.provideStubResponseFor(multiReadsRequest);
         if (stubResponse != null) {           
-            response.setCharacterEncoding(stubResponse.getEncoding().name());
+            //response.setCharacterEncoding(stubResponse.getEncoding().name());
             setResponseHeaders(stubResponse.getHeaders(), response);
             setStatus(stubResponse.getStatus(), response);
             processTimeout(stubResponse.getTimeout());
@@ -62,9 +63,12 @@ public class StubHandler extends AbstractHandler {
         }
     }
 
-    private void writeResponseBody(final String body, final HttpServletResponse response) throws IOException {
-        if (StringUtils.isNotBlank(body)) {
-            response.getWriter().print(body);
+    private void writeResponseBody(final byte[] body, final HttpServletResponse response) throws IOException {
+        if (body.length > 0) {
+            final ServletOutputStream os = response.getOutputStream();
+            os.write(body);
+            os.flush();
+            os.close();
         }
     }
 

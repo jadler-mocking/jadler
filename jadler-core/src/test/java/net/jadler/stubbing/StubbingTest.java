@@ -4,6 +4,9 @@
  */
 package net.jadler.stubbing;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import net.jadler.exception.JadlerException;
 import net.jadler.matchers.BodyRequestMatcher;
 import net.jadler.matchers.HeaderRequestMatcher;
@@ -22,12 +25,12 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import net.jadler.matchers.RawBodyRequestMatcher;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
@@ -37,8 +40,9 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 
 
@@ -95,6 +99,13 @@ public class StubbingTest {
     public void havingBody() {
         this.stubbing.havingBody(matcher);
         this.assertOneMatcher(is(instanceOf(BodyRequestMatcher.class)));
+    }
+    
+    
+    @Test
+    public void havingRawBodyEqualTo() {
+        this.stubbing.havingRawBodyEqualTo(new byte[0]);
+        this.assertOneMatcher(is(instanceOf(RawBodyRequestMatcher.class)));
     }
 
 
@@ -216,32 +227,68 @@ public class StubbingTest {
         this.stubbing.respond().withBody(body);
 
         final StubResponse response = assertAndGetOneResponse();
-        assertThat(response.getBody(), equalTo(body));
+        assertThat(response.getBody(), equalTo(body.getBytes(DEFAULT_ENCODING)));
     }
 
 
     @Test
-    public void withBody() throws Exception {
+    public void withBodyReader() throws Exception {
         final String body = "body";
         final Reader reader = spy(new StringReader(body));
         this.stubbing.respond().withBody(reader);
 
         final StubResponse response = assertAndGetOneResponse();
-        assertThat(response.getBody(), equalTo(body));
+        assertThat(response.getBody(), equalTo(body.getBytes(DEFAULT_ENCODING)));
         verify(reader).close();
     }
 
 
     @Test(expected = JadlerException.class)
     public void withBodyReaderThrowingIOE() throws Exception {
-        final String body = "body";
-        final Reader reader = spy(new StringReader(body));
-        doThrow(IOException.class).when(reader).read(any(char[].class));
-
+        final Reader reader = mock(Reader.class);
+        when(reader.read(any(char[].class))).thenThrow(new IOException());
+                
         try {
             this.stubbing.respond().withBody(reader);
         } finally {
             verify(reader).close();
+        }
+    }
+    
+    
+    @Test
+    public void withBodyBytes() {
+        final byte[] body = "body".getBytes(DEFAULT_ENCODING);
+        this.stubbing.respond().withBody(body);
+
+        final StubResponse response = assertAndGetOneResponse();
+        assertThat(response.getBody(), equalTo(body));
+    }
+    
+    
+    @Test
+    public void withBodyInputStream() throws Exception {
+        final byte[] body = new byte[] {1, 2, 3};
+        final InputStream is = spy(new ByteArrayInputStream(body));
+        this.stubbing.respond().withBody(is);
+
+        final StubResponse response = assertAndGetOneResponse();
+        assertThat(response.getBody(), equalTo(body));
+        verify(is).close();
+    }
+    
+    
+    @Test(expected = JadlerException.class)
+    @SuppressWarnings("unchecked")
+    public void withBodyInputStreamThrowingIOE() throws Exception {
+        final InputStream is = mock(InputStream.class);
+
+        when(is.read(any(byte[].class))).thenThrow(new IOException());
+                
+        try {
+            this.stubbing.respond().withBody(is);
+        } finally {
+            verify(is).close();
         }
     }
 
