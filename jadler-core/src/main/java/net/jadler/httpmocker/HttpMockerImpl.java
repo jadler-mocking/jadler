@@ -4,6 +4,7 @@
  */
 package net.jadler.httpmocker;
 
+import java.io.IOException;
 import net.jadler.stubbing.StubResponseProvider;
 import java.nio.charset.Charset;
 import net.jadler.stubbing.RequestStubbing;
@@ -17,6 +18,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
+import net.jadler.stubbing.server.MultipleReadsHttpServletRequest;
 import org.apache.commons.collections.MultiMap;
 import org.apache.commons.collections.map.MultiValueMap;
 import org.apache.commons.lang.Validate;
@@ -44,7 +46,18 @@ public class HttpMockerImpl implements HttpMocker, StubResponseProvider {
     private boolean started = false;
     private boolean configurable = true;
     
+    private static final StubResponse NO_RULE_FOUND_RESPONSE;
+    static {
+        NO_RULE_FOUND_RESPONSE = new StubResponse();
+        NO_RULE_FOUND_RESPONSE.setStatus(404);
+        NO_RULE_FOUND_RESPONSE.setBody("No stub response found for the incoming request");
+        NO_RULE_FOUND_RESPONSE.setEncoding(Charset.forName("UTF-8"));
+        NO_RULE_FOUND_RESPONSE.setHeaderCaseInsensitive("Content-Type", "text/plain; charset=utf-8");
+    }
+    
     private static final Logger logger = LoggerFactory.getLogger(HttpMockerImpl.class);
+    
+    
 
     
     /**
@@ -184,6 +197,14 @@ public class HttpMockerImpl implements HttpMocker, StubResponseProvider {
      */
     @Override
     public StubResponse provideStubResponseFor(final HttpServletRequest req) {
+        final MultipleReadsHttpServletRequest multiReadsRequest;
+        try {
+            multiReadsRequest = new MultipleReadsHttpServletRequest(req);            
+        }
+        catch (final IOException e) {
+            throw new JadlerException("A problem occurred while wrapping a request", e);
+        }
+
         
         synchronized(this) {
             if (this.configurable) {
@@ -193,7 +214,7 @@ public class HttpMockerImpl implements HttpMocker, StubResponseProvider {
         }
         
         for (final StubRule rule : this.httpStubRules) {
-            if (rule.matchedBy(req)) {
+            if (rule.matchedBy(multiReadsRequest)) {
                 final StringBuilder sb = new StringBuilder();
                 sb.append("Following rule will be applied:\n");
                 sb.append(rule);
@@ -209,12 +230,12 @@ public class HttpMockerImpl implements HttpMocker, StubResponseProvider {
             sb.append("The rule '");
             sb.append(rule);
             sb.append("' cannot be applied. Mismatch:\n");
-            sb.append(rule.describeMismatch(req));
+            sb.append(rule.describeMismatch(multiReadsRequest));
             sb.append("\n");
         }
         logger.info(sb.toString());
         
-        return null;
+        return NO_RULE_FOUND_RESPONSE;
     }
 
     
