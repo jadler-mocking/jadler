@@ -14,6 +14,7 @@ import java.util.Collections;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import net.jadler.exception.JadlerException;
+import net.jadler.stubbing.server.MultipleReadsHttpServletRequest;
 import net.jadler.stubbing.server.StubHttpServer;
 import org.apache.commons.collections.MultiMap;
 import org.apache.commons.collections.map.MultiValueMap;
@@ -33,10 +34,11 @@ import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.anyInt;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.isA;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
-
 
 
 public class HttpMockerImplTest {
@@ -158,7 +160,7 @@ public class HttpMockerImplTest {
     @Test(expected=IllegalStateException.class)
     public void setDefaultHeadersWrongState() {
         final HttpMockerImpl mocker = new HttpMockerImpl(mock(StubHttpServer.class));
-        mocker.provideStubResponseFor(new MockHttpServletRequest());
+        mocker.provideStubResponseFor(prepareEmptyMockRequest());
         mocker.setDefaultHeaders(new MultiValueMap());
         fail("addDefaultHeaders cannot be called after provideResponseFor");
     }
@@ -174,7 +176,7 @@ public class HttpMockerImplTest {
     @Test(expected=IllegalStateException.class)
     public void setDefaultStatusWrongState() {
         final HttpMockerImpl mocker = new HttpMockerImpl(mock(StubHttpServer.class));
-        mocker.provideStubResponseFor(new MockHttpServletRequest());
+        mocker.provideStubResponseFor(prepareEmptyMockRequest());
         mocker.setDefaultStatus(200);
         fail("setDefaultStatus cannot be called after provideResponseFor");
     }
@@ -190,7 +192,7 @@ public class HttpMockerImplTest {
     @Test(expected=IllegalStateException.class)
     public void setDefaultEncodingWrongState() {
         final HttpMockerImpl mocker = new HttpMockerImpl(mock(StubHttpServer.class));
-        mocker.provideStubResponseFor(new MockHttpServletRequest());
+        mocker.provideStubResponseFor(prepareEmptyMockRequest());
         mocker.setDefaultEncoding(Charset.forName("UTF-8"));
         fail("setDefaultStatus cannot be called after provideResponseFor");
     }    
@@ -200,7 +202,7 @@ public class HttpMockerImplTest {
     public void onRequestAfterFirstProvision() {
         final HttpMockerImpl mocker = new HttpMockerImpl(mock(StubHttpServer.class));
         
-        mocker.provideStubResponseFor(new MockHttpServletRequest());
+        mocker.provideStubResponseFor(prepareEmptyMockRequest());
         mocker.onRequest();
         fail("The mocker has already provided first response, cannot be configured anymore");
     }
@@ -228,9 +230,18 @@ public class HttpMockerImplTest {
         mocker.onRequest();
         mocker.onRequest();
           //calling provideResponseFor so mock rules are generated from stubing objects
-        mocker.provideStubResponseFor(new MockHttpServletRequest());
+        
+        mocker.provideStubResponseFor(prepareEmptyMockRequest());
         
         assertThat(mocker.getHttpMockRules(), contains(rule1, rule2));
+    }
+    
+    
+    private MockHttpServletRequest prepareEmptyMockRequest() {
+        final MockHttpServletRequest req = new MockHttpServletRequest();
+          //the content must be set so the getInputStream() method doesn't return null
+        req.setContent(new byte[0]);
+        return req;
     }
     
     
@@ -313,20 +324,20 @@ public class HttpMockerImplTest {
     
     @Test
     public void provideResponseFor() {
-        final MockHttpServletRequest req = new MockHttpServletRequest();
+        final MockHttpServletRequest req = prepareEmptyMockRequest();
     
           //exactly 1 rule matches
         final StubRule rule1 = mock(StubRule.class);
         final Stubbing stubbing1 = mock(Stubbing.class);
         when(stubbing1.createRule()).thenReturn(rule1);
-        when(rule1.matchedBy(eq(req))).thenReturn(true);
+        when(rule1.matchedBy(isA(MultipleReadsHttpServletRequest.class))).thenReturn(true);
         final StubResponse resp1 = new StubResponse();
         when(rule1.nextResponse()).thenReturn(resp1);
         
         final StubRule rule2  = mock(StubRule.class);
         final Stubbing stubbing2 = mock(Stubbing.class);
         when(stubbing2.createRule()).thenReturn(rule2);
-        when(rule2.matchedBy(eq(req))).thenReturn(false);
+        when(rule2.matchedBy(isA(MultipleReadsHttpServletRequest.class))).thenReturn(false);
         
         final StubbingFactory sf = mock(StubbingFactory.class);
         when(sf.createStubbing(any(Charset.class), anyInt(), any(MultiMap.class)))
@@ -345,19 +356,19 @@ public class HttpMockerImplTest {
     
     @Test
     public void provideResponseFor2() {
-        final MockHttpServletRequest req = new MockHttpServletRequest();
+        final MockHttpServletRequest req = prepareEmptyMockRequest();
         
           //no rule matches
         final StubRule rule1 = mock(StubRule.class);
         final Stubbing stubbing1 = mock(Stubbing.class);
         when(stubbing1.createRule()).thenReturn(rule1);
-        when(rule1.matchedBy(eq(req))).thenReturn(false);
+        when(rule1.matchedBy(isA(MultipleReadsHttpServletRequest.class))).thenReturn(false);
         
         
         final StubRule rule2  = mock(StubRule.class);
         final Stubbing stubbing2 = mock(Stubbing.class);
         when(stubbing2.createRule()).thenReturn(rule2);
-        when(rule2.matchedBy(eq(req))).thenReturn(false);
+        when(rule2.matchedBy(isA(MultipleReadsHttpServletRequest.class))).thenReturn(false);
         
         final StubbingFactory sf = mock(StubbingFactory.class);
         when(sf.createStubbing(any(Charset.class), anyInt(), any(MultiMap.class)))
@@ -370,26 +381,30 @@ public class HttpMockerImplTest {
         mocker.onRequest();
         mocker.onRequest();
         
-        assertThat(mocker.provideStubResponseFor(req), is(nullValue()));
+        final StubResponse res = mocker.provideStubResponseFor(req);
+        assertThat(res, is(not(nullValue())));
+        assertThat(res.getStatus(), is(404));
+        assertThat(res.getTimeout(), is(0L));
+        assertThat(res.getBody(), is("No stub response found for the incoming request".getBytes()));
     }
     
     
     @Test
     public void provideResponseFor3() {
-        final MockHttpServletRequest req = new MockHttpServletRequest();
+        final MockHttpServletRequest req = prepareEmptyMockRequest();
         
           //two rules matches, the first one must be provided
         final StubRule rule1 = mock(StubRule.class);
         final Stubbing stubbing1 = mock(Stubbing.class);
         when(stubbing1.createRule()).thenReturn(rule1);
-        when(rule1.matchedBy(eq(req))).thenReturn(true);
+        when(rule1.matchedBy(isA(MultipleReadsHttpServletRequest.class))).thenReturn(true);
         final StubResponse resp1 = new StubResponse();
         when(rule1.nextResponse()).thenReturn(resp1);
         
         final StubRule rule2  = mock(StubRule.class);
         final Stubbing stubbing2 = mock(Stubbing.class);
         when(stubbing2.createRule()).thenReturn(rule2);
-        when(rule2.matchedBy(eq(req))).thenReturn(true);
+        when(rule2.matchedBy(isA(MultipleReadsHttpServletRequest.class))).thenReturn(true);
         final StubResponse resp2 = new StubResponse();
         when(rule2.nextResponse()).thenReturn(resp2);
         

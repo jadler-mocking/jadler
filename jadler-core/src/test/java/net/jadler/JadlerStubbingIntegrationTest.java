@@ -623,8 +623,9 @@ public class JadlerStubbingIntegrationTest {
         final GetMethod method = new GetMethod("http://localhost:" + PORT);
         final int status = client.executeMethod(method);
         
-        assertThat(status, is(500));
-        assertThat(method.getResponseBodyAsString(), is(""));
+        assertThat(status, is(404));
+        assertThat(method.getResponseHeader("Content-Type").getValue(), is("text/plain; charset=utf-8"));
+        assertThat(method.getResponseBodyAsString(), is("No stub response found for the incoming request"));
     }
     
     
