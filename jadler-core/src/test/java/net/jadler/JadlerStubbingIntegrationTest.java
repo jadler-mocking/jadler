@@ -4,30 +4,47 @@
  */
 package net.jadler;
 
-import java.io.ByteArrayInputStream;
-import java.nio.charset.Charset;
+import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.methods.ByteArrayRequestEntity;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
-import org.apache.commons.httpclient.Header;
+import org.apache.commons.io.IOUtils;
 import org.junit.After;
-import org.junit.Test;
 import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
+
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringReader;
 import java.net.Socket;
+import java.nio.charset.Charset;
 import java.util.concurrent.TimeUnit;
-import org.apache.commons.io.IOUtils;
-import org.junit.Ignore;
 
-import static org.hamcrest.Matchers.*;
+import static net.jadler.Jadler.port;
+import static net.jadler.Jadler.initJadlerThat;
+import static net.jadler.Jadler.onRequest;
+import static net.jadler.Jadler.startStubServer;
+import static net.jadler.Jadler.stopStubServer;
+import static org.hamcrest.Matchers.anything;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.everyItem;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.isEmptyOrNullString;
+import static org.hamcrest.Matchers.isEmptyString;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
-import static net.jadler.Jadler.*;
-import org.apache.commons.httpclient.methods.ByteArrayRequestEntity;
 
 
 /**
@@ -37,7 +54,6 @@ import org.apache.commons.httpclient.methods.ByteArrayRequestEntity;
  */
 public class JadlerStubbingIntegrationTest {
     
-    private static final int PORT = 44532;
     private static final int DEFAULT_STATUS = 409;
     private static final String DEFAULT_HEADER1_NAME = "default_header";
     private static final String DEFAULT_HEADER1_VALUE1 = "value1";
@@ -62,7 +78,7 @@ public class JadlerStubbingIntegrationTest {
     public void setUp() {
         
         initJadlerThat()
-                .usesStandardServerListeningOn(PORT)
+                .usesStandardServer()
                 .respondsWithDefaultStatus(DEFAULT_STATUS)
                 .respondsWithDefaultHeader(DEFAULT_HEADER1_NAME, DEFAULT_HEADER1_VALUE1)
                 .respondsWithDefaultHeader(DEFAULT_HEADER1_NAME, DEFAULT_HEADER1_VALUE2)
@@ -92,8 +108,8 @@ public class JadlerStubbingIntegrationTest {
             .havingBody(not(isEmptyOrNullString()))
         .respond()
             .withStatus(201);
-        
-        final PostMethod method = new PostMethod("http://localhost:" + PORT);
+
+        final PostMethod method = new PostMethod("http://localhost:" + port());
         method.setRequestEntity(new StringRequestEntity("postbody", null, null));
         
         int status = client.executeMethod(method);
@@ -113,7 +129,7 @@ public class JadlerStubbingIntegrationTest {
         .respond()
             .withStatus(201);
                     
-        final PostMethod method = new PostMethod("http://localhost:" + PORT);
+        final PostMethod method = new PostMethod("http://localhost:" + port());
         method.setRequestEntity(new StringRequestEntity("", null, null));
         
         int status = client.executeMethod(method);
@@ -131,7 +147,7 @@ public class JadlerStubbingIntegrationTest {
         .respond()
             .withStatus(201);
         
-        final PostMethod method = new PostMethod("http://localhost:" + PORT);
+        final PostMethod method = new PostMethod("http://localhost:" + port());
         method.setRequestEntity(new ByteArrayRequestEntity(BINARY_BODY));
         
         final int status = client.executeMethod(method);
@@ -149,7 +165,7 @@ public class JadlerStubbingIntegrationTest {
         .respond()
             .withStatus(201);
         
-        final PostMethod method = new PostMethod("http://localhost:" + PORT);
+        final PostMethod method = new PostMethod("http://localhost:" + port());
         
         final int status = client.executeMethod(method);
         assertThat(status, is(201));
@@ -167,7 +183,7 @@ public class JadlerStubbingIntegrationTest {
         .respond()
             .withStatus(201);
         
-        final PostMethod method = new PostMethod("http://localhost:" + PORT);
+        final PostMethod method = new PostMethod("http://localhost:" + port());
         method.setRequestEntity(
                 new StringRequestEntity(STRING_WITH_DIACRITICS, "text/plain", UTF_8_CHARSET.name()));
 
@@ -187,7 +203,7 @@ public class JadlerStubbingIntegrationTest {
         .respond()
             .withStatus(201);
         
-        final PostMethod method = new PostMethod("http://localhost:" + PORT);
+        final PostMethod method = new PostMethod("http://localhost:" + port());
         method.setRequestEntity(
                 new StringRequestEntity(STRING_WITH_DIACRITICS, "text/plain", ISO_8859_2_CHARSET.name()));
 
@@ -218,7 +234,7 @@ public class JadlerStubbingIntegrationTest {
         .respond()
             .withStatus(201);
         
-        final GetMethod method = new GetMethod("http://localhost:" + PORT);
+        final GetMethod method = new GetMethod("http://localhost:" + port());
         method.addRequestHeader("hdr1", "h1v1");
         method.addRequestHeader("hdr2", "h2v1");
         method.addRequestHeader("hdr2", "h2v2");
@@ -242,7 +258,7 @@ public class JadlerStubbingIntegrationTest {
         .respond()
             .withStatus(201);
         
-        final PostMethod method = new PostMethod("http://localhost:" + PORT);
+        final PostMethod method = new PostMethod("http://localhost:" + port());
 
         int status = client.executeMethod(method);
         assertThat(status, is(201));
@@ -278,7 +294,7 @@ public class JadlerStubbingIntegrationTest {
         .respond()
             .withStatus(201);
         
-        final GetMethod method = new GetMethod("http://localhost:" + PORT + "?p1=p1v1&p2=p2v1&p2=p2v2&p3=&p4");
+        final GetMethod method = new GetMethod("http://localhost:" + port() + "?p1=p1v1&p2=p2v1&p2=p2v2&p3=&p4");
 
         int status = client.executeMethod(method);
         assertThat(status, is(201));
@@ -322,7 +338,7 @@ public class JadlerStubbingIntegrationTest {
         .respond()
             .withStatus(201);
         
-        final PostMethod method = new PostMethod("http://localhost:" + PORT + "?p2=p2v3");
+        final PostMethod method = new PostMethod("http://localhost:" + port() + "?p2=p2v3");
         method.setRequestEntity(new StringRequestEntity(body, "application/x-www-form-urlencoded", "UTF-8"));
 
         int status = client.executeMethod(method);
@@ -342,7 +358,7 @@ public class JadlerStubbingIntegrationTest {
         .respond()
             .withStatus(201);
         
-        final GetMethod method = new GetMethod("http://localhost:" + PORT + "?p1=v1&p2=v2");
+        final GetMethod method = new GetMethod("http://localhost:" + port() + "?p1=v1&p2=v2");
 
         int status = client.executeMethod(method);
         assertThat(status, is(201));
@@ -360,7 +376,7 @@ public class JadlerStubbingIntegrationTest {
         .respond()
             .withStatus(201);
         
-        final GetMethod method = new GetMethod("http://localhost:" + PORT);
+        final GetMethod method = new GetMethod("http://localhost:" + port());
 
         int status = client.executeMethod(method);
         assertThat(status, is(201));        
@@ -378,7 +394,7 @@ public class JadlerStubbingIntegrationTest {
         .respond()
             .withStatus(201);
         
-        final GetMethod method = new GetMethod("http://localhost:" + PORT + "/a/b/c/d");
+        final GetMethod method = new GetMethod("http://localhost:" + port() + "/a/b/c/d");
 
         int status = client.executeMethod(method);
         assertThat(status, is(201));
@@ -397,7 +413,7 @@ public class JadlerStubbingIntegrationTest {
             .withStatus(201);
         
           //if there was no slash at the end, the GetMethod constructor would add it automatically
-        final GetMethod method = new GetMethod("http://localhost:" + PORT + "/");
+        final GetMethod method = new GetMethod("http://localhost:" + port() + "/");
 
         final int status = client.executeMethod(method);
         assertThat(status, is(201));        
@@ -408,7 +424,7 @@ public class JadlerStubbingIntegrationTest {
     public void havingURISockets() throws IOException {
         onRequest().havingURIEqualTo("/").respond().withStatus(201);
         
-        final Socket sock = new Socket("localhost", PORT);
+        final Socket sock = new Socket("localhost", port());
         final OutputStream out = sock.getOutputStream();
         out.write("GET / HTTP/1.1\r\nHost:localhost\r\n\r\n".getBytes());
         
@@ -431,7 +447,7 @@ public class JadlerStubbingIntegrationTest {
     public void withDefaultEncoding() throws IOException {
         onRequest().respond().withBody(STRING_WITH_DIACRITICS);
         
-        final GetMethod method = new GetMethod("http://localhost:" + PORT);
+        final GetMethod method = new GetMethod("http://localhost:" + port());
 
         client.executeMethod(method);
         
@@ -452,7 +468,7 @@ public class JadlerStubbingIntegrationTest {
                 .withEncoding(ISO_8859_2_CHARSET)
                 .withBody(STRING_WITH_DIACRITICS);
         
-        final GetMethod method = new GetMethod("http://localhost:" + PORT);
+        final GetMethod method = new GetMethod("http://localhost:" + port());
 
         client.executeMethod(method);
         
@@ -471,7 +487,7 @@ public class JadlerStubbingIntegrationTest {
     public void withDefaultContentType() throws IOException {
         onRequest().respond().withBody(STRING_WITH_DIACRITICS);
         
-        final GetMethod method = new GetMethod("http://localhost:" + PORT);
+        final GetMethod method = new GetMethod("http://localhost:" + port());
 
         client.executeMethod(method);
         
@@ -499,7 +515,7 @@ public class JadlerStubbingIntegrationTest {
                 .withContentType(ISO_8859_2_TYPE)
                 .withBody(STRING_WITH_DIACRITICS);
         
-        final GetMethod method = new GetMethod("http://localhost:" + PORT);
+        final GetMethod method = new GetMethod("http://localhost:" + port());
 
         client.executeMethod(method);
         
@@ -527,7 +543,7 @@ public class JadlerStubbingIntegrationTest {
                 .withContentType(UTF_8_TYPE)
                 .withBody(STRING_WITH_DIACRITICS);
         
-        final GetMethod method = new GetMethod("http://localhost:" + PORT);
+        final GetMethod method = new GetMethod("http://localhost:" + port());
 
         client.executeMethod(method);
         
@@ -556,7 +572,7 @@ public class JadlerStubbingIntegrationTest {
                 .withEncoding(ISO_8859_2_CHARSET)
                 .withContentType(ISO_8859_2_TYPE);
         
-        final GetMethod method = new GetMethod("http://localhost:" + PORT);
+        final GetMethod method = new GetMethod("http://localhost:" + port());
         client.executeMethod(method);
 
         final byte[] resultBody = IOUtils.toByteArray(method.getResponseBodyAsStream());
@@ -574,7 +590,7 @@ public class JadlerStubbingIntegrationTest {
         
         onRequest().respond().withBody(is);
         
-        final GetMethod method = new GetMethod("http://localhost:" + PORT);
+        final GetMethod method = new GetMethod("http://localhost:" + port());
         client.executeMethod(method);
 
         final byte[] resultBody = IOUtils.toByteArray(method.getResponseBodyAsStream());
@@ -590,7 +606,7 @@ public class JadlerStubbingIntegrationTest {
     public void withBodyArrayOfBytes() throws IOException { 
         onRequest().respond().withBody(BINARY_BODY);
         
-        final GetMethod method = new GetMethod("http://localhost:" + PORT);
+        final GetMethod method = new GetMethod("http://localhost:" + port());
         client.executeMethod(method);
 
         final byte[] resultBody = IOUtils.toByteArray(method.getResponseBodyAsStream());
@@ -608,7 +624,7 @@ public class JadlerStubbingIntegrationTest {
         onRequest().that(is(anything())).respond().withStatus(202);
         onRequest().that(is(anything())).respond().withStatus(203);
         
-        final GetMethod method = new GetMethod("http://localhost:" + PORT);
+        final GetMethod method = new GetMethod("http://localhost:" + port());
         final int status = client.executeMethod(method);
         assertThat(status, is(201));
     }
@@ -620,7 +636,7 @@ public class JadlerStubbingIntegrationTest {
     @Test
     public void noRuleApplicable() throws IOException {
         onRequest().that(is(not(anything()))).respond();
-        final GetMethod method = new GetMethod("http://localhost:" + PORT);
+        final GetMethod method = new GetMethod("http://localhost:" + port());
         final int status = client.executeMethod(method);
         
         assertThat(status, is(500));
@@ -635,7 +651,7 @@ public class JadlerStubbingIntegrationTest {
     public void defaults() throws Exception {
         onRequest().respond();
         
-        final GetMethod method = new GetMethod("http://localhost:" + PORT);
+        final GetMethod method = new GetMethod("http://localhost:" + port());
         int status = client.executeMethod(method);
         assertThat(status, is(DEFAULT_STATUS));
 
@@ -656,7 +672,7 @@ public class JadlerStubbingIntegrationTest {
     public void overridenDefaultStatus() throws Exception {
         onRequest().respond().withStatus(201);
         
-        final GetMethod method = new GetMethod("http://localhost:" + PORT);
+        final GetMethod method = new GetMethod("http://localhost:" + port());
         int status = client.executeMethod(method);
         assertThat(status, is(201));
     }
@@ -671,7 +687,7 @@ public class JadlerStubbingIntegrationTest {
     public void overridenDefaultHeader() throws Exception {
         onRequest().respond().withHeader(DEFAULT_HEADER1_NAME, "value3");
         
-        final GetMethod method = new GetMethod("http://localhost:" + PORT);
+        final GetMethod method = new GetMethod("http://localhost:" + port());
         int status = client.executeMethod(method);
         assertThat(status, is(DEFAULT_STATUS));
 
@@ -695,7 +711,7 @@ public class JadlerStubbingIntegrationTest {
     public void timeout() throws IOException {
         onRequest().respond().withTimeout(3, TimeUnit.SECONDS);
         
-        final GetMethod method = new GetMethod("http://localhost:" + PORT);
+        final GetMethod method = new GetMethod("http://localhost:" + port());
         
         final long start = System.currentTimeMillis();
         client.executeMethod(method);
