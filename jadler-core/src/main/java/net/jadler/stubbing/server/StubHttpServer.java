@@ -37,4 +37,9 @@ public interface StubHttpServer {
      * @throws Exception when an error occurred while stopping the server
      */
     void stop() throws Exception;
+
+    /**
+     * @return HTTP server port
+     */
+    int getPort();
 }

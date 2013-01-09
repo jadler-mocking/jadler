@@ -65,8 +65,16 @@ public final class Jadler {
             mocker.start();
         }
     }
-    
-    
+
+    /**
+     * Returns port on which underlying http stub server is listening.
+     *
+     * @throws IllegalStateException when we're unable to find HTTP port
+     */
+    public static int port() {
+        return mockerContainer.get().getStubHttpServerPort();
+    }
+
     /**
      * Stops the underlying http stub server. This should be preferably called
      * in the <i>after</i> phase of a test.
@@ -126,7 +134,19 @@ public final class Jadler {
             return this;
         }
         
-        
+        /**
+         * Configures the new HttpMocker instance to use the default stub server implementation (jetty based).
+         * This is the preferred way to use Jadler. The stub http server will be listening on the random free port.
+         * Use {@link #usesCustomServer(net.jadler.stubbing.server.StubHttpServer) } if you want to use
+         * a custom stub server implementation.
+         *
+         * @return this ongoing configuration
+         */
+        public OngoingConfiguration usesStandardServer() {
+            this.stubHttpServer = new JettyStubHttpServer();
+            return this;
+        }
+
         /**
          * Configures the new HttpMocker instance to use a custom stub server implementation.
          * Godspeed you, brave developer!

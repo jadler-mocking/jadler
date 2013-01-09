@@ -20,36 +20,38 @@ import org.eclipse.jetty.server.Connector;
 /**
  * This class wraps Jetty server, performs all necessary configuration and
  * register HTTP rules which will be handled by the server.
- *
+ * <p/>
  * Jetty server created by this class runs in embedded mode.
  */
 public class JettyStubHttpServer implements StubHttpServer {
 
     private static final Logger logger = LoggerFactory.getLogger(JettyStubHttpServer.class);
     private final Server server;
+    private final Connector selectChannelConnector;
 
+    public JettyStubHttpServer() {
+        this(0);
+    }
 
     public JettyStubHttpServer(final int port) {
         this.server = new Server();
-        final Connector connector = new SelectChannelConnector();
-        connector.setPort(port);
-        server.addConnector(connector);
+        this.selectChannelConnector = new SelectChannelConnector();
+        selectChannelConnector.setPort(port);
+        server.addConnector(selectChannelConnector);
     }
 
-    
     /**
      * {@inheritDoc}
      */
     @Override
     public void registerResponseProvider(final StubResponseProvider ruleProvider) {
         Validate.notNull(ruleProvider, "ruleProvider cannot be null");
-        
+
         final HandlerList handlers = new HandlerList();
         handlers.setHandlers(new Handler[] {new StubHandler(ruleProvider), new DefaultHandler() });
         server.setHandler(handlers);
     }
-    
-    
+
     /**
      * {@inheritDoc}
      */
@@ -63,11 +65,19 @@ public class JettyStubHttpServer implements StubHttpServer {
 
     /**
      * {@inheritDoc}
-     */    
+     */
     @Override
     public void stop() throws Exception {
         logger.debug("stopping jetty");
         server.stop();
         logger.debug("jetty stopped");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int getPort() {
+        return selectChannelConnector.getLocalPort();
     }
 }
