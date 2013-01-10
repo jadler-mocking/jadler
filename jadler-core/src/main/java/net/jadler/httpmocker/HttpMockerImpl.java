@@ -91,8 +91,18 @@ public class HttpMockerImpl implements HttpMocker, StubResponseProvider {
         
         this.httpStubRules = new ArrayList<>();
     }
-    
-    
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int getStubHttpServerPort() {
+        if (!this.started) {
+            throw new IllegalStateException("The stub server hasn't been started yet.");
+        }
+        return server.getPort();
+    }
+
     /**
      * {@inheritDoc}
      */

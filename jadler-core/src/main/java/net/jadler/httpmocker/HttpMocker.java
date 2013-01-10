@@ -44,4 +44,10 @@ public interface HttpMocker {
      * @return true, if the stub server has already been started, otherwise false
      */
     boolean isStarted();
+
+
+    /**
+     * @return port of HTTP server
+     */
+    public int getStubHttpServerPort();
 }
