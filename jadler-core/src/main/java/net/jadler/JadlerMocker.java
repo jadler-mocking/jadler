@@ -2,8 +2,9 @@
  * Copyright (c) 2012 Jadler contributors
  * This program is made available under the terms of the MIT License.
  */
-package net.jadler.httpmocker;
+package net.jadler;
 
+import net.jadler.stubbing.server.StubHttpServerManager;
 import java.io.IOException;
 import net.jadler.stubbing.StubResponseProvider;
 import java.nio.charset.Charset;
@@ -21,8 +22,9 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
-import net.jadler.Jadler;
+import net.jadler.stubbing.Stubber;
 import net.jadler.stubbing.server.MultipleReadsHttpServletRequest;
+import net.jadler.stubbing.server.jetty.JettyStubHttpServer;
 import org.apache.commons.collections.MultiMap;
 import org.apache.commons.collections.map.MultiValueMap;
 import org.apache.commons.lang.Validate;
@@ -31,12 +33,20 @@ import org.slf4j.LoggerFactory;
 
 
 /**
- * Standard {@link HttpMocker} implementation. You shouldn't create instances of this class
- * on your own, see {@link Jadler} instead. It also acts as a great {@link ResponseProvider}.
- * 
+ * This class represents the very hearth of the Jadler library. It acts as a great {@link Stubber} providing
+ * a way to create new http stubs, {@link StubHttpServerManager} allowing the client to manage the state
+ * of the underlying stub http server and {@link StubResponseProvider} providing stub response definitions
+ * according to a given http request.
+ * <br /><br />
+ * An underlying stub http server instance is registered to an instance of this class during the instantiation.
+ * <br /><br />
+ * Normally you shouldn't create instances of this on your own, use the {@link Jadler} facade instead.
+ * However, if more http stub servers are needed in one execution thread (for example two http stub servers
+ * listening on different ports) have no fear, go ahead and create more two or more instances directly.
+ * <br /><br />
  * This class is stateful and thread-safe.
  */
-public class HttpMockerImpl implements HttpMocker, StubResponseProvider {
+public class JadlerMocker implements StubHttpServerManager, Stubber, StubResponseProvider {
 
     private final StubHttpServer server;
     private final StubbingFactory stubbingFactory;
@@ -59,18 +69,21 @@ public class HttpMockerImpl implements HttpMocker, StubResponseProvider {
         NO_RULE_FOUND_RESPONSE.setHeaderCaseInsensitive("Content-Type", "text/plain; charset=utf-8");
     }
     
-    private static final Logger logger = LoggerFactory.getLogger(HttpMockerImpl.class);
+    private static final Logger logger = LoggerFactory.getLogger(JadlerMocker.class);
     
     
-
+    public JadlerMocker() {
+        this(new JettyStubHttpServer());
+    }
+    
     
     /**
-     * Creates new HttpMocker instance using the given http stub server.
+     * Creates new JadlerMocker instance bound to the given http stub server.
      * Instances of this class should never be created directly, see {@link Jadler} for explanation and tutorial.
      * 
      * @param server stub http server instance this mocker should use
      */
-    public HttpMockerImpl(final StubHttpServer server) {
+    public JadlerMocker(final StubHttpServer server) {
         this(server, new StubbingFactory());
     }
     
@@ -81,7 +94,7 @@ public class HttpMockerImpl implements HttpMocker, StubResponseProvider {
      * @param server stub http server instance this mocker should use
      * @param stubbingFactory a factory to create stubbing instances
      */
-    HttpMockerImpl(final StubHttpServer server, final StubbingFactory stubbingFactory) {
+    JadlerMocker(final StubHttpServer server, final StubbingFactory stubbingFactory) {
         Validate.notNull(server, "server cannot be null");
         this.server = server;
         
@@ -102,7 +115,7 @@ public class HttpMockerImpl implements HttpMocker, StubResponseProvider {
     @Override
     public int getStubHttpServerPort() {
         if (!this.started) {
-            throw new IllegalStateException("The stub server hasn't been started yet.");
+            throw new IllegalStateException("The stub http server hasn't been started yet.");
         }
         return server.getPort();
     }
@@ -117,6 +130,8 @@ public class HttpMockerImpl implements HttpMocker, StubResponseProvider {
         }
         
         logger.debug("starting the underlying stub server...");
+        
+        this.server.registerResponseProvider(this);
 
         try {
             server.start();
@@ -166,6 +181,19 @@ public class HttpMockerImpl implements HttpMocker, StubResponseProvider {
         this.checkConfigurable();
         this.defaultHeaders = new MultiValueMap();
         this.defaultHeaders.putAll(defaultHeaders);
+    }
+    
+    
+    /**
+     * Adds a default header to be added to every stub http response.
+     * @param name header name (cannot be empty)
+     * @param value header value (cannot be <tt>null</tt>)
+     */
+    public void addDefaultHeader(final String name, final String value) {
+        Validate.notEmpty(name, "header name cannot be empty");
+        Validate.notNull("header value cannot be null, use an empty string instead");
+        this.checkConfigurable();
+        this.defaultHeaders.put(name, value);
     }
     
 
@@ -256,7 +284,7 @@ public class HttpMockerImpl implements HttpMocker, StubResponseProvider {
     
     /**
      * package private getter useful for testing
-     * @return list of created http stub rules
+     * @return deque of created http stub rules
      */
     Deque<StubRule> getHttpMockRules() {
         return httpStubRules;
