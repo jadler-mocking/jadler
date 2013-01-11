@@ -16,8 +16,12 @@ import net.jadler.exception.JadlerException;
 import net.jadler.stubbing.server.StubHttpServer;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
+import java.util.Deque;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
+import net.jadler.Jadler;
 import net.jadler.stubbing.server.MultipleReadsHttpServletRequest;
 import org.apache.commons.collections.MultiMap;
 import org.apache.commons.collections.map.MultiValueMap;
@@ -37,7 +41,7 @@ public class HttpMockerImpl implements HttpMocker, StubResponseProvider {
     private final StubHttpServer server;
     private final StubbingFactory stubbingFactory;
     private final List<Stubbing> stubbings;
-    private List<StubRule> httpStubRules;
+    private Deque<StubRule> httpStubRules;
     
     private MultiMap defaultHeaders;
     private int defaultStatus;
@@ -89,7 +93,7 @@ public class HttpMockerImpl implements HttpMocker, StubResponseProvider {
         Validate.notNull(stubbingFactory, "stubbingFactory cannot be null");
         this.stubbingFactory = stubbingFactory;
         
-        this.httpStubRules = new ArrayList<>();
+        this.httpStubRules = new LinkedList<>();
     }
 
     /**
@@ -223,7 +227,8 @@ public class HttpMockerImpl implements HttpMocker, StubResponseProvider {
             }
         }
         
-        for (final StubRule rule : this.httpStubRules) {
+        for (final Iterator<StubRule> it = this.httpStubRules.descendingIterator(); it.hasNext(); ) {
+            final StubRule rule = it.next();
             if (rule.matchedBy(multiReadsRequest)) {
                 final StringBuilder sb = new StringBuilder();
                 sb.append("Following rule will be applied:\n");
@@ -253,13 +258,13 @@ public class HttpMockerImpl implements HttpMocker, StubResponseProvider {
      * package private getter useful for testing
      * @return list of created http stub rules
      */
-    List<StubRule> getHttpMockRules() {
+    Deque<StubRule> getHttpMockRules() {
         return httpStubRules;
     }
     
     
-    private List<StubRule> createRules() {
-        final List<StubRule> rules = new ArrayList<>();
+    private Deque<StubRule> createRules() {
+        final Deque<StubRule> rules = new LinkedList<>();
         for (final Stubbing stub : stubbings) {
             rules.add(stub.createRule());
         }
