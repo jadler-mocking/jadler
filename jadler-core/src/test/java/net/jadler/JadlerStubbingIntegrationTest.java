@@ -615,18 +615,18 @@ public class JadlerStubbingIntegrationTest {
     
     
     /*
-     * Tests that for more matching stub rules the first one is applied.
+     * Tests that for more matching stub rules the latter is applied.
      */
     @Test
     public void rulesOrdering() throws IOException {
-          //these 3 rules are always matched, the first one must be applied
+          //these 3 rules are always matched, the latter one must be applied
         onRequest().that(is(anything())).respond().withStatus(201);
         onRequest().that(is(anything())).respond().withStatus(202);
         onRequest().that(is(anything())).respond().withStatus(203);
         
         final GetMethod method = new GetMethod("http://localhost:" + port());
         final int status = client.executeMethod(method);
-        assertThat(status, is(201));
+        assertThat(status, is(203));
     }
     
     
