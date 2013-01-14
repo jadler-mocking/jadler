@@ -393,7 +393,7 @@ public class HttpMockerImplTest {
     public void provideResponseFor3() {
         final MockHttpServletRequest req = prepareEmptyMockRequest();
         
-          //two rules matches, the first one must be provided
+          //two rules matches, the latter must be provided
         final StubRule rule1 = mock(StubRule.class);
         final Stubbing stubbing1 = mock(Stubbing.class);
         when(stubbing1.createRule()).thenReturn(rule1);
@@ -419,6 +419,6 @@ public class HttpMockerImplTest {
         mocker.onRequest();
         mocker.onRequest();
         
-        assertThat(mocker.provideStubResponseFor(req), is(resp1));
+        assertThat(mocker.provideStubResponseFor(req), is(resp2));
     }
 }
