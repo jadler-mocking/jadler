@@ -9,7 +9,7 @@ This program is made available under the terms of the MIT License.
 
     <groupId>net.jadler</groupId>
     <artifactId>jadler-core</artifactId>
-    <version>0.9.0</version>
+    <version>0.9.1-SNAPSHOT</version>
     <name>${project.artifactId}</name>
     <description>jadler - http communication mocking library</description>
     <packaging>jar</packaging>

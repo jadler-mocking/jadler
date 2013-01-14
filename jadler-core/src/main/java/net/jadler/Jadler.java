@@ -133,6 +133,20 @@ public final class Jadler {
             this.stubHttpServer = new JettyStubHttpServer(port);
             return this;
         }
+
+        /**
+         * Configures the new HttpMocker instance to use the default stub server implementation (jetty based) communicating
+         * via HTTPS protocol.
+         * This is the preferred way to use Jadler. The stub https server will be listening on the given port.
+         * Use {@link #usesCustomServer(net.jadler.stubbing.server.StubHttpServer) } if you want to use
+         * a custom stub server implementation.
+         *
+         * @return this ongoing configuration
+         */
+        public OngoingConfiguration usesStandardHttpsServerListeningOn() {
+            this.stubHttpServer = new JettyStubHttpServer(JettyStubHttpServer.Protocol.HTTPS);
+            return this;
+        }
         
         /**
          * Configures the new HttpMocker instance to use the default stub server implementation (jetty based).
@@ -208,7 +222,7 @@ public final class Jadler {
          * 
          * Calling this method is equivalent with calling
          * respondsWithDefaultHeader("Content-Type", defaultContentType)
-         * @param defaultEncoding 
+         * @param defaultContentType
          * @return this ongoing configuration
          */
         public OngoingConfiguration respondsWithDefaultContentType(final String defaultContentType) {
