@@ -2,30 +2,16 @@
  * Copyright (c) 2012 Jadler contributors
  * This program is made available under the terms of the MIT License.
  */
-package net.jadler.httpmocker;
-
-import net.jadler.Jadler;
-import net.jadler.stubbing.RequestStubbing;
+package net.jadler.stubbing.server;
 
 
 /**
- * <tt>HttpMocker</tt> is the hearth of the jadler library. It manages the underlying 
- * stub http server (and its lifecycle) and provides the client a way to define stubs
- * (by calling {@link #onRequest()}).
- * 
- * You shouldn't create HttpMocker instances directly, please see {@link Jadler} for usage examples.
+ * An implementation of this interface can manage an underlying stub http server.
  */
-public interface HttpMocker {
-    
+public interface StubHttpServerManager {
+        
     /**
-     * Starts new stubbing (definition of a <i>WHEN</i>-<i>THEN</i> rule).
-     * @return stubbing object to continue the stubbing
-     */
-    RequestStubbing onRequest();
-    
-    
-    /**
-     * Starts the stub http server assigned to this mocker.
+     * Starts the underlying stub http server
      * @throws JadlerException if an error occurred while starting the stub http server.
      * @throws IllegalStateException if the stub server has been started already.
      */

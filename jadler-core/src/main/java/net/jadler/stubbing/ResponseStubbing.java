@@ -37,7 +37,7 @@ public interface ResponseStubbing {
     /**
      * Sets the character encoding of the http stub response. 
      * Calling this method overrides any previous calls or the default encoding
-     * (set by {@link Jadler.OngoingConfiguration#respondsWithDefaultEncoding(java.nio.charset.Charset)}).
+     * (set by {@link net.jadler.Jadler.OngoingConfiguration#respondsWithDefaultEncoding(java.nio.charset.Charset)}).
      * 
      * Please note this method doesn't set the <tt>Content-Type</tt> header <tt>charset</tt> part,
      * {@link #withContentType(java.lang.String)} must be called to do so. You can even set different
@@ -51,7 +51,7 @@ public interface ResponseStubbing {
 
     /**
      * Sets the http stub response status. Calling this method overrides any previous calls or the default status
-     * (set by {@link Jadler.OngoingConfiguration#respondsWithDefaultStatus(int)}).
+     * (set by {@link net.jadler.Jadler.OngoingConfiguration#respondsWithDefaultStatus(int)}).
      * @param status http status code
      * @return this ongoing stubbing
      */
@@ -106,7 +106,7 @@ public interface ResponseStubbing {
      * is used as the stub response body as-is, it is not affected by the encoding set by
      * {@link #withEncoding(java.nio.charset.Charset)} in any way.
      * Calling this method overrides any previous calls of this or any other <tt>withBody</tt> method.
-     * @param is response body
+     * @param responseBody response body
      * @return this ongoing stubbing
      */
     ResponseStubbing withBody(byte[] responseBody);
