@@ -29,7 +29,7 @@ import static org.hamcrest.Matchers.*;
  * 
  * Instances of this class are stateful (they are aware of the next response to be returned) and thread-safe.
  * 
- * One should never create new instances of this class directly, see {@link Jadler} for explanation and tutorial.
+ * One should never create new instances of this class directly, see {@link net.jadler.Jadler} for explanation and tutorial.
  */
 public class StubRule {
 

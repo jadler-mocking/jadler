@@ -15,7 +15,7 @@ import static org.apache.commons.lang.Validate.notNull;
 
 
 /**
- * Convenient base class for all HttpMocker request matchers.
+ * Convenient base class for all Jadler request matchers.
  * @param <T> type of the value retrieved from a request to be matched
  */
 public abstract class RequestMatcher<T> extends BaseMatcher<HttpServletRequest> {

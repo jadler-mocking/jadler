@@ -2,8 +2,9 @@
  * Copyright (c) 2012 Jadler contributors
  * This program is made available under the terms of the MIT License.
  */
-package net.jadler.httpmocker;
+package net.jadler;
 
+import net.jadler.stubbing.server.StubHttpServerManager;
 import java.nio.charset.Charset;
 import net.jadler.stubbing.Stubbing;
 import net.jadler.stubbing.StubRule;
@@ -41,32 +42,33 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 
 
-public class HttpMockerImplTest {
+public class JadlerMockerTest {
     
     private static final int DEFAULT_STATUS = 204;
     private static final String HEADER_NAME1 = "h1";
     private static final String HEADER_VALUE1 = "v1";
     private static final String HEADER_NAME2 = "h2";
     private static final String HEADER_VALUE2 = "v2";
-     private static final Charset DEFAULT_ENCODING = Charset.forName("UTF-16");
+    private static final Charset DEFAULT_ENCODING = Charset.forName("UTF-16");
+    private static final int PORT = 12345;
     
     
     @Test(expected=IllegalArgumentException.class)
     public void constructor1() {
-        new HttpMockerImpl(null);
+        new JadlerMocker(null);
         fail("server cannot be null");
     }
     
     
     @Test
     public void constructor2() {
-        new HttpMockerImpl(mock(StubHttpServer.class));
+        new JadlerMocker(mock(StubHttpServer.class));
     }
     
     
     @Test(expected=IllegalStateException.class)
     public void startTwice() {
-        final HttpMockerImpl mocker = new HttpMockerImpl(mock(StubHttpServer.class));
+        final JadlerMocker mocker = new JadlerMocker(mock(StubHttpServer.class));
         
         mocker.start();
         mocker.start();
@@ -79,7 +81,7 @@ public class HttpMockerImplTest {
     public void startException() throws Exception {
         final StubHttpServer server = mock(StubHttpServer.class);
         doThrow(new Exception()).when(server).start();
-        new HttpMockerImpl(server).start();
+        new JadlerMocker(server).start();
         fail("server threw an exception");
     }
     
@@ -87,23 +89,25 @@ public class HttpMockerImplTest {
     @Test
     public void start() throws Exception {
         final StubHttpServer server = mock(StubHttpServer.class);
-        new HttpMockerImpl(server).start();
+        final JadlerMocker jadlerMocker = new JadlerMocker(server);
+        jadlerMocker.start();
         
         verify(server, times(1)).start();
+        verify(server, times(1)).registerResponseProvider(eq(jadlerMocker));
         verifyNoMoreInteractions(server);
     }
     
     
     @Test(expected=IllegalStateException.class)
     public void stopNotStarted() {
-        new HttpMockerImpl(mock(StubHttpServer.class)).stop();
+        new JadlerMocker(mock(StubHttpServer.class)).stop();
         fail("mocker cannot be stopped without being started");
     }
     
     
     @Test(expected=IllegalStateException.class)
     public void stopTwice() {
-        final HttpMockerImpl mocker = new HttpMockerImpl(mock(StubHttpServer.class));
+        final JadlerMocker mocker = new JadlerMocker(mock(StubHttpServer.class));
         
         mocker.start();
         mocker.stop();
@@ -116,7 +120,7 @@ public class HttpMockerImplTest {
     public void stopException() throws Exception {
         final StubHttpServer server = mock(StubHttpServer.class);
         doThrow(new Exception()).when(server).start();
-        final HttpMocker mocker = new HttpMockerImpl(server);
+        final StubHttpServerManager mocker = new JadlerMocker(server);
         
         mocker.start();
         mocker.stop();
@@ -128,7 +132,7 @@ public class HttpMockerImplTest {
     @Test
     public void stop() throws Exception {
         final StubHttpServer server = mock(StubHttpServer.class);
-        final HttpMockerImpl mocker = new HttpMockerImpl(server);
+        final JadlerMocker mocker = new JadlerMocker(server);
         
         mocker.start();
         mocker.stop();
@@ -140,26 +144,44 @@ public class HttpMockerImplTest {
     @Test
     public void isStarted() throws Exception {
         final StubHttpServer server = mock(StubHttpServer.class);
-        final HttpMockerImpl mocker = new HttpMockerImpl(server);
+        final JadlerMocker jadlerMocker = new JadlerMocker(server);
         
-        assertThat(mocker.isStarted(), is(false));
-        mocker.start();
-        assertThat(mocker.isStarted(), is(true));
-        mocker.stop();
-        assertThat(mocker.isStarted(), is(false));
+        assertThat(jadlerMocker.isStarted(), is(false));
+        jadlerMocker.start();
+        assertThat(jadlerMocker.isStarted(), is(true));
+        jadlerMocker.stop();
+        assertThat(jadlerMocker.isStarted(), is(false));
+    }
+    
+    
+    @Test(expected=IllegalStateException.class)
+    public void getStubHttpServerPortNotStarted() {       
+        final StubHttpServerManager serverManager = new JadlerMocker(mock(StubHttpServer.class));
+        serverManager.getStubHttpServerPort();
+    }
+    
+    
+    @Test
+    public void getStubHttpServerPort() {
+        final StubHttpServer server = mock(StubHttpServer.class);
+        when(server.getPort()).thenReturn(PORT);
+        
+        final StubHttpServerManager serverManager = new JadlerMocker(server);
+        serverManager.start();
+        assertThat(serverManager.getStubHttpServerPort(), is(PORT));
     }
     
     
     @Test(expected=IllegalArgumentException.class)
     public void setDefaultHeadersWrongParam() {
-        new HttpMockerImpl(mock(StubHttpServer.class)).setDefaultHeaders(null);
+        new JadlerMocker(mock(StubHttpServer.class)).setDefaultHeaders(null);
         fail("defaultHeaders cannot be null");
     }
     
     
     @Test(expected=IllegalStateException.class)
     public void setDefaultHeadersWrongState() {
-        final HttpMockerImpl mocker = new HttpMockerImpl(mock(StubHttpServer.class));
+        final JadlerMocker mocker = new JadlerMocker(mock(StubHttpServer.class));
         mocker.provideStubResponseFor(prepareEmptyMockRequest());
         mocker.setDefaultHeaders(new MultiValueMap());
         fail("addDefaultHeaders cannot be called after provideResponseFor");
@@ -168,14 +190,14 @@ public class HttpMockerImplTest {
     
     @Test(expected=IllegalArgumentException.class)
     public void setDefaultStatusWrongParam() {
-        new HttpMockerImpl(mock(StubHttpServer.class)).setDefaultStatus(-1);
+        new JadlerMocker(mock(StubHttpServer.class)).setDefaultStatus(-1);
         fail("defaultStatus must be at least 0");
     }
     
     
     @Test(expected=IllegalStateException.class)
     public void setDefaultStatusWrongState() {
-        final HttpMockerImpl mocker = new HttpMockerImpl(mock(StubHttpServer.class));
+        final JadlerMocker mocker = new JadlerMocker(mock(StubHttpServer.class));
         mocker.provideStubResponseFor(prepareEmptyMockRequest());
         mocker.setDefaultStatus(200);
         fail("setDefaultStatus cannot be called after provideResponseFor");
@@ -184,14 +206,14 @@ public class HttpMockerImplTest {
     
     @Test(expected=IllegalArgumentException.class)
     public void setDefaultEncodingWrongParam() {
-        new HttpMockerImpl(mock(StubHttpServer.class)).setDefaultEncoding(null);
+        new JadlerMocker(mock(StubHttpServer.class)).setDefaultEncoding(null);
         fail("defaultEncoding mustn't be null");
     }
     
     
     @Test(expected=IllegalStateException.class)
     public void setDefaultEncodingWrongState() {
-        final HttpMockerImpl mocker = new HttpMockerImpl(mock(StubHttpServer.class));
+        final JadlerMocker mocker = new JadlerMocker(mock(StubHttpServer.class));
         mocker.provideStubResponseFor(prepareEmptyMockRequest());
         mocker.setDefaultEncoding(Charset.forName("UTF-8"));
         fail("setDefaultStatus cannot be called after provideResponseFor");
@@ -200,7 +222,7 @@ public class HttpMockerImplTest {
     
     @Test(expected=IllegalStateException.class)
     public void onRequestAfterFirstProvision() {
-        final HttpMockerImpl mocker = new HttpMockerImpl(mock(StubHttpServer.class));
+        final JadlerMocker mocker = new JadlerMocker(mock(StubHttpServer.class));
         
         mocker.provideStubResponseFor(prepareEmptyMockRequest());
         mocker.onRequest();
@@ -224,9 +246,9 @@ public class HttpMockerImplTest {
         when(sf.createStubbing(any(Charset.class), anyInt(), any(MultiMap.class))).thenReturn(stubbing1, stubbing2);
         
         final StubHttpServer server = mock(StubHttpServer.class);
-        final HttpMockerImpl mocker = new HttpMockerImpl(server, sf);
+        final JadlerMocker mocker = new JadlerMocker(server, sf);
         
-          //calling the onRequest twice so stubbing1 and stubbing2 are created in the HttpMocker instance
+          //calling the onRequest twice so stubbing1 and stubbing2 are created in the JadlerMocker instance
         mocker.onRequest();
         mocker.onRequest();
           //calling provideResponseFor so mock rules are generated from stubing objects
@@ -250,7 +272,7 @@ public class HttpMockerImplTest {
         final StubHttpServer server = mock(StubHttpServer.class);
         final StubbingFactory sf = spy(new StubbingFactory());
         
-        final HttpMockerImpl mocker = new HttpMockerImpl(server, sf);
+        final JadlerMocker mocker = new JadlerMocker(server, sf);
         
         final MultiMap defaultHeaders = new MultiValueMap();
         defaultHeaders.put(HEADER_NAME1, HEADER_VALUE1);
@@ -276,7 +298,7 @@ public class HttpMockerImplTest {
         final StubHttpServer server = mock(StubHttpServer.class);
         final StubbingFactory sf = spy(new StubbingFactory());
         
-        final HttpMockerImpl mocker = new HttpMockerImpl(server, sf);
+        final JadlerMocker mocker = new JadlerMocker(server, sf);
         
           //ok, this is not a pure unit test, it depends on the Stubbing.respond() method as well.
           //the respond() method is called so a HttpMockResponse is created internally.
@@ -293,7 +315,7 @@ public class HttpMockerImplTest {
         final StubHttpServer server = mock(StubHttpServer.class);
         final StubbingFactory sf = spy(new StubbingFactory());
         
-        final HttpMockerImpl mocker = new HttpMockerImpl(server, sf);
+        final JadlerMocker mocker = new JadlerMocker(server, sf);
         
           //ok, this is not a pure unit test, it depends on the Stubbing.respond() method as well.
           //the respond() method is called so a HttpMockResponse is created internally.
@@ -310,7 +332,7 @@ public class HttpMockerImplTest {
         final StubHttpServer server = mock(StubHttpServer.class);
         final StubbingFactory sf = spy(new StubbingFactory());
         
-        final HttpMockerImpl mocker = new HttpMockerImpl(server, sf);
+        final JadlerMocker mocker = new JadlerMocker(server, sf);
         
           //ok, this is not a pure unit test, it depends on the Stubbing.respond() method as well.
           //the respond() method is called so a HttpMockResponse is created internally.
@@ -344,9 +366,9 @@ public class HttpMockerImplTest {
                 .thenReturn(stubbing1, stubbing2);
         
         final StubHttpServer server = mock(StubHttpServer.class);
-        final HttpMockerImpl mocker = new HttpMockerImpl(server, sf);
+        final JadlerMocker mocker = new JadlerMocker(server, sf);
         
-          //calling the onRequest twice so stubbing1 and stubbing2 are created in the HttpMocker instance
+          //calling the onRequest twice so stubbing1 and stubbing2 are created in the JadlerMocker instance
         mocker.onRequest();
         mocker.onRequest();
         
@@ -375,9 +397,9 @@ public class HttpMockerImplTest {
                 .thenReturn(stubbing1, stubbing2);
         
         final StubHttpServer server = mock(StubHttpServer.class);
-        final HttpMockerImpl mocker = new HttpMockerImpl(server, sf);
+        final JadlerMocker mocker = new JadlerMocker(server, sf);
         
-          //calling the onRequest twice so stubbing1 and stubbing2 are created in the HttpMocker instance
+          //calling the onRequest twice so stubbing1 and stubbing2 are created in the JadlerMocker instance
         mocker.onRequest();
         mocker.onRequest();
         
@@ -413,9 +435,9 @@ public class HttpMockerImplTest {
                 .thenReturn(stubbing1, stubbing2);
         
         final StubHttpServer server = mock(StubHttpServer.class);
-        final HttpMockerImpl mocker = new HttpMockerImpl(server, sf);
+        final JadlerMocker mocker = new JadlerMocker(server, sf);
         
-          //calling the onRequest twice so stubbing1 and stubbing2 are created in the HttpMocker instance
+          //calling the onRequest twice so stubbing1 and stubbing2 are created in the JadlerMocker instance
         mocker.onRequest();
         mocker.onRequest();
         

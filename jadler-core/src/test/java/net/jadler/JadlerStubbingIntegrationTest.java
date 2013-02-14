@@ -15,7 +15,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,10 +26,9 @@ import java.nio.charset.Charset;
 import java.util.concurrent.TimeUnit;
 
 import static net.jadler.Jadler.port;
-import static net.jadler.Jadler.initJadlerThat;
+import static net.jadler.Jadler.initJadler;
 import static net.jadler.Jadler.onRequest;
-import static net.jadler.Jadler.startStubServer;
-import static net.jadler.Jadler.stopStubServer;
+import static net.jadler.Jadler.closeJadler;
 import static org.hamcrest.Matchers.anything;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
@@ -77,15 +75,12 @@ public class JadlerStubbingIntegrationTest {
     @Before
     public void setUp() {
         
-        initJadlerThat()
-                .usesStandardServer()
+        initJadler().that()
                 .respondsWithDefaultStatus(DEFAULT_STATUS)
                 .respondsWithDefaultHeader(DEFAULT_HEADER1_NAME, DEFAULT_HEADER1_VALUE1)
                 .respondsWithDefaultHeader(DEFAULT_HEADER1_NAME, DEFAULT_HEADER1_VALUE2)
                 .respondsWithDefaultEncoding(UTF_8_CHARSET)
                 .respondsWithDefaultContentType(UTF_8_TYPE);
-        
-        startStubServer();
         
         this.client = new HttpClient();
     }
@@ -93,7 +88,7 @@ public class JadlerStubbingIntegrationTest {
     
     @After
     public void tearDown() {
-        stopStubServer();
+        closeJadler();
     }
     
     

@@ -21,7 +21,7 @@ import static org.apache.commons.lang.StringUtils.abbreviate;
  * a timeout the response will be returned after. Instances of this class are mutable so the stub response definition
  * can be constructed on the fly.
  * 
- * One should never create new instances of this class directly, see {@link Jadler} for explanation and tutorial.
+ * One should never create new instances of this class directly, see {@link net.jadler.Jadler} for explanation and tutorial.
  */
 public class StubResponse {
     private Charset encoding;
@@ -74,7 +74,7 @@ public class StubResponse {
     
     /**
      * Sets the stub response body as a string.
-     * Calling this method also resets any previous calls of {@link #setRawBody(byte[]) }
+     * Calling this method also resets any previous calls of {@link #setBody(byte[]) }
      * @param body stub response body (cannot be null)
      */
     public void setBody(final String body) {
@@ -86,8 +86,8 @@ public class StubResponse {
     
     /**
      * Sets the stub response body as an array of bytes.
-     * Calling this method also resets any previous calls of {@link #setStringBody(java.lang.String)}
-     * @param stringBody stub response body (cannot be null)
+     * Calling this method also resets any previous calls of {@link #setBody(java.lang.String) }
+     * @param body stub response body (cannot be null)
      */
     public void setBody(byte[] body) {
         Validate.notNull(body, "body cannot be null, use an empty array instead.");
