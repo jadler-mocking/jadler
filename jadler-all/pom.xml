@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Copyright (c) 2012 Jadler contributors
+This program is made available under the terms of the MIT License.
+-->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>net.jadler</groupId>
+    <artifactId>jadler-all</artifactId>
+    <name>${project.artifactId}</name>
+    <description>This module contains all jadler sub-modules. By including jadler-all to a project a complete Jadler
+    library will be included automatically.</description>
+    <packaging>jar</packaging>
+    
+    <parent>
+        <groupId>net.jadler</groupId>
+        <artifactId>jadler-pom</artifactId>
+        <version>0.9.5-SNAPSHOT</version>
+    </parent>
+ 
+
+    <dependencies>
+        <!-- JADLER dependencies -->
+        <dependency>
+            <groupId>net.jadler</groupId>
+            <artifactId>jadler-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>net.jadler</groupId>
+            <artifactId>jadler-jetty</artifactId>
+        </dependency>
+        
+        <!-- TEST -->
+        <dependency> 
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+        </dependency>
+        <dependency> 
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>commons-httpclient</groupId>
+            <artifactId>commons-httpclient</artifactId>
+        </dependency>
+    </dependencies>
+</project>

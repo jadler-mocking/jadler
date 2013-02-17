@@ -4,11 +4,12 @@
  */
 package net.jadler;
 
+import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.Charset;
+import net.jadler.exception.JadlerException;
 import net.jadler.stubbing.RequestStubbing;
 import net.jadler.stubbing.server.StubHttpServerManager;
 import net.jadler.stubbing.server.StubHttpServer;
-import net.jadler.stubbing.server.jetty.JettyStubHttpServer;
 import net.jadler.stubbing.ResponseStubbing;
 
 
@@ -353,6 +354,7 @@ import net.jadler.stubbing.ResponseStubbing;
 public final class Jadler {
     
     private static ThreadLocal<JadlerMocker> jadlerMockerContainer = new ThreadLocal<>();
+    private static String JETTY_SERVER_CLASS = "net.jadler.stubbing.server.jetty.JettyStubHttpServer";
 
     private Jadler() {
         //gtfo
@@ -369,7 +371,7 @@ public final class Jadler {
      * to add more configuration
      */
     public static AdditionalConfiguration initJadler() {
-        return initInternal(new JadlerMocker());
+        return initInternal(new JadlerMocker(getJettyServer()));
     }
     
 
@@ -383,7 +385,7 @@ public final class Jadler {
      * to add more configuration
      */
     public static AdditionalConfiguration initJadlerListeningOn(final int port) {
-        return initInternal(new JadlerMocker(new JettyStubHttpServer(port)));
+        return initInternal(new JadlerMocker(getJettyServer(port)));
     }
     
 
@@ -451,6 +453,40 @@ public final class Jadler {
         jadlerMockerContainer.set(jadlerMocker);
         jadlerMocker.start();
         return AdditionalConfiguration.INSTANCE;        
+    }
+    
+    
+    private static StubHttpServer getJettyServer() {
+        final Class<?> clazz = getJettyStubHttpServerClass();
+        try {
+            return (StubHttpServer) clazz.newInstance();
+        }
+        catch (InstantiationException | IllegalAccessException e) {
+            throw new JadlerException("Cannot instantiate default Jetty stub server", e);
+        }
+    }
+    
+    private static StubHttpServer getJettyServer(final int port) {
+        final Class<?> clazz = getJettyStubHttpServerClass();
+        try {
+            return (StubHttpServer) clazz.getConstructor(int.class).newInstance(port);
+        }
+        catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException
+                | IllegalArgumentException | InvocationTargetException e) {
+            throw new JadlerException("Cannot instantiate default Jetty stub server with the given port", e);
+        }
+    }
+    
+    
+    private static Class<?> getJettyStubHttpServerClass() {
+        try {
+            return Class.forName(JETTY_SERVER_CLASS);
+        }
+        catch (final ClassNotFoundException e) {
+            throw new JadlerException("Class " + JETTY_SERVER_CLASS + " cannot be found. "
+                    + "Either add jadler-jetty to your classpath or use the initJadlerUsing method to specify the "
+                    + "stub server explicitly.", e);
+        }
     }
     
     

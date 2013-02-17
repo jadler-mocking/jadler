@@ -24,7 +24,6 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import net.jadler.stubbing.Stubber;
 import net.jadler.stubbing.server.MultipleReadsHttpServletRequest;
-import net.jadler.stubbing.server.jetty.JettyStubHttpServer;
 import org.apache.commons.collections.MultiMap;
 import org.apache.commons.collections.map.MultiValueMap;
 import org.apache.commons.lang.Validate;
@@ -70,11 +69,6 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, StubRespons
     }
     
     private static final Logger logger = LoggerFactory.getLogger(JadlerMocker.class);
-    
-    
-    public JadlerMocker() {
-        this(new JettyStubHttpServer());
-    }
     
     
     /**
