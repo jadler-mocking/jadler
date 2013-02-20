@@ -110,7 +110,7 @@ public class MultipleReadsHttpServletRequest extends HttpServletRequestWrapper {
             }
         }
         
-        final Map<String, String[]> res = new HashMap<>();
+        final Map<String, String[]> res = new HashMap<String, String[]>();
         for(final Object o: params.entrySet()) {
             final Entry<String, Collection<String>> e = (Entry) o;
             res.put(e.getKey(), e.getValue().toArray(new String[0]));
