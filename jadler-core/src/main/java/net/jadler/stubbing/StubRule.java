@@ -46,10 +46,10 @@ public class StubRule {
     public StubRule(final Collection<Matcher<? super HttpServletRequest>> predicates,
             final List<StubResponse> stubResponses) {
         Validate.notNull(predicates, "predicates cannot be null, use an empty list instead");
-        this.predicates = new ArrayList<>(predicates);
+        this.predicates = new ArrayList<Matcher<? super HttpServletRequest>>(predicates);
         
         Validate.notEmpty(stubResponses, "at least one stub response must be defined");
-        this.stubResponses = new ArrayList<>(stubResponses);
+        this.stubResponses = new ArrayList<StubResponse>(stubResponses);
     }
 
     

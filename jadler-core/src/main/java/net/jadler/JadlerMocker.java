@@ -92,7 +92,7 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, StubRespons
         Validate.notNull(server, "server cannot be null");
         this.server = server;
         
-        this.stubbings = new ArrayList<>();
+        this.stubbings = new ArrayList<Stubbing>();
         this.defaultHeaders = new MultiValueMap();
         this.defaultStatus = HttpServletResponse.SC_OK;
         this.defaultEncoding =  Charset.forName("UTF-8");
@@ -100,7 +100,7 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, StubRespons
         Validate.notNull(stubbingFactory, "stubbingFactory cannot be null");
         this.stubbingFactory = stubbingFactory;
         
-        this.httpStubRules = new LinkedList<>();
+        this.httpStubRules = new LinkedList<StubRule>();
     }
 
     /**
@@ -286,7 +286,7 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, StubRespons
     
     
     private Deque<StubRule> createRules() {
-        final Deque<StubRule> rules = new LinkedList<>();
+        final Deque<StubRule> rules = new LinkedList<StubRule>();
         for (final Stubbing stub : stubbings) {
             rules.add(stub.createRule());
         }

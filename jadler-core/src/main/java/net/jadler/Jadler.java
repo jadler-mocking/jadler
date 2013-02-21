@@ -4,7 +4,6 @@
  */
 package net.jadler;
 
-import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.Charset;
 import net.jadler.exception.JadlerException;
 import net.jadler.stubbing.RequestStubbing;
@@ -353,7 +352,7 @@ import net.jadler.stubbing.ResponseStubbing;
  */
 public final class Jadler {
     
-    private static ThreadLocal<JadlerMocker> jadlerMockerContainer = new ThreadLocal<>();
+    private static ThreadLocal<JadlerMocker> jadlerMockerContainer = new ThreadLocal<JadlerMocker>();
     private static String JETTY_SERVER_CLASS = "net.jadler.stubbing.server.jetty.JettyStubHttpServer";
 
     private Jadler() {
@@ -461,7 +460,7 @@ public final class Jadler {
         try {
             return (StubHttpServer) clazz.newInstance();
         }
-        catch (InstantiationException | IllegalAccessException e) {
+        catch (final Exception e) {
             throw new JadlerException("Cannot instantiate default Jetty stub server", e);
         }
     }
@@ -471,8 +470,7 @@ public final class Jadler {
         try {
             return (StubHttpServer) clazz.getConstructor(int.class).newInstance(port);
         }
-        catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException
-                | IllegalArgumentException | InvocationTargetException e) {
+        catch (final Exception e) {
             throw new JadlerException("Cannot instantiate default Jetty stub server with the given port", e);
         }
     }

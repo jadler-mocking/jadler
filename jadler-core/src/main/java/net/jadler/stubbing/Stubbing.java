@@ -55,8 +55,8 @@ public class Stubbing implements RequestStubbing, ResponseStubbing {
     @SuppressWarnings("unchecked")
     Stubbing(final Charset defaultEncoding, final int defaultStatus, final MultiMap defaultHeaders) {
         
-        this.predicates = new ArrayList<>();
-        this.stubResponses = new ArrayList<>();
+        this.predicates = new ArrayList<Matcher<? super HttpServletRequest>>();
+        this.stubResponses = new ArrayList<StubResponse>();
         this.defaultHeaders = new MultiValueMap();
         this.defaultHeaders.putAll(defaultHeaders);
         this.defaultStatus = defaultStatus;
@@ -390,7 +390,7 @@ public class Stubbing implements RequestStubbing, ResponseStubbing {
      * @return all registered predicates
      */
     List<Matcher<? super HttpServletRequest>> getPredicates() {
-        return new ArrayList<>(this.predicates);
+        return new ArrayList<Matcher<? super HttpServletRequest>>(this.predicates);
     }
     
     
@@ -399,7 +399,7 @@ public class Stubbing implements RequestStubbing, ResponseStubbing {
      * @return all defined stub responses
      */
     List<StubResponse> getStubResponses() {
-        return new ArrayList<>(this.stubResponses);
+        return new ArrayList<StubResponse>(this.stubResponses);
     }
     
 
