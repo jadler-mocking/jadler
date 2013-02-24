@@ -18,10 +18,8 @@ import org.eclipse.jetty.server.Connector;
 
 
 /**
- * This class wraps Jetty server, performs all necessary configuration and
- * register HTTP rules which will be handled by the server.
- * <p/>
- * Jetty server created by this class runs in embedded mode.
+ * Default stub http server implementation using <a href="http://jetty.codehaus.org/jetty/" target="_blank">Jetty</a>
+ * as an http server.
  */
 public class JettyStubHttpServer implements StubHttpServer {
 

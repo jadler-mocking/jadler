@@ -361,9 +361,8 @@ public final class Jadler {
     
     
     /**
-     * Initializes Jadler and starts a default stub server {@link JettyStubHttpServer}
-     * serving the http protocol listening on any free port. The port number can be
-     * retrieved using {@link #port()}.
+     * Initializes Jadler and starts a default stub server {@link net.jadler.stubbing.server.jetty.JettyStubHttpServer}
+     * serving the http protocol listening on any free port. The port number can be retrieved using {@link #port()}.
      * <br /><br />
      * This should be preferably called in the <tt>setUp</tt> method of the test suite
      * @return if additional tweaking needed on the initialized Jadler, call {@link AdditionalConfiguration#that()}
@@ -375,7 +374,7 @@ public final class Jadler {
     
 
     /**
-     * Initializes Jadler and starts a default stub server {@link JettyStubHttpServer}
+     * Initializes Jadler and starts a default stub server {@link net.jadler.stubbing.server.jetty.JettyStubHttpServer}
      * serving the http protocol listening on the given port.
      * <br /><br />
      * This should be preferably called in the <tt>setUp</tt> method of the test suite
