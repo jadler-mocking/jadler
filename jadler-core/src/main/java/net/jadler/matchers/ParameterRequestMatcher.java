@@ -4,9 +4,9 @@
  */
 package net.jadler.matchers;
 
-import java.util.Arrays;
 import java.util.List;
-import javax.servlet.http.HttpServletRequest;
+
+import net.jadler.stubbing.Request;
 import org.apache.commons.lang.Validate;
 import org.hamcrest.Factory;
 import org.hamcrest.Matcher;
@@ -29,13 +29,8 @@ public class ParameterRequestMatcher extends RequestMatcher<List<String>> {
 
 
     @Override
-    protected List<String> retrieveValue(final HttpServletRequest req) throws Exception {
-        final String[] values = req.getParameterValues(this.paramName);
-        if (values == null) {
-            return null;
-        }
-        
-        return Arrays.asList(values);
+    protected List<String> retrieveValue(final Request req) throws Exception {
+        return req.getParameters(this.paramName);
     }
     
     

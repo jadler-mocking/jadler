@@ -4,9 +4,9 @@
  */
 package net.jadler.matchers;
 
-import java.util.Collections;
 import java.util.List;
-import javax.servlet.http.HttpServletRequest;
+
+import net.jadler.stubbing.Request;
 import org.apache.commons.lang.Validate;
 import org.hamcrest.Factory;
 import org.hamcrest.Matcher;
@@ -29,12 +29,9 @@ public class HeaderRequestMatcher extends RequestMatcher<List<String>> {
 
 
     @Override
-    protected List<String> retrieveValue(final HttpServletRequest req) throws Exception {
-        
-        @SuppressWarnings("unchecked")
-        final List<String> res = Collections.list(req.getHeaders(this.headerName));
-        
-        return res.isEmpty() ? null : res;
+    protected List<String> retrieveValue(final Request req) throws Exception {
+        List<String> headers = req.getHeaders(this.headerName);
+        return ((headers != null) && !headers.isEmpty()) ? headers : null;
     }
     
     
