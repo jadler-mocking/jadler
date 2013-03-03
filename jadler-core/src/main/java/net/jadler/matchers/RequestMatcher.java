@@ -5,11 +5,11 @@
 package net.jadler.matchers;
 
 import net.jadler.exception.JadlerException;
+import net.jadler.stubbing.Request;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 
-import javax.servlet.http.HttpServletRequest;
 
 import static org.apache.commons.lang.Validate.notNull;
 
@@ -18,7 +18,7 @@ import static org.apache.commons.lang.Validate.notNull;
  * Convenient base class for all Jadler request matchers.
  * @param <T> type of the value retrieved from a request to be matched
  */
-public abstract class RequestMatcher<T> extends BaseMatcher<HttpServletRequest> {
+public abstract class RequestMatcher<T> extends BaseMatcher<Request> {
 
     protected final Matcher<? super T> pred;
 
@@ -33,7 +33,7 @@ public abstract class RequestMatcher<T> extends BaseMatcher<HttpServletRequest> 
     public void describeMismatch(final Object item, final Description description) {
         final T value;
         try {
-            value = this.retrieveValue((HttpServletRequest) item);
+            value = this.retrieveValue((Request) item);
         } catch (Exception ex) {
             throw new JadlerException("An error occurred while retrieving a value from the http request "
                     + "for mismatch description", ex);
@@ -56,13 +56,13 @@ public abstract class RequestMatcher<T> extends BaseMatcher<HttpServletRequest> 
 
     @Override
     public boolean matches(final Object o) {
-        if (!(o instanceof HttpServletRequest)) {
+        if (!(o instanceof Request)) {
             return false;
         }
 
         T value;
         try {
-            value = this.retrieveValue((HttpServletRequest) o);
+            value = this.retrieveValue((Request) o);
         }
         catch (Exception e) {
             throw new JadlerException("An error occurred while retrieving a value from the http request", e);
@@ -78,7 +78,7 @@ public abstract class RequestMatcher<T> extends BaseMatcher<HttpServletRequest> 
      * @param req request object to read a value from
      * @return a value read from the given request object.
      */
-    protected abstract T retrieveValue(final HttpServletRequest req) throws Exception;
+    protected abstract T retrieveValue(final Request req) throws Exception;
 
 
     protected abstract String provideDescription();

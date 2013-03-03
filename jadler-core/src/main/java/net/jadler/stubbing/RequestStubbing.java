@@ -21,7 +21,7 @@ public interface RequestStubbing {
      * @param predicate request predicate to be added to the <i>WHEN</i> part of this stubbing
      * @return this ongoing stubbing
      */
-    RequestStubbing that(Matcher<? super HttpServletRequest> predicate);
+    RequestStubbing that(Matcher<? super Request> predicate);
 
 
     /**

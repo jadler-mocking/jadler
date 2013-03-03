@@ -4,8 +4,9 @@
  */
 package net.jadler;
 
+import net.jadler.stubbing.Request;
+import net.jadler.stubbing.Stubber;
 import net.jadler.stubbing.server.StubHttpServerManager;
-import java.io.IOException;
 import net.jadler.stubbing.StubResponseProvider;
 import java.nio.charset.Charset;
 import net.jadler.stubbing.RequestStubbing;
@@ -21,9 +22,6 @@ import java.util.Deque;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import javax.servlet.http.HttpServletRequest;
-import net.jadler.stubbing.Stubber;
-import net.jadler.stubbing.server.MultipleReadsHttpServletRequest;
 import org.apache.commons.collections.MultiMap;
 import org.apache.commons.collections.map.MultiValueMap;
 import org.apache.commons.lang.Validate;
@@ -51,7 +49,7 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, StubRespons
     private final StubbingFactory stubbingFactory;
     private final List<Stubbing> stubbings;
     private Deque<StubRule> httpStubRules;
-    
+
     private MultiMap defaultHeaders;
     private int defaultStatus;
     private Charset defaultEncoding;
@@ -233,16 +231,7 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, StubRespons
      * {@inheritDoc} 
      */
     @Override
-    public StubResponse provideStubResponseFor(final HttpServletRequest req) {
-        final MultipleReadsHttpServletRequest multiReadsRequest;
-        try {
-            multiReadsRequest = new MultipleReadsHttpServletRequest(req);            
-        }
-        catch (final IOException e) {
-            throw new JadlerException("A problem occurred while wrapping a request", e);
-        }
-
-        
+    public StubResponse provideStubResponseFor(final Request request) {
         synchronized(this) {
             if (this.configurable) {
                 this.configurable = false;
@@ -252,7 +241,7 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, StubRespons
         
         for (final Iterator<StubRule> it = this.httpStubRules.descendingIterator(); it.hasNext(); ) {
             final StubRule rule = it.next();
-            if (rule.matchedBy(multiReadsRequest)) {
+            if (rule.matchedBy(request)) {
                 final StringBuilder sb = new StringBuilder();
                 sb.append("Following rule will be applied:\n");
                 sb.append(rule);
@@ -268,7 +257,7 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, StubRespons
             sb.append("The rule '");
             sb.append(rule);
             sb.append("' cannot be applied. Mismatch:\n");
-            sb.append(rule.describeMismatch(multiReadsRequest));
+            sb.append(rule.describeMismatch(request));
             sb.append("\n");
         }
         logger.info(sb.toString());
