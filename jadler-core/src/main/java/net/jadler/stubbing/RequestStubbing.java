@@ -5,7 +5,6 @@
 package net.jadler.stubbing;
 
 import org.hamcrest.Matcher;
-import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 

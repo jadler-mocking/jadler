@@ -16,7 +16,6 @@ import net.jadler.stubbing.StubResponse;
 import net.jadler.stubbing.StubRule;
 import net.jadler.exception.JadlerException;
 import net.jadler.stubbing.server.StubHttpServer;
-import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.Iterator;
@@ -92,7 +91,7 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, StubRespons
         
         this.stubbings = new ArrayList<Stubbing>();
         this.defaultHeaders = new MultiValueMap();
-        this.defaultStatus = HttpServletResponse.SC_OK;
+        this.defaultStatus = 200; //OK
         this.defaultEncoding =  Charset.forName("UTF-8");
         
         Validate.notNull(stubbingFactory, "stubbingFactory cannot be null");
