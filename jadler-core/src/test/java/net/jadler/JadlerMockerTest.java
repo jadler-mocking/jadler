@@ -15,7 +15,6 @@ import net.jadler.stubbing.StubResponse;
 import net.jadler.stubbing.StubbingFactory;
 import java.util.Arrays;
 import java.util.Collections;
-import javax.servlet.http.HttpServletResponse;
 import net.jadler.exception.JadlerException;
 import net.jadler.stubbing.server.StubHttpServer;
 import org.apache.commons.collections.MultiMap;
@@ -306,7 +305,7 @@ public class JadlerMockerTest {
         mocker.onRequest().respond();
         
           //verify the Stubbing instance was created with empty default headers and default status
-        verify(sf, times(1)).createStubbing(any(Charset.class), eq(HttpServletResponse.SC_OK), any(MultiMap.class));
+        verify(sf, times(1)).createStubbing(any(Charset.class), eq(200), any(MultiMap.class));
         verifyNoMoreInteractions(sf);
     }
     
