@@ -11,7 +11,28 @@ This program is made available under the terms of the MIT License.
     <artifactId>jadler-core</artifactId>
     <name>${project.artifactId}</name>
     <description>Core of the Jadler library.</description>
+    <url>http://jadler.net</url>
     <packaging>jar</packaging>
+    
+    <developers>
+        <developer>
+            <name>Jan Dudek</name>
+            <email>jan_dudek@seznam.cz</email>
+        </developer>
+    </developers>
+    
+    <licenses>
+        <license>
+            <name>MIT license</name>
+            <url>http://www.opensource.org/licenses/mit-license.php</url>
+        </license>
+    </licenses>
+    
+    <scm>
+        <connection>scm:git:git@github.com:jadler-mocking/jadler.git</connection>
+        <developerConnection>scm:git:git@github.com:jadler-mocking/jadler.git</developerConnection>
+        <url>https://github.com/jadler-mocking/jadler</url>
+    </scm>
     
     <parent>
         <groupId>net.jadler</groupId>
