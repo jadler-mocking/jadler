@@ -7,7 +7,7 @@ package net.jadler.stubbing;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import javax.servlet.http.HttpServletRequest;
+
 import org.hamcrest.Matcher;
 import org.junit.Test;
 
@@ -34,7 +34,7 @@ public class StubRuleTest {
     
     @Test(expected=IllegalArgumentException.class)
     public void constructor2() {
-        new StubRule(Collections.<Matcher<? super HttpServletRequest>>emptyList(),
+        new StubRule(Collections.<Matcher<? super Request>>emptyList(),
                 Collections.<StubResponse>emptyList());
         fail("stubResponses cannot be empty");
     }
@@ -42,22 +42,22 @@ public class StubRuleTest {
     
     @Test
     public void constructor3() {
-        new StubRule(Collections.<Matcher<? super HttpServletRequest>>emptyList(), DUMB_RESPONSE);
+        new StubRule(Collections.<Matcher<? super Request>>emptyList(), DUMB_RESPONSE);
     }
     
     
     @Test
     public void matchedBy() {
         @SuppressWarnings("unchecked")
-        final Matcher<? super HttpServletRequest> m1 = mock(Matcher.class);
+        final Matcher<? super Request> m1 = mock(Matcher.class);
         
         when(m1.matches(any())).thenReturn(false);
         
         final StubRule rule = new StubRule(
-                Arrays.<Matcher<? super HttpServletRequest>>asList(anything(), m1, anything()), DUMB_RESPONSE);
+                Arrays.<Matcher<? super Request>>asList(anything(), m1, anything()), DUMB_RESPONSE);
         
           //one matcher returns false, this rule is not applicable
-        assertThat(rule.matchedBy(mock(HttpServletRequest.class)), is(false));
+        assertThat(rule.matchedBy(mock(Request.class)), is(false));
     }
     
     
@@ -66,7 +66,7 @@ public class StubRuleTest {
         final StubResponse r1 = new StubResponse();
         final StubResponse r2 = new StubResponse();
         
-        final StubRule rule = new StubRule(Collections.<Matcher<? super HttpServletRequest>>emptyList(),
+        final StubRule rule = new StubRule(Collections.<Matcher<? super Request>>emptyList(),
                 Arrays.asList(r1, r2));
         
         assertThat(rule.nextResponse(), is(r1));

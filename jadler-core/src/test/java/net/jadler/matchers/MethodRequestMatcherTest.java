@@ -4,9 +4,9 @@
  */
 package net.jadler.matchers;
 
+import net.jadler.stubbing.Request;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.mock.web.MockHttpServletRequest;
 import org.hamcrest.Matcher;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -15,6 +15,8 @@ import org.mockito.runners.MockitoJUnitRunner;
 import static org.junit.Assert.assertThat;
 import static net.jadler.matchers.MethodRequestMatcher.requestMethod;
 import static org.hamcrest.Matchers.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 
 @RunWith(MockitoJUnitRunner.class)
@@ -22,15 +24,15 @@ public class MethodRequestMatcherTest {
     
     private static final String METHOD = "GET";
 
-    private MockHttpServletRequest request;
+    private Request request;
     
     @Mock
     Matcher<String> mockMatcher;
 
     @Before
     public void setUp() throws Exception {
-        this.request = new MockHttpServletRequest();
-        this.request.setMethod(METHOD);
+        this.request = mock(Request.class);
+        when(request.getMethod()).thenReturn(METHOD);
     }
 
     @Test

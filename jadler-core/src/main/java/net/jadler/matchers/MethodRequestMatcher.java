@@ -4,7 +4,7 @@
  */
 package net.jadler.matchers;
 
-import javax.servlet.http.HttpServletRequest;
+import net.jadler.stubbing.Request;
 import org.hamcrest.Factory;
 import org.hamcrest.Matcher;
 
@@ -22,7 +22,7 @@ public class MethodRequestMatcher extends RequestMatcher<String> {
 
 
     @Override
-    protected String retrieveValue(final HttpServletRequest req) throws Exception {
+    protected String retrieveValue(final Request req) throws Exception {
         return req.getMethod();
     }
     

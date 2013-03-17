@@ -5,7 +5,8 @@
 package net.jadler.matchers;
 
 import net.jadler.exception.JadlerException;
-import javax.servlet.http.HttpServletRequest;
+
+import net.jadler.stubbing.Request;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.StringDescription;
@@ -16,7 +17,6 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.junit.Before;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.springframework.mock.web.MockHttpServletRequest;
 
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
@@ -75,7 +75,7 @@ public class RequestMatcherTest {
     @Test
     public void testDescribeMismatch() {
         final Matcher<?> rm = new TestRequestMatcher(mockInnerMatcher);
-        final HttpServletRequest req = new MockHttpServletRequest();
+        final Request req = mock(Request.class);
         final Description desc = new StringDescription();
         
         rm.describeMismatch(req, desc);
@@ -118,12 +118,12 @@ public class RequestMatcherTest {
     
     @Test(expected=JadlerException.class)
     public void matchesException() {
-        final MockHttpServletRequest request = new MockHttpServletRequest();
+        final Request request = mock(Request.class);
         
         final Matcher<?> rm = new TestRequestMatcher(mockInnerMatcher) {
 
             @Override
-            public Object retrieveValue(HttpServletRequest req) throws Exception {
+            public Object retrieveValue(Request req) throws Exception {
                 throw new Exception();
             }
         };
@@ -135,7 +135,7 @@ public class RequestMatcherTest {
 
     @Test
     public void matches() {
-        final MockHttpServletRequest request = new MockHttpServletRequest();
+        final Request request = mock(Request.class);
         
         when(this.mockInnerMatcher.matches(eq(RETRIEVED_VALUE))).thenReturn(true);
         
@@ -152,7 +152,7 @@ public class RequestMatcherTest {
     
     @Test
     public void notMatches() {
-        final MockHttpServletRequest request = new MockHttpServletRequest();
+        final Request request = mock(Request.class);
         
         when(this.mockInnerMatcher.matches(eq(RETRIEVED_VALUE))).thenReturn(false);
         
@@ -177,7 +177,7 @@ public class RequestMatcherTest {
         }
         
         @Override
-        public Object retrieveValue(final HttpServletRequest req) throws Exception {
+        public Object retrieveValue(final Request req) throws Exception {
             return RETRIEVED_VALUE;
         }
       

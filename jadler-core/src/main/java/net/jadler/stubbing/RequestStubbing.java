@@ -5,7 +5,6 @@
 package net.jadler.stubbing;
 
 import org.hamcrest.Matcher;
-import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 
@@ -21,7 +20,7 @@ public interface RequestStubbing {
      * @param predicate request predicate to be added to the <i>WHEN</i> part of this stubbing
      * @return this ongoing stubbing
      */
-    RequestStubbing that(Matcher<? super HttpServletRequest> predicate);
+    RequestStubbing that(Matcher<? super Request> predicate);
 
 
     /**

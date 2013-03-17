@@ -705,7 +705,7 @@ public class JadlerStubbingIntegrationTest {
      */
     @Test
     public void timeout() throws IOException {
-        onRequest().respond().withTimeout(3, TimeUnit.SECONDS);
+        onRequest().respond().withTimeout(1, TimeUnit.SECONDS);
         
         final GetMethod method = new GetMethod("http://localhost:" + port());
         
@@ -713,6 +713,6 @@ public class JadlerStubbingIntegrationTest {
         client.executeMethod(method);
         final long end = System.currentTimeMillis();
         final long dur = end - start;
-        assertThat(dur / 1000, is(greaterThanOrEqualTo(3L)));
+        assertThat(dur / 1000, is(greaterThanOrEqualTo(1L)));
     }
 }

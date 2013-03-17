@@ -8,9 +8,9 @@ import net.jadler.exception.JadlerException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
 import org.apache.commons.io.IOUtils;
 import org.hamcrest.Matcher;
-import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
@@ -39,7 +39,7 @@ public class Stubbing implements RequestStubbing, ResponseStubbing {
     
     private static final String CONTENT_TYPE_HEADER = "Content-Type";
 
-    private final List<Matcher<? super HttpServletRequest>> predicates;
+    private final List<Matcher<? super Request>> predicates;
     private final List<StubResponse> stubResponses;
     private final MultiMap defaultHeaders;
     private final int defaultStatus;
@@ -55,7 +55,7 @@ public class Stubbing implements RequestStubbing, ResponseStubbing {
     @SuppressWarnings("unchecked")
     Stubbing(final Charset defaultEncoding, final int defaultStatus, final MultiMap defaultHeaders) {
         
-        this.predicates = new ArrayList<Matcher<? super HttpServletRequest>>();
+        this.predicates = new ArrayList<Matcher<? super Request>>();
         this.stubResponses = new ArrayList<StubResponse>();
         this.defaultHeaders = new MultiValueMap();
         this.defaultHeaders.putAll(defaultHeaders);
@@ -68,7 +68,7 @@ public class Stubbing implements RequestStubbing, ResponseStubbing {
      * {@inheritDoc}
      */
     @Override
-    public RequestStubbing that(final Matcher<? super HttpServletRequest> predicate) {
+    public RequestStubbing that(final Matcher<? super Request> predicate) {
         Validate.notNull(predicate, "predicate cannot be null");
         
         this.predicates.add(predicate);
@@ -389,8 +389,8 @@ public class Stubbing implements RequestStubbing, ResponseStubbing {
      * package private getter for testing purposes
      * @return all registered predicates
      */
-    List<Matcher<? super HttpServletRequest>> getPredicates() {
-        return new ArrayList<Matcher<? super HttpServletRequest>>(this.predicates);
+    List<Matcher<? super Request>> getPredicates() {
+        return new ArrayList<Matcher<? super Request>>(this.predicates);
     }
     
     

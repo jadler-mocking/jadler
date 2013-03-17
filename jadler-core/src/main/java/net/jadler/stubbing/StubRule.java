@@ -4,11 +4,11 @@
  */
 package net.jadler.stubbing;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+
 import org.apache.commons.lang.Validate;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
@@ -33,7 +33,7 @@ import static org.hamcrest.Matchers.*;
  */
 public class StubRule {
 
-    private final Collection<Matcher<? super HttpServletRequest>> predicates;
+    private final Collection<Matcher<? super Request>> predicates;
     private final List<StubResponse> stubResponses;
     private int responsePointer = 0;
 
@@ -43,10 +43,10 @@ public class StubRule {
      * be matched by every request)
      * @param stubResponses list of stub response definitions. Must contain at least one stub response.
      */
-    public StubRule(final Collection<Matcher<? super HttpServletRequest>> predicates,
+    public StubRule(final Collection<Matcher<? super Request>> predicates,
             final List<StubResponse> stubResponses) {
         Validate.notNull(predicates, "predicates cannot be null, use an empty list instead");
-        this.predicates = new ArrayList<Matcher<? super HttpServletRequest>>(predicates);
+        this.predicates = new ArrayList<Matcher<? super Request>>(predicates);
         
         Validate.notEmpty(stubResponses, "at least one stub response must be defined");
         this.stubResponses = new ArrayList<StubResponse>(stubResponses);
@@ -58,7 +58,7 @@ public class StubRule {
      * @return true if and only if all predicates defined in this rule were evaluated to <tt>true</tt>
      * by the given request.
      */
-    public boolean matchedBy(final HttpServletRequest request) {
+    public boolean matchedBy(final Request request) {
         return allOf(this.predicates).matches(request);
     }
 
@@ -79,17 +79,17 @@ public class StubRule {
     
     /**
      * Returns a reason why the given request doesn't match this rule. This method should be called if
-     * and only if {@link  #matchedBy(javax.servlet.http.HttpServletRequest)} would returned <tt>false</tt>.
+     * and only if {@link  #matchedBy(Request)} would returned <tt>false</tt>.
      * However, this is not checked.
      * @param request an http request to describe the mismatch for
      * @return a human readable mismatch reason 
      */
-    public String describeMismatch(final HttpServletRequest request) {
+    public String describeMismatch(final Request request) {
         final Description desc = new StringDescription();
         
         boolean first = true;
-        for (final Iterator<Matcher<? super HttpServletRequest>> it = this.predicates.iterator(); it.hasNext();) {
-            final Matcher<? super HttpServletRequest> m = it.next();
+        for (final Iterator<Matcher<? super Request>> it = this.predicates.iterator(); it.hasNext();) {
+            final Matcher<? super Request> m = it.next();
             
             if (!m.matches(request)) {
                 if (!first) {
@@ -108,7 +108,7 @@ public class StubRule {
     public String toString() {
         final Description desc = new StringDescription();
         desc.appendText("WHEN request (\n");
-        for(final Iterator<Matcher<? super HttpServletRequest>> it = this.predicates.iterator(); it.hasNext();) {
+        for(final Iterator<Matcher<? super Request>> it = this.predicates.iterator(); it.hasNext();) {
             desc.appendText("  ");
             desc.appendDescriptionOf(it.next());
             if (it.hasNext()) {

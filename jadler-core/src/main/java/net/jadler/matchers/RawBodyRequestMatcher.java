@@ -4,7 +4,7 @@
  */
 package net.jadler.matchers;
 
-import javax.servlet.http.HttpServletRequest;
+import net.jadler.stubbing.Request;
 import org.apache.commons.io.IOUtils;
 import org.hamcrest.Factory;
 import org.hamcrest.Matcher;
@@ -19,8 +19,8 @@ public class RawBodyRequestMatcher extends RequestMatcher<byte[]> {
 
     
     @Override
-    protected byte[] retrieveValue(final HttpServletRequest req) throws Exception {
-        return IOUtils.toByteArray(req.getInputStream());
+    protected byte[] retrieveValue(final Request req) throws Exception {
+        return IOUtils.toByteArray(req.getBody());
     }
     
     

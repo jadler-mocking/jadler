@@ -4,8 +4,7 @@
  */
 package net.jadler.matchers;
 
-import javax.servlet.http.HttpServletRequest;
-import org.apache.commons.io.IOUtils;
+import net.jadler.stubbing.Request;
 import org.hamcrest.Factory;
 import org.hamcrest.Matcher;
 
@@ -21,8 +20,8 @@ public class BodyRequestMatcher extends RequestMatcher<String> {
 
     
     @Override
-    protected String retrieveValue(final HttpServletRequest req) throws Exception {
-        return IOUtils.toString(req.getReader());
+    protected String retrieveValue(final Request req) throws Exception {
+        return req.getBodyAsString();
     }
     
     
