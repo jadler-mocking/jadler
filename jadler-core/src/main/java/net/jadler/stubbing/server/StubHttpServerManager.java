@@ -7,6 +7,7 @@ package net.jadler.stubbing.server;
 
 /**
  * An implementation of this interface can manage an underlying stub http server.
+ * //TODO closable? Auto-closable?
  */
 public interface StubHttpServerManager {
         

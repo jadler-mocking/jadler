@@ -6,20 +6,17 @@ package net.jadler;
 
 import net.jadler.stubbing.server.StubHttpServerManager;
 import java.nio.charset.Charset;
+import java.util.List;
 import net.jadler.stubbing.Stubbing;
 import net.jadler.stubbing.StubRule;
 import net.jadler.stubbing.StubResponse;
 import net.jadler.stubbing.StubbingFactory;
-import java.util.Arrays;
-import java.util.Collections;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import net.jadler.exception.JadlerException;
 import net.jadler.stubbing.server.MultipleReadsHttpServletRequest;
 import net.jadler.stubbing.server.StubHttpServer;
 import org.apache.commons.collections.MultiMap;
 import org.apache.commons.collections.map.MultiValueMap;
-import org.hamcrest.Matcher;
 import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 
@@ -30,13 +27,11 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.anyInt;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.isA;
-import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
@@ -65,15 +60,41 @@ public class JadlerMockerTest {
         new JadlerMocker(mock(StubHttpServer.class));
     }
     
+
+    @Test(expected=IllegalArgumentException.class)
+    public void constructor3() {
+        new JadlerMocker(null, null);
+        fail("neither server nor stubbing factory can be null");
+    }
+    
+    
+    @Test(expected=IllegalArgumentException.class)
+    public void constructor4() {
+        new JadlerMocker(null, mock(StubbingFactory.class));
+        fail("server cannot be null");
+    }
+    
+    
+    @Test(expected=IllegalArgumentException.class)
+    public void constructor5() {
+        new JadlerMocker(mock(StubHttpServer.class), null);
+        fail("stubbing factory cannot be null");
+    }
+    
+    @Test
+    public void constructor6() {
+        new JadlerMocker(mock(StubHttpServer.class), mock(StubbingFactory.class));
+    }
+    
     
     @Test(expected=IllegalStateException.class)
-    public void startTwice() {
+    public void startNotStopped() {
         final JadlerMocker mocker = new JadlerMocker(mock(StubHttpServer.class));
         
         mocker.start();
         mocker.start();
         
-        fail("mocker cannot be started twice");
+        fail("mocker has been started already, cannot be started again without being stopped first");
     }
     
     
@@ -102,17 +123,6 @@ public class JadlerMockerTest {
     public void stopNotStarted() {
         new JadlerMocker(mock(StubHttpServer.class)).stop();
         fail("mocker cannot be stopped without being started");
-    }
-    
-    
-    @Test(expected=IllegalStateException.class)
-    public void stopTwice() {
-        final JadlerMocker mocker = new JadlerMocker(mock(StubHttpServer.class));
-        
-        mocker.start();
-        mocker.stop();
-        mocker.stop();
-        fail("mocker cannot be stopped twice");
     }
     
     
@@ -158,6 +168,7 @@ public class JadlerMockerTest {
     public void getStubHttpServerPortNotStarted() {       
         final StubHttpServerManager serverManager = new JadlerMocker(mock(StubHttpServer.class));
         serverManager.getStubHttpServerPort();
+        fail("server has not been started yet, cannot retrieve the port number");
     }
     
     
@@ -182,9 +193,58 @@ public class JadlerMockerTest {
     @Test(expected=IllegalStateException.class)
     public void setDefaultHeadersWrongState() {
         final JadlerMocker mocker = new JadlerMocker(mock(StubHttpServer.class));
+        
+          //calling provideStubResponseFor finishes the configuration phase, default headers cannot be set anymore
         mocker.provideStubResponseFor(prepareEmptyMockRequest());
+        
         mocker.setDefaultHeaders(new MultiValueMap());
-        fail("addDefaultHeaders cannot be called after provideResponseFor");
+        fail("default headers cannot be set anymore");
+    }
+    
+    
+    @Test
+    public void setDefaultHeaders() {
+        final JadlerMocker mocker = new JadlerMocker(mock(StubHttpServer.class));
+        mocker.setDefaultHeaders(new MultiValueMap());
+    }
+    
+    
+    @Test(expected=IllegalArgumentException.class)
+    public void addDefaultHeaderWrongParam1() {
+        new JadlerMocker(mock(StubHttpServer.class)).addDefaultHeader(null, "abcd");
+        fail("default header name cannot be null");
+    }
+    
+    
+    @Test(expected=IllegalArgumentException.class)
+    public void addDefaultHeaderWrongParam2() {
+        new JadlerMocker(mock(StubHttpServer.class)).addDefaultHeader("abcd", null);
+        fail("default header value cannot be null");
+    }
+    
+    
+    @Test(expected=IllegalStateException.class)
+    public void addDefaultHeaderWrongState() {
+        final JadlerMocker mocker = new JadlerMocker(mock(StubHttpServer.class));
+        
+          //calling provideStubResponseFor finishes the configuration phase, a default header cannot be added anymore
+        mocker.provideStubResponseFor(prepareEmptyMockRequest());
+        
+        mocker.addDefaultHeader("abcd", "efgh");
+        fail("default header cannot be added anymore");
+    }
+    
+    
+    @Test
+    public void addDefaultHeader1() {
+          //empty header value is valid
+        new JadlerMocker(mock(StubHttpServer.class)).addDefaultHeader("abcd", "");
+    }
+    
+    
+    @Test
+    public void addDefaultHeader2() {
+        new JadlerMocker(mock(StubHttpServer.class)).addDefaultHeader("abcd", "efgh");
     }
 
     
@@ -200,7 +260,14 @@ public class JadlerMockerTest {
         final JadlerMocker mocker = new JadlerMocker(mock(StubHttpServer.class));
         mocker.provideStubResponseFor(prepareEmptyMockRequest());
         mocker.setDefaultStatus(200);
-        fail("setDefaultStatus cannot be called after provideResponseFor");
+        fail("default status cannot be set anymore");
+    }
+    
+    
+    @Test
+    public void setDefaultStatus() {
+        final JadlerMocker mocker = new JadlerMocker(mock(StubHttpServer.class));
+        mocker.setDefaultStatus(200);
     }
     
     
@@ -215,62 +282,49 @@ public class JadlerMockerTest {
     public void setDefaultEncodingWrongState() {
         final JadlerMocker mocker = new JadlerMocker(mock(StubHttpServer.class));
         mocker.provideStubResponseFor(prepareEmptyMockRequest());
-        mocker.setDefaultEncoding(Charset.forName("UTF-8"));
-        fail("setDefaultStatus cannot be called after provideResponseFor");
-    }    
-    
-    
-    @Test(expected=IllegalStateException.class)
-    public void onRequestAfterFirstProvision() {
-        final JadlerMocker mocker = new JadlerMocker(mock(StubHttpServer.class));
-        
-        mocker.provideStubResponseFor(prepareEmptyMockRequest());
-        mocker.onRequest();
-        fail("The mocker has already provided first response, cannot be configured anymore");
+        mocker.setDefaultEncoding(DEFAULT_ENCODING);
+        fail("default encoding cannot be set anymore");
     }
     
     
     @Test
+    public void setDefaultEncoding() {
+        final JadlerMocker mocker = new JadlerMocker(mock(StubHttpServer.class));
+        mocker.setDefaultEncoding(DEFAULT_ENCODING);
+    } 
+    
+    
+    @Test(expected=IllegalStateException.class)
+    public void onRequestWrongState() {
+        final JadlerMocker mocker = new JadlerMocker(mock(StubHttpServer.class));
+        mocker.provideStubResponseFor(prepareEmptyMockRequest());
+        mocker.onRequest();
+        fail("The mocker has already provided first response, cannot do any stubbing anymore");
+    }
+    
+
+    @Test
     public void onRequest() {
-        final StubRule rule1 = new StubRule(Collections.<Matcher<? super HttpServletRequest>>emptyList(),
-                Arrays.asList(new StubResponse()));
-        final Stubbing stubbing1 = mock(Stubbing.class);
-        when(stubbing1.createRule()).thenReturn(rule1);
-        
-        final StubRule rule2 = new StubRule(Collections.<Matcher<? super HttpServletRequest>>emptyList(),
-                Arrays.asList(new StubResponse()));
-        final Stubbing stubbing2 = mock(Stubbing.class);
-        when(stubbing2.createRule()).thenReturn(rule2);
-        
+        final Stubbing stubbing = mock(Stubbing.class);
         final StubbingFactory sf = mock(StubbingFactory.class);
-        when(sf.createStubbing(any(Charset.class), anyInt(), any(MultiMap.class))).thenReturn(stubbing1, stubbing2);
+        when(sf.createStubbing(any(Charset.class), anyInt(), any(MultiMap.class))).thenReturn(stubbing);
         
         final StubHttpServer server = mock(StubHttpServer.class);
         final JadlerMocker mocker = new JadlerMocker(server, sf);
         
-          //calling the onRequest twice so stubbing1 and stubbing2 are created in the JadlerMocker instance
-        mocker.onRequest();
-        mocker.onRequest();
-          //calling provideResponseFor so mock rules are generated from stubing objects
+        final Stubbing result = (Stubbing) mocker.onRequest();
         
-        mocker.provideStubResponseFor(prepareEmptyMockRequest());
-        
-        assertThat(mocker.getHttpMockRules(), contains(rule1, rule2));
+        assertThat(result, is(stubbing));
     }
     
     
-    private MockHttpServletRequest prepareEmptyMockRequest() {
-        final MockHttpServletRequest req = new MockHttpServletRequest();
-          //the content must be set so the getInputStream() method doesn't return null
-        req.setContent(new byte[0]);
-        return req;
-    }
-    
-    
+    /*
+     * Tests that defaults (status, headers, encoding) are used correctly when creating a stubbing instance.
+     */
     @Test
     public void onRequestWithDefaults() {
         final StubHttpServer server = mock(StubHttpServer.class);
-        final StubbingFactory sf = spy(new StubbingFactory());
+        final StubbingFactory sf = mock(StubbingFactory.class);
         
         final JadlerMocker mocker = new JadlerMocker(server, sf);
         
@@ -282,73 +336,70 @@ public class JadlerMockerTest {
         mocker.setDefaultHeaders(defaultHeaders);
         mocker.setDefaultEncoding(DEFAULT_ENCODING);
 
-        
-          //ok, this is not a pure unit test, it depends on the Stubbing.respond() method as well.
-          //the response() method is called so a HttpMockResponse is created internally.
-        mocker.onRequest().respond();
+        mocker.onRequest();
         
           //verify the Stubbing instance was created with the given defaults
         verify(sf, times(1)).createStubbing(eq(DEFAULT_ENCODING), eq(DEFAULT_STATUS), eq(defaultHeaders));
-        verifyNoMoreInteractions(sf);
     }
     
     
+    /*
+     * Tests that if no default status is set, 200 is used as a super-default
+     */
     @Test
     public void onRequestNoDefaultStatus() {
         final StubHttpServer server = mock(StubHttpServer.class);
-        final StubbingFactory sf = spy(new StubbingFactory());
+        final StubbingFactory sf = mock(StubbingFactory.class);
         
         final JadlerMocker mocker = new JadlerMocker(server, sf);
         
-          //ok, this is not a pure unit test, it depends on the Stubbing.respond() method as well.
-          //the respond() method is called so a HttpMockResponse is created internally.
-        mocker.onRequest().respond();
+        mocker.onRequest();
         
-          //verify the Stubbing instance was created with empty default headers and default status
+          //verify the Stubbing instance was created with the default 200 response status
         verify(sf, times(1)).createStubbing(any(Charset.class), eq(HttpServletResponse.SC_OK), any(MultiMap.class));
-        verifyNoMoreInteractions(sf);
     }
     
     
+    /*
+     * 
+     */
     @Test
     public void onRequestNoDefaultEncoding() {
         final StubHttpServer server = mock(StubHttpServer.class);
-        final StubbingFactory sf = spy(new StubbingFactory());
+        final StubbingFactory sf = mock(StubbingFactory.class);
         
         final JadlerMocker mocker = new JadlerMocker(server, sf);
         
-          //ok, this is not a pure unit test, it depends on the Stubbing.respond() method as well.
-          //the respond() method is called so a HttpMockResponse is created internally.
-        mocker.onRequest().respond();
+        mocker.onRequest();
         
-          //verify the Stubbing instance was created with empty default headers and default status
+          //verify the Stubbing instance was created with the default UTF-8 response encoding
         verify(sf, times(1)).createStubbing(eq(Charset.forName("UTF-8")), anyInt(), any(MultiMap.class));
-        verifyNoMoreInteractions(sf);
     }
     
     
     @Test
     public void onRequestNoDefaultHeaders() {
         final StubHttpServer server = mock(StubHttpServer.class);
-        final StubbingFactory sf = spy(new StubbingFactory());
+        final StubbingFactory sf = mock(StubbingFactory.class);
         
         final JadlerMocker mocker = new JadlerMocker(server, sf);
         
-          //ok, this is not a pure unit test, it depends on the Stubbing.respond() method as well.
-          //the respond() method is called so a HttpMockResponse is created internally.
-        mocker.onRequest().respond();
+        mocker.onRequest();
         
-          //verify the Stubbing instance was created with empty default headers and default status
+          //verify the Stubbing instance was created with no default headers
         verify(sf, times(1)).createStubbing(any(Charset.class), anyInt(), eq(new MultiValueMap()));
-        verifyNoMoreInteractions(sf);
     }
     
+    
+    //following provideResponseFor() tests are far from being just standard unit tests since they
+    //need a cooperation of two or more JadlerMocker methods.
     
     @Test
     public void provideResponseFor() {
         final MockHttpServletRequest req = prepareEmptyMockRequest();
     
-          //exactly 1 rule matches
+          //rule1 matches the given request (param of the provideResponseFor method) so it must be returned from
+          //the tested method
         final StubRule rule1 = mock(StubRule.class);
         final Stubbing stubbing1 = mock(Stubbing.class);
         when(stubbing1.createRule()).thenReturn(rule1);
@@ -356,19 +407,19 @@ public class JadlerMockerTest {
         final StubResponse resp1 = new StubResponse();
         when(rule1.nextResponse()).thenReturn(resp1);
         
+          //rule2 doesn't match the given request
         final StubRule rule2  = mock(StubRule.class);
         final Stubbing stubbing2 = mock(Stubbing.class);
         when(stubbing2.createRule()).thenReturn(rule2);
         when(rule2.matchedBy(isA(MultipleReadsHttpServletRequest.class))).thenReturn(false);
         
         final StubbingFactory sf = mock(StubbingFactory.class);
-        when(sf.createStubbing(any(Charset.class), anyInt(), any(MultiMap.class)))
-                .thenReturn(stubbing1, stubbing2);
+        when(sf.createStubbing(any(Charset.class), anyInt(), any(MultiMap.class))).thenReturn(stubbing1, stubbing2);
         
         final StubHttpServer server = mock(StubHttpServer.class);
         final JadlerMocker mocker = new JadlerMocker(server, sf);
         
-          //calling the onRequest twice so stubbing1 and stubbing2 are created in the JadlerMocker instance
+          //calling onRequest twice so stubbing1 and stubbing2 are created in the JadlerMocker instance
         mocker.onRequest();
         mocker.onRequest();
         
@@ -380,7 +431,7 @@ public class JadlerMockerTest {
     public void provideResponseFor2() {
         final MockHttpServletRequest req = prepareEmptyMockRequest();
         
-          //no rule matches
+          //neither rule1 nor rule2 matches, default not-found response must be returned
         final StubRule rule1 = mock(StubRule.class);
         final Stubbing stubbing1 = mock(Stubbing.class);
         when(stubbing1.createRule()).thenReturn(rule1);
@@ -399,7 +450,7 @@ public class JadlerMockerTest {
         final StubHttpServer server = mock(StubHttpServer.class);
         final JadlerMocker mocker = new JadlerMocker(server, sf);
         
-          //calling the onRequest twice so stubbing1 and stubbing2 are created in the JadlerMocker instance
+          //calling onRequest twice so stubbing1 and stubbing2 are created in the JadlerMocker instance
         mocker.onRequest();
         mocker.onRequest();
         
@@ -408,6 +459,9 @@ public class JadlerMockerTest {
         assertThat(res.getStatus(), is(404));
         assertThat(res.getTimeout(), is(0L));
         assertThat(res.getBody(), is("No stub response found for the incoming request".getBytes()));
+        assertThat(res.getEncoding(), is(Charset.forName("UTF-8")));
+        assertThat(res.getHeaders().size(), is(1));
+        assertThat((String)((List) res.getHeaders().get("Content-Type")).get(0), is("text/plain; charset=utf-8"));
     }
     
     
@@ -415,7 +469,7 @@ public class JadlerMockerTest {
     public void provideResponseFor3() {
         final MockHttpServletRequest req = prepareEmptyMockRequest();
         
-          //two rules matches, the latter must be provided
+          //both rules matches the request, the latter must be provided
         final StubRule rule1 = mock(StubRule.class);
         final Stubbing stubbing1 = mock(Stubbing.class);
         when(stubbing1.createRule()).thenReturn(rule1);
@@ -437,10 +491,18 @@ public class JadlerMockerTest {
         final StubHttpServer server = mock(StubHttpServer.class);
         final JadlerMocker mocker = new JadlerMocker(server, sf);
         
-          //calling the onRequest twice so stubbing1 and stubbing2 are created in the JadlerMocker instance
+          //calling onRequest twice so stubbing1 and stubbing2 are created in the JadlerMocker instance
         mocker.onRequest();
         mocker.onRequest();
         
         assertThat(mocker.provideStubResponseFor(req), is(resp2));
+    }
+    
+    
+    private MockHttpServletRequest prepareEmptyMockRequest() {
+        final MockHttpServletRequest req = new MockHttpServletRequest();
+          //the content must be set so the getInputStream() method doesn't return null
+        req.setContent(new byte[0]);
+        return req;
     }
 }
