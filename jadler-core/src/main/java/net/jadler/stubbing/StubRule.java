@@ -18,6 +18,7 @@ import static org.hamcrest.Matchers.*;
 
 
 /**
+ * TODO: shouldn't this be called HttpStub instead of StubRule?
  * A stub rule is a <i>WHEN</i>-<i>THEN</i> pair (when a http request with specific properties arrives, then respond
  * with a defined http response).
  * The <i>WHEN<i> part is a list of predicates (in form of Hamcrest matchers) applied to a request. All of these

@@ -32,18 +32,18 @@ import org.slf4j.LoggerFactory;
 
 
 /**
- * This class represents the very hearth of the Jadler library. It acts as a great {@link Stubber} providing
+ * <p>This class represents the very hearth of the Jadler library. It acts as a great {@link Stubber} providing
  * a way to create new http stubs, {@link StubHttpServerManager} allowing the client to manage the state
  * of the underlying stub http server and {@link StubResponseProvider} providing stub response definitions
- * according to a given http request.
- * <br /><br />
- * An underlying stub http server instance is registered to an instance of this class during the instantiation.
- * <br /><br />
- * Normally you shouldn't create instances of this on your own, use the {@link Jadler} facade instead.
+ * according to a given http request.</p>
+ * 
+ * <p>An underlying stub http server instance is registered to an instance of this class during the instantiation.</p>
+ * 
+ * <p>Normally you shouldn't create instances of this on your own, use the {@link Jadler} facade instead.
  * However, if more http stub servers are needed in one execution thread (for example two http stub servers
- * listening on different ports) have no fear, go ahead and create more two or more instances directly.
- * <br /><br />
- * This class is stateful and thread-safe.
+ * listening on different ports) have no fear, go ahead and create more two or more instances directly.</p>
+ * 
+ * <p>This class is stateful and thread-safe.</p>
  */
 public class JadlerMocker implements StubHttpServerManager, Stubber, StubResponseProvider {
 
@@ -107,17 +107,6 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, StubRespons
      * {@inheritDoc}
      */
     @Override
-    public int getStubHttpServerPort() {
-        if (!this.started) {
-            throw new IllegalStateException("The stub http server hasn't been started yet.");
-        }
-        return server.getPort();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     public void start() {
         if (this.started){
             throw new IllegalStateException("The stub server has been started already.");
@@ -163,6 +152,18 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, StubRespons
     public boolean isStarted() {
         return this.started;
     }
+    
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int getStubHttpServerPort() {
+        if (!this.started) {
+            throw new IllegalStateException("The stub http server hasn't been started yet.");
+        }
+        return server.getPort();
+    }
 
 
     /**
@@ -185,7 +186,7 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, StubRespons
      */
     public void addDefaultHeader(final String name, final String value) {
         Validate.notEmpty(name, "header name cannot be empty");
-        Validate.notNull("header value cannot be null, use an empty string instead");
+        Validate.notNull(value, "header value cannot be null, use an empty string instead");
         this.checkConfigurable();
         this.defaultHeaders.put(name, value);
     }
@@ -273,15 +274,6 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, StubRespons
         logger.info(sb.toString());
         
         return NO_RULE_FOUND_RESPONSE;
-    }
-
-    
-    /**
-     * package private getter useful for testing
-     * @return deque of created http stub rules
-     */
-    Deque<StubRule> getHttpMockRules() {
-        return httpStubRules;
     }
     
     
