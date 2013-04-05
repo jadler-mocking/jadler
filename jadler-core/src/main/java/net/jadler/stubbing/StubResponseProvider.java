@@ -4,7 +4,7 @@
  */
 package net.jadler.stubbing;
 
-import javax.servlet.http.HttpServletRequest;
+import net.jadler.Request;
 
 
 /**
@@ -16,5 +16,5 @@ public interface StubResponseProvider {
      * @param req http request to return a stub response for
      * @return definition of a stub response to be returned by the stub http server (never returns <tt>null</tt>)
      */
-    StubResponse provideStubResponseFor(HttpServletRequest req);
+    StubResponse provideStubResponseFor(Request req);
 }

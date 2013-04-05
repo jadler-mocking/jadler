@@ -434,8 +434,7 @@ public final class Jadler {
         checkInitialized();
         return jadlerMockerContainer.get().onRequest();
     }
-    
-    
+
     private static void checkInitialized() {
         if (jadlerMockerContainer.get() == null) {
             throw new IllegalStateException("Jadler has not been initialized yet.");

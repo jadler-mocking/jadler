@@ -4,6 +4,8 @@
  */
 package net.jadler.matchers;
 
+
+import java.net.URI;
 import net.jadler.Request;
 import org.junit.Before;
 import org.junit.Test;
@@ -13,36 +15,39 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import static org.junit.Assert.assertThat;
-import static net.jadler.matchers.MethodRequestMatcher.requestMethod;
+import static net.jadler.matchers.URIRequestMatcher.requestURI;
 import static org.hamcrest.Matchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 
 @RunWith(MockitoJUnitRunner.class)
-public class MethodRequestMatcherTest {
-    
-    private static final String METHOD = "GET";
+public class URIRequestMatcherTest {
+
+    private static final String PATH = "/a/%C5%99";
 
     private Request request;
     
     @Mock
-    Matcher<String> mockMatcher;
+    private Matcher<String> mockMatcher;
+
 
     @Before
     public void setUp() throws Exception {
         this.request = mock(Request.class);
-        when(request.getMethod()).thenReturn(METHOD);
     }
 
-    @Test
+
+   @Test
     public void retrieveValue() throws Exception {
-        assertThat(requestMethod(mockMatcher).retrieveValue(request), is(METHOD));
+        when(request.getURI()).thenReturn(new URI("http://localhost" + PATH));
+        assertThat(requestURI(mockMatcher).retrieveValue(request), is(PATH));
     }
     
     
     @Test
     public void provideDescription() {
-        assertThat(requestMethod(mockMatcher).provideDescription(), is("method is"));
+        assertThat(requestURI(mockMatcher).provideDescription(), is("URI is"));
     }
+
 }

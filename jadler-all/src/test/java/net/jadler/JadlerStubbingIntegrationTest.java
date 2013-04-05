@@ -347,13 +347,13 @@ public class JadlerStubbingIntegrationTest {
     @Test
     public void havingQueryString() throws Exception {
         onRequest()
-            .havingQueryStringEqualTo("p1=v1&p2=v2")
+            .havingQueryStringEqualTo("p1=v1&p2=v2&name=%C5%99eho%C5%99")
             .havingQueryString(not(isEmptyOrNullString()))
             .havingQueryString(anything())
         .respond()
             .withStatus(201);
         
-        final GetMethod method = new GetMethod("http://localhost:" + port() + "?p1=v1&p2=v2");
+        final GetMethod method = new GetMethod("http://localhost:" + port() + "?p1=v1&p2=v2&name=%C5%99eho%C5%99");
 
         int status = client.executeMethod(method);
         assertThat(status, is(201));
@@ -384,12 +384,12 @@ public class JadlerStubbingIntegrationTest {
     @Test
     public void havingURI() throws Exception {
         onRequest()
-            .havingURIEqualTo("/a/b/c/d")
+            .havingURIEqualTo("/a/b/c/d/%C5%99")
             .havingURI(notNullValue())
         .respond()
             .withStatus(201);
         
-        final GetMethod method = new GetMethod("http://localhost:" + port() + "/a/b/c/d");
+        final GetMethod method = new GetMethod("http://localhost:" + port() + "/a/b/c/d/%C5%99");
 
         int status = client.executeMethod(method);
         assertThat(status, is(201));
@@ -705,7 +705,7 @@ public class JadlerStubbingIntegrationTest {
      */
     @Test
     public void timeout() throws IOException {
-        onRequest().respond().withTimeout(3, TimeUnit.SECONDS);
+        onRequest().respond().withTimeout(1, TimeUnit.SECONDS);
         
         final GetMethod method = new GetMethod("http://localhost:" + port());
         
@@ -713,6 +713,6 @@ public class JadlerStubbingIntegrationTest {
         client.executeMethod(method);
         final long end = System.currentTimeMillis();
         final long dur = end - start;
-        assertThat(dur / 1000, is(greaterThanOrEqualTo(3L)));
+        assertThat(dur / 1000, is(greaterThanOrEqualTo(1L)));
     }
 }

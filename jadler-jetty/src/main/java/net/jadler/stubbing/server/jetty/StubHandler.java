@@ -17,6 +17,7 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 import javax.servlet.ServletOutputStream;
 import org.apache.commons.collections.MultiMap;
+import org.apache.commons.lang.Validate;
 
 
 public class StubHandler extends AbstractHandler {
@@ -24,6 +25,7 @@ public class StubHandler extends AbstractHandler {
     private final StubResponseProvider ruleProvider;
 
     public StubHandler(final StubResponseProvider ruleProvider) {
+        Validate.notNull(ruleProvider, "ruleProvider cannot be null");
         this.ruleProvider = ruleProvider;
     }
 
@@ -33,7 +35,9 @@ public class StubHandler extends AbstractHandler {
                        HttpServletRequest request, HttpServletResponse response)
             throws IOException, ServletException {
 
-        final StubResponse stubResponse = this.ruleProvider.provideStubResponseFor(request);
+        net.jadler.Request req = RequestUtils.convert(request);
+
+        final StubResponse stubResponse = this.ruleProvider.provideStubResponseFor(req);
         setResponseHeaders(stubResponse.getHeaders(), response);
         setStatus(stubResponse.getStatus(), response);
         processTimeout(stubResponse.getTimeout());

@@ -4,7 +4,7 @@
  */
 package net.jadler.matchers;
 
-import javax.servlet.http.HttpServletRequest;
+import net.jadler.Request;
 import org.hamcrest.Factory;
 import org.hamcrest.Matcher;
 
@@ -20,8 +20,8 @@ public class URIRequestMatcher extends RequestMatcher<String> {
 
 
     @Override
-    public String retrieveValue(final HttpServletRequest req) throws Exception {
-        return req.getRequestURI();
+    public String retrieveValue(final Request req) throws Exception {
+        return req.getURI().getRawPath();
     }
     
     
