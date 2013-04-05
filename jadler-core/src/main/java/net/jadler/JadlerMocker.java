@@ -4,7 +4,6 @@
  */
 package net.jadler;
 
-import net.jadler.stubbing.Request;
 import net.jadler.stubbing.Stubber;
 import net.jadler.stubbing.server.StubHttpServerManager;
 import net.jadler.stubbing.StubResponseProvider;

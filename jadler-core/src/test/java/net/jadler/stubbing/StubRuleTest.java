@@ -4,6 +4,7 @@
  */
 package net.jadler.stubbing;
 
+import net.jadler.Request;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -47,8 +48,8 @@ public class StubRuleTest {
     
     
     @Test
+    @SuppressWarnings("unchecked")
     public void matchedBy() {
-        @SuppressWarnings("unchecked")
         final Matcher<? super Request> m1 = mock(Matcher.class);
         
         when(m1.matches(any())).thenReturn(false);

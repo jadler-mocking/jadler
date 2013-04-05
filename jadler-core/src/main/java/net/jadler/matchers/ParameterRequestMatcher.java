@@ -6,7 +6,7 @@ package net.jadler.matchers;
 
 import java.util.List;
 
-import net.jadler.stubbing.Request;
+import net.jadler.Request;
 import org.apache.commons.lang.Validate;
 import org.hamcrest.Factory;
 import org.hamcrest.Matcher;
@@ -30,7 +30,7 @@ public class ParameterRequestMatcher extends RequestMatcher<List<String>> {
 
     @Override
     protected List<String> retrieveValue(final Request req) throws Exception {
-        return req.getParameters(this.paramName);
+        return req.getParameterValues(this.paramName);
     }
     
     

@@ -4,6 +4,7 @@
  */
 package net.jadler.stubbing;
 
+import net.jadler.Request;
 import org.hamcrest.Matcher;
 import java.util.List;
 

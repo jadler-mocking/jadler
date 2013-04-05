@@ -4,6 +4,7 @@
  */
 package net.jadler;
 
+import java.net.URI;
 import net.jadler.stubbing.server.StubHttpServerManager;
 import java.nio.charset.Charset;
 import java.util.List;
@@ -11,14 +12,11 @@ import net.jadler.stubbing.Stubbing;
 import net.jadler.stubbing.StubRule;
 import net.jadler.stubbing.StubResponse;
 import net.jadler.stubbing.StubbingFactory;
-import javax.servlet.http.HttpServletResponse;
 import net.jadler.exception.JadlerException;
-import net.jadler.stubbing.server.MultipleReadsHttpServletRequest;
 import net.jadler.stubbing.server.StubHttpServer;
 import org.apache.commons.collections.MultiMap;
 import org.apache.commons.collections.map.MultiValueMap;
 import org.junit.Test;
-import org.springframework.mock.web.MockHttpServletRequest;
 
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
@@ -31,7 +29,6 @@ import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.anyInt;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.isA;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
@@ -356,7 +353,7 @@ public class JadlerMockerTest {
         mocker.onRequest();
         
           //verify the Stubbing instance was created with the default 200 response status
-        verify(sf, times(1)).createStubbing(any(Charset.class), eq(HttpServletResponse.SC_OK), any(MultiMap.class));
+        verify(sf, times(1)).createStubbing(any(Charset.class), eq(200), any(MultiMap.class));
     }
     
     
@@ -396,14 +393,14 @@ public class JadlerMockerTest {
     
     @Test
     public void provideResponseFor() {
-        final MockHttpServletRequest req = prepareEmptyMockRequest();
+        final Request req = prepareEmptyMockRequest();
     
           //rule1 matches the given request (param of the provideResponseFor method) so it must be returned from
           //the tested method
         final StubRule rule1 = mock(StubRule.class);
         final Stubbing stubbing1 = mock(Stubbing.class);
         when(stubbing1.createRule()).thenReturn(rule1);
-        when(rule1.matchedBy(isA(MultipleReadsHttpServletRequest.class))).thenReturn(true);
+        when(rule1.matchedBy(eq(req))).thenReturn(true);
         final StubResponse resp1 = new StubResponse();
         when(rule1.nextResponse()).thenReturn(resp1);
         
@@ -411,7 +408,7 @@ public class JadlerMockerTest {
         final StubRule rule2  = mock(StubRule.class);
         final Stubbing stubbing2 = mock(Stubbing.class);
         when(stubbing2.createRule()).thenReturn(rule2);
-        when(rule2.matchedBy(isA(MultipleReadsHttpServletRequest.class))).thenReturn(false);
+        when(rule2.matchedBy(eq(req))).thenReturn(false);
         
         final StubbingFactory sf = mock(StubbingFactory.class);
         when(sf.createStubbing(any(Charset.class), anyInt(), any(MultiMap.class))).thenReturn(stubbing1, stubbing2);
@@ -429,19 +426,19 @@ public class JadlerMockerTest {
     
     @Test
     public void provideResponseFor2() {
-        final MockHttpServletRequest req = prepareEmptyMockRequest();
+        final Request req = prepareEmptyMockRequest();
         
           //neither rule1 nor rule2 matches, default not-found response must be returned
         final StubRule rule1 = mock(StubRule.class);
         final Stubbing stubbing1 = mock(Stubbing.class);
         when(stubbing1.createRule()).thenReturn(rule1);
-        when(rule1.matchedBy(isA(MultipleReadsHttpServletRequest.class))).thenReturn(false);
+        when(rule1.matchedBy(eq(req))).thenReturn(false);
         
         
         final StubRule rule2  = mock(StubRule.class);
         final Stubbing stubbing2 = mock(Stubbing.class);
         when(stubbing2.createRule()).thenReturn(rule2);
-        when(rule2.matchedBy(isA(MultipleReadsHttpServletRequest.class))).thenReturn(false);
+        when(rule2.matchedBy(eq(req))).thenReturn(false);
         
         final StubbingFactory sf = mock(StubbingFactory.class);
         when(sf.createStubbing(any(Charset.class), anyInt(), any(MultiMap.class)))
@@ -467,20 +464,20 @@ public class JadlerMockerTest {
     
     @Test
     public void provideResponseFor3() {
-        final MockHttpServletRequest req = prepareEmptyMockRequest();
+        final Request req = prepareEmptyMockRequest();
         
           //both rules matches the request, the latter must be provided
         final StubRule rule1 = mock(StubRule.class);
         final Stubbing stubbing1 = mock(Stubbing.class);
         when(stubbing1.createRule()).thenReturn(rule1);
-        when(rule1.matchedBy(isA(MultipleReadsHttpServletRequest.class))).thenReturn(true);
+        when(rule1.matchedBy(eq(req))).thenReturn(true);
         final StubResponse resp1 = new StubResponse();
         when(rule1.nextResponse()).thenReturn(resp1);
         
         final StubRule rule2  = mock(StubRule.class);
         final Stubbing stubbing2 = mock(Stubbing.class);
         when(stubbing2.createRule()).thenReturn(rule2);
-        when(rule2.matchedBy(isA(MultipleReadsHttpServletRequest.class))).thenReturn(true);
+        when(rule2.matchedBy(eq(req))).thenReturn(true);
         final StubResponse resp2 = new StubResponse();
         when(rule2.nextResponse()).thenReturn(resp2);
         
@@ -499,10 +496,10 @@ public class JadlerMockerTest {
     }
     
     
-    private MockHttpServletRequest prepareEmptyMockRequest() {
-        final MockHttpServletRequest req = new MockHttpServletRequest();
-          //the content must be set so the getInputStream() method doesn't return null
-        req.setContent(new byte[0]);
-        return req;
+    private Request prepareEmptyMockRequest() {
+        return new Request.Builder()
+                .method("GET")
+                .requestURI(URI.create("http://localhost/"))
+                .build();
     }
 }

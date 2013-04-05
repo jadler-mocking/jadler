@@ -5,7 +5,7 @@
 package net.jadler.matchers;
 
 import net.jadler.exception.JadlerException;
-import net.jadler.stubbing.Request;
+import net.jadler.Request;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;

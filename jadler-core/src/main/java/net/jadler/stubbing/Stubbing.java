@@ -4,6 +4,7 @@
  */
 package net.jadler.stubbing;
 
+import net.jadler.Request;
 import net.jadler.exception.JadlerException;
 import java.util.ArrayList;
 import java.util.List;

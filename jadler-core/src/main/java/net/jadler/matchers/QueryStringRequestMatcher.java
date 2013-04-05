@@ -4,7 +4,7 @@
  */
 package net.jadler.matchers;
 
-import net.jadler.stubbing.Request;
+import net.jadler.Request;
 import org.hamcrest.Factory;
 import org.hamcrest.Matcher;
 
@@ -23,7 +23,7 @@ public class QueryStringRequestMatcher extends RequestMatcher<String> {
     
     @Override
     public String retrieveValue(final Request req) throws Exception {
-        return req.getQueryString();
+        return req.getURI().getRawQuery();
     }
     
     

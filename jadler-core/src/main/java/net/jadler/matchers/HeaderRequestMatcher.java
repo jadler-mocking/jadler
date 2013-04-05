@@ -6,7 +6,7 @@ package net.jadler.matchers;
 
 import java.util.List;
 
-import net.jadler.stubbing.Request;
+import net.jadler.Request;
 import org.apache.commons.lang.Validate;
 import org.hamcrest.Factory;
 import org.hamcrest.Matcher;
@@ -30,8 +30,7 @@ public class HeaderRequestMatcher extends RequestMatcher<List<String>> {
 
     @Override
     protected List<String> retrieveValue(final Request req) throws Exception {
-        List<String> headers = req.getHeaders(this.headerName);
-        return ((headers != null) && !headers.isEmpty()) ? headers : null;
+        return req.getHeaderValues(this.headerName);
     }
     
     

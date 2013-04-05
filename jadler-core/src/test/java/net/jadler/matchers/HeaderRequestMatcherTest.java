@@ -4,7 +4,7 @@
  */
 package net.jadler.matchers;
 
-import net.jadler.stubbing.Request;
+import net.jadler.Request;
 import org.junit.Before;
 import org.junit.Test;
 import org.hamcrest.Matcher;
@@ -38,7 +38,8 @@ public class HeaderRequestMatcherTest {
     @Before
     public void setUp() throws Exception {
         this.request = mock(Request.class);
-        when(request.getHeaders(HEADER_NAME)).thenReturn(asList(HEADER_VALUE1, HEADER_VALUE2));
+        when(request.getHeaderValues(HEADER_NAME)).thenReturn(asList(HEADER_VALUE1, HEADER_VALUE2));
+        when(request.getHeaderValues(UNDEFINED_HEADER)).thenReturn(null);
     }
     
     

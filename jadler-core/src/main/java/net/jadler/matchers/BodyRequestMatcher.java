@@ -4,7 +4,7 @@
  */
 package net.jadler.matchers;
 
-import net.jadler.stubbing.Request;
+import net.jadler.Request;
 import org.hamcrest.Factory;
 import org.hamcrest.Matcher;
 

@@ -4,7 +4,7 @@
  */
 package net.jadler.matchers;
 
-import net.jadler.stubbing.Request;
+import net.jadler.Request;
 import org.junit.Before;
 import org.junit.Test;
 import org.hamcrest.Matcher;
@@ -35,7 +35,7 @@ public class RawBodyRequestMatcherTest {
     @Before
     public void setUp() {
         this.request = mock(Request.class);
-        when(request.getBody()).thenReturn(new ByteArrayInputStream(BODY.getBytes()));
+        when(request.getBodyAsStream()).thenReturn(new ByteArrayInputStream(BODY.getBytes()));
     }
 
     

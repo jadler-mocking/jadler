@@ -4,6 +4,7 @@
  */
 package net.jadler.stubbing;
 
+import net.jadler.Request;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;

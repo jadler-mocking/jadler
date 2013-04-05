@@ -7,7 +7,6 @@ package net.jadler;
 import java.nio.charset.Charset;
 import net.jadler.exception.JadlerException;
 import net.jadler.stubbing.RequestStubbing;
-import net.jadler.stubbing.Request;
 import net.jadler.stubbing.server.StubHttpServerManager;
 import net.jadler.stubbing.server.StubHttpServer;
 import net.jadler.stubbing.ResponseStubbing;

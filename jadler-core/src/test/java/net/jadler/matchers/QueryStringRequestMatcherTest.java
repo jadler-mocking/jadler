@@ -5,7 +5,8 @@
 package net.jadler.matchers;
 
 
-import net.jadler.stubbing.Request;
+import java.net.URI;
+import net.jadler.Request;
 import org.junit.Before;
 import org.junit.Test;
 import org.hamcrest.Matcher;
@@ -23,7 +24,7 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class QueryStringRequestMatcherTest {
 
-    private static final String QUERY = "id%5Bgt%5D=1800004238&dir=asc&limit=10";
+    private static final String QUERY = "name=%C5%99eho%C5%99";
 
     private Request request;
     
@@ -39,14 +40,22 @@ public class QueryStringRequestMatcherTest {
 
    @Test
     public void retrieveValue() throws Exception {
-        when(request.getQueryString()).thenReturn(QUERY);
+        when(request.getURI()).thenReturn(new URI("http://localhost?" + QUERY));
         assertThat(requestQueryString(mockMatcher).retrieveValue(request), is(QUERY));
     }
    
    
     @Test
     public void retrieveValueNoQueryString() throws Exception {
+        when(request.getURI()).thenReturn(new URI("http://localhost"));
         assertThat(requestQueryString(mockMatcher).retrieveValue(request), is(nullValue()));
+    }
+    
+    
+    @Test
+    public void retrieveValueEmptyQueryString() throws Exception {
+        when(request.getURI()).thenReturn(new URI("http://localhost?"));
+        assertThat(requestQueryString(mockMatcher).retrieveValue(request), is(""));
     }
     
     

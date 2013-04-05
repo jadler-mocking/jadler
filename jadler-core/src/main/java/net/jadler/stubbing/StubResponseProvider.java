@@ -4,6 +4,8 @@
  */
 package net.jadler.stubbing;
 
+import net.jadler.Request;
+
 
 /**
  * A component which provides stub http response definitions for the given http request.

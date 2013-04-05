@@ -4,6 +4,7 @@
  */
 package net.jadler.stubbing;
 
+import net.jadler.Request;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;

@@ -4,7 +4,7 @@
  */
 package net.jadler.matchers;
 
-import net.jadler.stubbing.Request;
+import net.jadler.Request;
 import org.junit.Before;
 import org.junit.Test;
 import org.hamcrest.Matcher;
@@ -42,9 +42,9 @@ public class ParameterRequestMatcherTest {
     @Before
     public void setUp() throws Exception {
         this.request = mock(Request.class);
-        when(request.getParameters(PARAMETER_NAME)).thenReturn(asList(PARAMETER_VALUE1, PARAMETER_VALUE2));
-        when(request.getParameters(NO_VALUE_PARAMETER_NAME)).thenReturn(Collections.<String>emptyList());
-        when(request.getParameters(UNDEFINED_PARAMETER)).thenReturn(null);
+        when(request.getParameterValues(PARAMETER_NAME)).thenReturn(asList(PARAMETER_VALUE1, PARAMETER_VALUE2));
+        when(request.getParameterValues(NO_VALUE_PARAMETER_NAME)).thenReturn(Collections.<String>emptyList());
+        when(request.getParameterValues(UNDEFINED_PARAMETER)).thenReturn(null);
     }
     
     
