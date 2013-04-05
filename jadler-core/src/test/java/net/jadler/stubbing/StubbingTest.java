@@ -4,6 +4,7 @@
  */
 package net.jadler.stubbing;
 
+import net.jadler.Request;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,7 +25,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import javax.servlet.http.HttpServletRequest;
 import java.io.Reader;
 import java.io.StringReader;
 import java.nio.charset.Charset;
@@ -70,7 +70,7 @@ public class StubbingTest {
         this.stubbing.that(matcher);
 
           //Fuck Java generics. This thing is sick.
-        this.assertOneMatcher(Matchers.<Matcher<? super HttpServletRequest>>equalTo(matcher));
+        this.assertOneMatcher(Matchers.<Matcher<? super Request>>equalTo(matcher));
     }
 
 
@@ -359,7 +359,7 @@ public class StubbingTest {
     }
 
 
-    private void assertOneMatcher(final Matcher<? super Matcher<? super HttpServletRequest>> matcher) {
+    private void assertOneMatcher(final Matcher<? super Matcher<? super Request>> matcher) {
         assertThat(this.stubbing.getPredicates(), is(notNullValue()));
         assertThat(this.stubbing.getPredicates(), hasSize(1));
 
