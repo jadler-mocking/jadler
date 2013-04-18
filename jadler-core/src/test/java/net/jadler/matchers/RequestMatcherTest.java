@@ -103,7 +103,7 @@ public class RequestMatcherTest {
     @Test
     public void matchesObject() {
         final Matcher<?> rm = new TestRequestMatcher(mockInnerMatcher);
-          //it's not a HttpServletRequest instance, must be false
+          //it's not a Request instance, must be false
         assertThat(rm.matches(new Object()), is(false));
     }
     
@@ -111,7 +111,7 @@ public class RequestMatcherTest {
     @Test
     public void matchesNull() {
         final Matcher<?> rm = new TestRequestMatcher(mockInnerMatcher);
-          //it's not a HttpServletRequest instance, must be false
+          //it's not a Request instance, must be false
         assertThat(rm.matches(null), is(false));
     }
     
@@ -128,7 +128,6 @@ public class RequestMatcherTest {
             }
         };
         
-          //since the value retrieval ended by throwing an exception, the result must be false
         rm.matches(request);
     }
     

@@ -10,9 +10,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
-import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
@@ -83,7 +81,7 @@ public class Request {
     
     /**
      * Returns the first value of the given request header.
-     * @param name header name
+     * @param name header name (case insensitive)
      * @return single (first) value of the given header or null, if there is no such a header in this request
      */
     public String getHeaderValue(final String name) {
@@ -94,7 +92,7 @@ public class Request {
     
     /**
      * Returns all values of the given request header.
-     * @param name header name
+     * @param name header name (case insensitive)
      * @return all values of the given header or null, if there is no such a header in this request 
      */
     public List<String> getHeaderValues(final String name) {
@@ -107,7 +105,7 @@ public class Request {
     
     
     /**
-     * @return all header names of this request (never returns <tt>null</tt>)
+     * @return all header names (lower-cased) of this request (never returns {@code null})
      */
     public Set<String> getHeaderNames() {
         @SuppressWarnings("unchecked")
@@ -195,7 +193,7 @@ public class Request {
     
 
     private MultiMap readParametersFromQueryString() {
-        return this.readParametersFromString(this.requestURI.getQuery());
+        return this.readParametersFromString(this.requestURI.getRawQuery());
     }
 
     
@@ -217,20 +215,13 @@ public class Request {
         for (final String pair : pairs) {
             final int idx = pair.indexOf('=');
             if (idx > -1) {
+                final String name = StringUtils.substring(pair, 0, idx);
+                final String value = StringUtils.substring(pair, idx + 1);
+                res.put(name, value);
 
-                try {
-                    final String name = URLDecoder.decode(StringUtils.substring(pair, 0, idx), enc);
-                    final String value = URLDecoder.decode(StringUtils.substring(pair, idx + 1), enc);
-                    res.put(name, value);
-                } catch (final UnsupportedEncodingException ex) {
-                    //indeed
-                }
-            } else {
-                try {
-                    res.put(URLDecoder.decode(pair, enc), "");
-                } catch (final UnsupportedEncodingException ex) {
-                    //no way
-                }
+            }
+            else {
+                res.put(pair, "");
             }
         }
 

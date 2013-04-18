@@ -5,7 +5,6 @@
 package net.jadler.matchers;
 
 import net.jadler.Request;
-import org.junit.Before;
 import org.junit.Test;
 import org.hamcrest.Matcher;
 import org.junit.runner.RunWith;
@@ -26,22 +25,29 @@ public class RawBodyRequestMatcherTest {
 
     private static final String BODY = "Sample body";
     
-    private Request request;
-    
     @Mock
     private Matcher<byte[]> mockMatcher;
-
-
-    @Before
-    public void setUp() {
-        this.request = mock(Request.class);
-        when(request.getBodyAsStream()).thenReturn(new ByteArrayInputStream(BODY.getBytes()));
-    }
 
     
     @Test
     public void retrieveValue() throws Exception {
-        assertThat(requestRawBody(mockMatcher).retrieveValue(request), is(BODY.getBytes()));
+        final Request req = 
+                when(mock(Request.class).getBodyAsStream())
+                .thenReturn(new ByteArrayInputStream(BODY.getBytes()))
+                .getMock();
+        
+        assertThat(requestRawBody(mockMatcher).retrieveValue(req), is(BODY.getBytes()));
+    }
+    
+    
+    @Test
+    public void retrieveValueEmptyBody() throws Exception {
+        final Request req = 
+                when(mock(Request.class).getBodyAsStream())
+                .thenReturn(new ByteArrayInputStream(new byte[0]))
+                .getMock();
+        
+        assertThat(requestRawBody(mockMatcher).retrieveValue(req), is(new byte[0]));
     }
     
     

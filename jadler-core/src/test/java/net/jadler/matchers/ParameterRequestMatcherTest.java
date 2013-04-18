@@ -5,7 +5,6 @@
 package net.jadler.matchers;
 
 import net.jadler.Request;
-import org.junit.Before;
 import org.junit.Test;
 import org.hamcrest.Matcher;
 
@@ -27,36 +26,46 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class ParameterRequestMatcherTest {
 
-    private static final String PARAMETER_NAME = "param1";
-    private static final String PARAMETER_VALUE1 = "value1";
+    private static final String PARAMETER_NAME = "param%201";
+    private static final String PARAMETER_VALUE1 = "value%201";
     private static final String PARAMETER_VALUE2 = "value2";
     private static final String NO_VALUE_PARAMETER_NAME = "param2";
     private static final String UNDEFINED_PARAMETER = "param3";
     
-    private Request request;
-    
     @Mock
     Matcher<? super List<String>> mockMatcher;
-
-
-    @Before
-    public void setUp() throws Exception {
-        this.request = mock(Request.class);
-        when(request.getParameterValues(PARAMETER_NAME)).thenReturn(asList(PARAMETER_VALUE1, PARAMETER_VALUE2));
-        when(request.getParameterValues(NO_VALUE_PARAMETER_NAME)).thenReturn(Collections.<String>emptyList());
-        when(request.getParameterValues(UNDEFINED_PARAMETER)).thenReturn(null);
-    }
     
     
     @Test
     public void retrieveValue() throws Exception {
-        assertThat(requestParameter(PARAMETER_NAME, mockMatcher).retrieveValue(request), 
+        final Request req = when(mock(Request.class).getParameterValues(PARAMETER_NAME))
+                .thenReturn(asList(PARAMETER_VALUE1, PARAMETER_VALUE2))
+                .getMock();
+        
+        assertThat(requestParameter(PARAMETER_NAME, mockMatcher).retrieveValue(req), 
                 is(allOf(notNullValue(), contains(PARAMETER_VALUE1, PARAMETER_VALUE2))));
+    }
+    
+    
+    @Test
+    public void retrieveValueEmpty() throws Exception {
+        final Request req = when(mock(Request.class).getParameterValues(NO_VALUE_PARAMETER_NAME))
+                .thenReturn(Collections.singletonList(""))
+                .getMock();
         
-        assertThat(requestParameter(NO_VALUE_PARAMETER_NAME, mockMatcher).retrieveValue(request), 
-                is(allOf(notNullValue(), empty())));
+        assertThat(requestParameter(NO_VALUE_PARAMETER_NAME, mockMatcher).retrieveValue(req), 
+                is(allOf(notNullValue(), contains(""))));
+    }
+    
+    
+    @Test
+    public void retrieveValueNoParameter() throws Exception {
+        final Request req = when(mock(Request.class).getParameterValues(UNDEFINED_PARAMETER))
+                .thenReturn(null)
+                .getMock();
         
-        assertThat(requestParameter(UNDEFINED_PARAMETER, mockMatcher).retrieveValue(request), 
+        
+        assertThat(requestParameter(UNDEFINED_PARAMETER, mockMatcher).retrieveValue(req), 
                 is(nullValue()));
     }
     
