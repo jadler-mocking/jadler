@@ -9,7 +9,6 @@ import net.jadler.exception.JadlerException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
 import org.apache.commons.io.IOUtils;
 import org.hamcrest.Matcher;
 import java.io.IOException;
@@ -82,6 +81,8 @@ public class Stubbing implements RequestStubbing, ResponseStubbing {
      */
     @Override
     public RequestStubbing havingMethodEqualTo(final String method) {
+        Validate.notEmpty(method, "method cannot be empty");
+        
         return havingMethod(equalToIgnoringCase(method));
     }
 
@@ -91,6 +92,8 @@ public class Stubbing implements RequestStubbing, ResponseStubbing {
      */    
     @Override
     public RequestStubbing havingMethod(final Matcher<? super String> predicate) {
+        Validate.notNull(predicate, "predicate cannot be null");
+        
         return that(requestMethod(predicate));
     }
     
@@ -100,6 +103,8 @@ public class Stubbing implements RequestStubbing, ResponseStubbing {
      */    
     @Override
     public RequestStubbing havingBodyEqualTo(final String requestBody) {
+        Validate.notNull(requestBody, "requestBody cannot be null, use an empty string instead");
+        
         return havingBody(equalTo(requestBody));
     }
 
@@ -109,6 +114,8 @@ public class Stubbing implements RequestStubbing, ResponseStubbing {
      */    
     @Override
     public RequestStubbing havingBody(final Matcher<? super String> predicate) {
+        Validate.notNull(predicate, "predicate cannot be null");
+        
         return that(requestBody(predicate));
     }
     
@@ -117,7 +124,9 @@ public class Stubbing implements RequestStubbing, ResponseStubbing {
      * {@inheritDoc}
      */
     @Override
-    public RequestStubbing havingRawBodyEqualTo(byte[] requestBody) {
+    public RequestStubbing havingRawBodyEqualTo(final byte[] requestBody) {
+        Validate.notNull(requestBody, "requestBody cannot be null, use an empty array instead");
+        
         return that(requestRawBody(equalTo(requestBody)));
     }
     
@@ -127,7 +136,8 @@ public class Stubbing implements RequestStubbing, ResponseStubbing {
      */    
     @Override
     public RequestStubbing havingURIEqualTo(final String uri) {
-        Validate.isTrue(!uri.contains("?"), "URI must not contain query parameters.");
+        Validate.notEmpty(uri, "uri cannot be empty");
+        
         return havingURI(equalTo(uri));
     }
 
@@ -137,6 +147,8 @@ public class Stubbing implements RequestStubbing, ResponseStubbing {
      */    
     @Override
     public RequestStubbing havingURI(final Matcher<? super String> predicate) {
+        Validate.notNull(predicate, "predicate cannot be null");
+        
         return that(requestURI(predicate));
     }
     
@@ -155,6 +167,8 @@ public class Stubbing implements RequestStubbing, ResponseStubbing {
      */    
     @Override
     public RequestStubbing havingQueryString(final Matcher<? super String> predicate) {
+        Validate.notNull(predicate, "predicate cannot be null");
+        
         return that(requestQueryString(predicate));
     }
     
@@ -164,6 +178,8 @@ public class Stubbing implements RequestStubbing, ResponseStubbing {
      */    
     @Override
     public RequestStubbing havingParameterEqualTo(final String name, final String value) {
+        Validate.notNull(value, "value cannot be null");
+        
         return havingParameter(name, hasItem(value));
     }
     
@@ -173,6 +189,9 @@ public class Stubbing implements RequestStubbing, ResponseStubbing {
      */    
     @Override
     public RequestStubbing havingParameter(final String name, final Matcher<? super List<String>> predicate) {
+        Validate.notEmpty(name, "name cannot be empty");
+        Validate.notNull(predicate, "predicate cannot be null");
+        
         return that(requestParameter(name, predicate));
     }
     
@@ -190,7 +209,7 @@ public class Stubbing implements RequestStubbing, ResponseStubbing {
      * {@inheritDoc}
      */    
     @Override
-    public RequestStubbing havingParameters(String... names) {
+    public RequestStubbing havingParameters(final String... names) {
         
         for (final String name: names) {
             havingParameter(name);
@@ -205,6 +224,8 @@ public class Stubbing implements RequestStubbing, ResponseStubbing {
      */    
     @Override
     public RequestStubbing havingHeaderEqualTo(final String name, final String value) {
+        Validate.notNull(value, "value cannot be null");
+        
         return havingHeader(name, hasItem(value));
     }
 
@@ -214,6 +235,9 @@ public class Stubbing implements RequestStubbing, ResponseStubbing {
      */    
     @Override
     public RequestStubbing havingHeader(final String name, final Matcher<? super List<String>> predicate) {
+        Validate.notEmpty(name, "name cannot be empty");
+        Validate.notNull(predicate, "predicate cannot be null");
+        
         return that(requestHeader(name, predicate));
     }
 
@@ -231,7 +255,9 @@ public class Stubbing implements RequestStubbing, ResponseStubbing {
      * {@inheritDoc}
      */    
     @Override
-    public RequestStubbing havingHeaders(String... names) {
+    public RequestStubbing havingHeaders(final String... names) {
+        Validate.notNull(names, "names cannot be null");
+        
         for (final String name: names) {
             havingHeader(name);
         }

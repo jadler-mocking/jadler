@@ -40,7 +40,7 @@ class RequestUtils {
     
 
     private static String getQueryString(final HttpServletRequest source) {
-        return isNotBlank(source.getQueryString()) ? ("?" + source.getQueryString()) : "";
+        return source.getQueryString() != null ? ("?" + source.getQueryString()) : "";
     }
 
     

@@ -42,6 +42,8 @@ import org.slf4j.LoggerFactory;
  * <p>This class is stateful and thread-safe.</p>
  */
 public class JadlerMocker implements StubHttpServerManager, Stubber, StubResponseProvider {
+    
+    //TODO AutoCloseable ???
 
     private final StubHttpServer server;
     private final StubbingFactory stubbingFactory;
@@ -165,6 +167,7 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, StubRespons
     /**
      * Defines default headers to be added to every stub http response
      * @param defaultHeaders default headers to be added to every stub http response 
+     * //TODO what about removing this method completely so the MultiMap bullshit is not exposed to the client?
      */
     @SuppressWarnings("unchecked")
     public void setDefaultHeaders(final MultiMap defaultHeaders) {

@@ -5,7 +5,6 @@
 package net.jadler.matchers;
 
 import net.jadler.Request;
-import org.junit.Before;
 import org.junit.Test;
 import org.hamcrest.Matcher;
 import java.util.List;
@@ -29,27 +28,26 @@ public class HeaderRequestMatcherTest {
     private static final String HEADER_VALUE2 = "value2";
     private static final String UNDEFINED_HEADER = "header2";
     
-    private Request request;
-    
     @Mock
     Matcher<? super List<String>> mockMatcher;
-
-
-    @Before
-    public void setUp() throws Exception {
-        this.request = mock(Request.class);
-        when(request.getHeaderValues(HEADER_NAME)).thenReturn(asList(HEADER_VALUE1, HEADER_VALUE2));
-        when(request.getHeaderValues(UNDEFINED_HEADER)).thenReturn(null);
+    
+    
+    @Test
+    public void retrieveValue() {
+        final Request req = when(mock(Request.class).getHeaderValues(HEADER_NAME))
+                .thenReturn(asList(HEADER_VALUE1, HEADER_VALUE2)).getMock();
+        
+        assertThat(requestHeader(HEADER_NAME, mockMatcher).retrieveValue(req), 
+                is(allOf(notNullValue(), contains(HEADER_VALUE1, HEADER_VALUE2))));
     }
     
     
     @Test
-    public void retrieveValue() throws Exception {
-        assertThat(requestHeader(HEADER_NAME, mockMatcher).retrieveValue(request), 
-                is(allOf(notNullValue(), contains(HEADER_VALUE1, HEADER_VALUE2))));
+    public void retrieveValueNoHeader() {
+        final Request req = when(mock(Request.class).getHeaderValues(UNDEFINED_HEADER))
+                .thenReturn(null).getMock();
         
-        assertThat(requestHeader(UNDEFINED_HEADER, mockMatcher).retrieveValue(request), 
-                is(nullValue()));
+        assertThat(requestHeader(UNDEFINED_HEADER, mockMatcher).retrieveValue(req), is(nullValue()));
     }
     
     

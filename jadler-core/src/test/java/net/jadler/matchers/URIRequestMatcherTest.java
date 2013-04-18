@@ -7,7 +7,6 @@ package net.jadler.matchers;
 
 import java.net.URI;
 import net.jadler.Request;
-import org.junit.Before;
 import org.junit.Test;
 import org.hamcrest.Matcher;
 import org.junit.runner.RunWith;
@@ -25,23 +24,22 @@ import static org.mockito.Mockito.when;
 public class URIRequestMatcherTest {
 
     private static final String PATH = "/a/%C5%99";
-
-    private Request request;
     
     @Mock
     private Matcher<String> mockMatcher;
 
 
-    @Before
-    public void setUp() throws Exception {
-        this.request = mock(Request.class);
-    }
-
-
    @Test
     public void retrieveValue() throws Exception {
-        when(request.getURI()).thenReturn(new URI("http://localhost" + PATH));
-        assertThat(requestURI(mockMatcher).retrieveValue(request), is(PATH));
+       final Request req = when(mock(Request.class).getURI()).thenReturn(new URI("http://localhost" + PATH)).getMock();
+        assertThat(requestURI(mockMatcher).retrieveValue(req), is(PATH));
+    }
+   
+   
+   @Test
+    public void retrieveValueRootPath() throws Exception {
+       final Request req = when(mock(Request.class).getURI()).thenReturn(new URI("http://localhost/")).getMock();
+        assertThat(requestURI(mockMatcher).retrieveValue(req), is("/"));
     }
     
     
