@@ -21,7 +21,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringReader;
+import java.net.HttpURLConnection;
 import java.net.Socket;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.concurrent.TimeUnit;
 
@@ -34,6 +36,7 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
@@ -42,6 +45,7 @@ import static org.hamcrest.Matchers.isEmptyString;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.empty;
 import static org.junit.Assert.assertThat;
 
 
@@ -156,7 +160,7 @@ public class JadlerStubbingIntegrationTest {
     @Test
     public void havingRawEmptyBody() throws IOException {
         onRequest()
-            .havingRawBodyEqualTo(new byte[]{})
+            .havingRawBodyEqualTo(new byte[0])
         .respond()
             .withStatus(201);
         
@@ -215,17 +219,19 @@ public class JadlerStubbingIntegrationTest {
         
         onRequest()
             .havingHeader("hdr1")
-            .havingHeader("hdr1", hasSize(1))
+            .havingHeader("hdr1", not(empty()))
+            .havingHeader("hDR1", hasSize(1))
             .havingHeader("hdr1", everyItem(not(isEmptyOrNullString())))
             .havingHeader("hdr1", contains("h1v1"))
             .havingHeaderEqualTo("hdr1", "h1v1")
-            .havingHeader("hdr2")
+            .havingHeader("HDr2")
             .havingHeader("hdr2", hasSize(2))
             .havingHeader("hdr2", contains("h2v1", "h2v2"))
+            .havingHeader("hdr2", hasItem("h2v1"))
             .havingHeader("hdr3", nullValue())
             .havingHeaderEqualTo("hdr2", "h2v1")
-            .havingHeaderEqualTo("hdr2", "h2v2")
-            .havingHeaders("hdr1", "hdr2")
+            .havingHeaderEqualTo("HDR2", "h2v2")
+            .havingHeaders("hDR1", "hdr2")
         .respond()
             .withStatus(201);
         
@@ -233,6 +239,26 @@ public class JadlerStubbingIntegrationTest {
         method.addRequestHeader("hdr1", "h1v1");
         method.addRequestHeader("hdr2", "h2v1");
         method.addRequestHeader("hdr2", "h2v2");
+        
+        int status = client.executeMethod(method);
+        assertThat(status, is(201));
+    }
+    
+    
+    /*
+     * I'm not sure whether a request header can be empty according to the RFC. However, it seems to work. 
+     */
+    @Test
+    public void havingEmptyHeader() throws IOException {
+        onRequest()
+                .havingHeaderEqualTo("empty", "")
+                .havingHeader("empty")
+                .havingHeader("empty", everyItem(isEmptyString()))
+            .respond()
+                .withStatus(201);
+        
+        final GetMethod method = new GetMethod("http://localhost:" + port());
+        method.addRequestHeader("empty", "");
         
         int status = client.executeMethod(method);
         assertThat(status, is(201));
@@ -286,10 +312,12 @@ public class JadlerStubbingIntegrationTest {
             .havingParameter("p4", contains(""))
             .havingParameterEqualTo("p4", "")
             .havingParameter("p5", nullValue())
+            .havingParameter("url%20encoded", contains("url%20encoded"))
         .respond()
             .withStatus(201);
         
-        final GetMethod method = new GetMethod("http://localhost:" + port() + "?p1=p1v1&p2=p2v1&p2=p2v2&p3=&p4");
+        final GetMethod method = new GetMethod("http://localhost:" + port() + 
+                "?p1=p1v1&p2=p2v1&p2=p2v2&p3=&p4&url%20encoded=url%20encoded");
 
         int status = client.executeMethod(method);
         assertThat(status, is(201));
@@ -307,7 +335,7 @@ public class JadlerStubbingIntegrationTest {
      */
     @Test
     public void havingParameterPOST() throws Exception {
-        final String body = "p1=p1v1&p2=p2v1&p2=p2v2&p3=&p4";
+        final String body = "p1=p1v1&p2=p2v1&p2=p2v2&p3=&p4&url%20encoded=url%20encoded";
         
         onRequest()
             .havingParameter("p1")
@@ -329,6 +357,7 @@ public class JadlerStubbingIntegrationTest {
             .havingParameter("p4", contains(""))
             .havingParameterEqualTo("p4", "")
             .havingParameter("p5", nullValue())
+            .havingParameter("url%20encoded", contains("url%20encoded"))
             .havingBodyEqualTo(body)
         .respond()
             .withStatus(201);
@@ -361,7 +390,27 @@ public class JadlerStubbingIntegrationTest {
     
     
     /*
-     * Null value is matched for an empty http request.
+     * Tests the <tt>havingQueryString</tt> methods. 
+     */
+    @Test
+    public void havingEmptyQueryString() throws Exception {
+        onRequest()
+            .havingQueryStringEqualTo("")
+            .havingQueryString(isEmptyString())
+        .respond()
+            .withStatus(201);
+        
+          //it seems HttpClient cannot send a request with an empty query string ('?' as the last character)
+          //let's test this in a more hardcore fashion
+        final URL url = new URL("http://localhost:" + port() + "/?");
+        final HttpURLConnection c = (HttpURLConnection) url.openConnection();
+
+        assertThat(c.getResponseCode(), is(201));
+    }
+    
+    
+    /*
+     * Null value is matched for a http request without a query string
      */
     @Test
     public void havingNoQueryString() throws Exception {

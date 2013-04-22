@@ -15,6 +15,7 @@ import net.jadler.matchers.MethodRequestMatcher;
 import net.jadler.matchers.ParameterRequestMatcher;
 import net.jadler.matchers.QueryStringRequestMatcher;
 import net.jadler.matchers.URIRequestMatcher;
+import net.jadler.matchers.RawBodyRequestMatcher;
 import org.apache.commons.collections.MultiMap;
 import org.apache.commons.collections.map.MultiValueMap;
 import org.hamcrest.Matcher;
@@ -24,13 +25,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-
 import java.io.Reader;
 import java.io.StringReader;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import net.jadler.matchers.RawBodyRequestMatcher;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
@@ -63,6 +62,12 @@ public class StubbingTest {
     public void setUp() {
         this.stubbing = new Stubbing(DEFAULT_ENCODING, DEFAULT_STATUS, DEFAULT_HEADERS);
     }
+    
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void thatWrongParam() {
+        this.stubbing.that(null);
+    }
 
 
     @Test
@@ -87,6 +92,12 @@ public class StubbingTest {
         this.assertOneMatcher(is(instanceOf(MethodRequestMatcher.class)));
     }
 
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void havingBodyEqualToWrongParam() {
+        this.stubbing.havingBodyEqualTo(null);
+    }
+    
 
     @Test
     public void havingBodyEqualTo() {
@@ -100,6 +111,12 @@ public class StubbingTest {
         this.stubbing.havingBody(matcher);
         this.assertOneMatcher(is(instanceOf(BodyRequestMatcher.class)));
     }
+
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void havingRawBodyEqualToWrongParam() {
+        this.stubbing.havingRawBodyEqualTo(null);
+    }
     
     
     @Test
@@ -109,16 +126,16 @@ public class StubbingTest {
     }
 
 
+    @Test(expected = IllegalArgumentException.class)
+    public void havingURIMatchingWrongParam() {
+        this.stubbing.havingURIEqualTo("");
+    } 
+
+    
     @Test
     public void havingURIMatching() {
-        this.stubbing.havingURIEqualTo("/**");
+        this.stubbing.havingURIEqualTo("/");
         this.assertOneMatcher(is(instanceOf(URIRequestMatcher.class)));
-    }
-
-
-    @Test(expected = IllegalArgumentException.class)
-    public void havingURIMatchingWrongValue() {
-        this.stubbing.havingURIEqualTo("/a/b?param");
     }
 
 

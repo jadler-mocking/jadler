@@ -62,6 +62,20 @@ public class RequestUtilsTest {
         assertThat(req.getParameterValues("b"), contains("3"));
     }
     
+    
+    @Test
+    public void parametersURLEncoded() throws IOException {
+        final MockHttpServletRequest httpRequest = prepareEmptyRequest();
+        httpRequest.setQueryString("param1%20name=param1%20value");
+        httpRequest.setContent("param2%20name=param2%20value".getBytes());
+        httpRequest.addHeader("content-type", "application/x-www-form-urlencoded");
+
+        final Request req = RequestUtils.convert(httpRequest);
+        assertThat(req.getParameterNames(), containsInAnyOrder("param1%20name", "param2%20name"));
+        assertThat(req.getParameterValues("param1%20name"), contains("param1%20value"));
+        assertThat(req.getParameterValues("param2%20name"), contains("param2%20value"));
+    }
+    
 
     @Test
     public void uri() throws IOException {
@@ -73,6 +87,19 @@ public class RequestUtilsTest {
 
         Request req = RequestUtils.convert(httpRequest);
         assertThat(req.getURI(), is(URI.create("https://example.com:1234/test/a/b?a=1")));
+    }
+    
+    
+    @Test
+    public void uriURLEncoded() throws IOException {
+        final MockHttpServletRequest httpRequest = prepareEmptyRequest();
+        httpRequest.setScheme("https");
+        httpRequest.setServerName("example.com");
+        httpRequest.setServerPort(1234);
+        httpRequest.setRequestURI("/te%20st/a/%20/b?a=1&param%20name=param%20value");
+
+        Request req = RequestUtils.convert(httpRequest);
+        assertThat(req.getURI(), is(URI.create("https://example.com:1234/te%20st/a/%20/b?a=1&param%20name=param%20value")));
     }
     
     

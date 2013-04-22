@@ -22,6 +22,7 @@ public class RequestTest {
     
     private static final String METHOD = "GET";
     private static final URI URI = create("http://localhost/");
+    
     private static final String HEADER1_NAME = "header1";
     private static final String HEADER1_VALUE1 = "value1_1";
     private static final String HEADER1_VALUE2 = "value1_2";
@@ -32,6 +33,9 @@ public class RequestTest {
     private static final String PARAM1_VALUE2 = "value1_2";
     private static final String PARAM2_NAME = "header2";
     private static final String PARAM2_VALUE = "value2";
+    private static final String PARAM_NAME_URL_ENCODED = "param1%20name";
+    private static final String PARAM_VALUE_URL_ENCODED = "param1%20value";
+    
     private static final String CONTENT_TYPE = "text/html; charset=UTF-8";
     private static final byte[] BINARY_BODY = {1, 2, 3};
     private static final String STRING_WITH_DIACRITICS = "\u00e1\u00ed\u00e9";
@@ -383,6 +387,30 @@ public class RequestTest {
                 .build();
         
         assertThat(req.getParameterValue(PARAM1_NAME.toUpperCase()), is(nullValue()));
+    }
+    
+    
+    @Test
+    public void getParameterValueInQueryURLEncoded() {
+        final Request req = new Request.Builder()
+                .method(METHOD)
+                .requestURI(create(format("http://localhost/?%s=%s", PARAM_NAME_URL_ENCODED, PARAM_VALUE_URL_ENCODED)))
+                .build();  
+        
+        assertThat(req.getParameterValue(PARAM_NAME_URL_ENCODED), is(PARAM_VALUE_URL_ENCODED));
+    }
+    
+    
+    @Test
+    public void getParameterValueInBodyURLEncoded() {
+        final Request req = new Request.Builder()
+                .method("POST")
+                .requestURI(create("http://localhost/"))
+                .body(format("%s=%s", PARAM_NAME_URL_ENCODED, PARAM_VALUE_URL_ENCODED).getBytes())
+                .header("content-type", "application/x-www-form-urlencoded")
+                .build();
+        
+        assertThat(req.getParameterValue(PARAM_NAME_URL_ENCODED), is(PARAM_VALUE_URL_ENCODED));
     }
     
     

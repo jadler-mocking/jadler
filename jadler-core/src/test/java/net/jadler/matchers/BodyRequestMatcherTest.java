@@ -5,14 +5,11 @@
 package net.jadler.matchers;
 
 import net.jadler.Request;
-import org.junit.Before;
 import org.junit.Test;
 import org.hamcrest.Matcher;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import java.io.ByteArrayInputStream;
 
 import static org.junit.Assert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -26,22 +23,23 @@ public class BodyRequestMatcherTest {
 
     private static final String BODY = "Sample body";
     
-    private Request request;
-    
     @Mock
     private Matcher<String> mockMatcher;
-
-
-    @Before
-    public void setUp() {
-        this.request = mock(Request.class);
-        when(request.getBodyAsString()).thenReturn(BODY);
-    }
 
     
     @Test
     public void retrieveValue() throws Exception {
-        assertThat(requestBody(mockMatcher).retrieveValue(request), is(BODY));
+        final Request req = when(mock(Request.class).getBodyAsString()).thenReturn(BODY).getMock();
+        when(req.getBodyAsString()).thenReturn(BODY);
+        assertThat(requestBody(mockMatcher).retrieveValue(req), is(BODY));
+    }
+    
+    
+    @Test
+    public void retrieveValueEmptyBody() throws Exception {
+        final Request req = when(mock(Request.class).getBodyAsString()).thenReturn("").getMock();
+        when(req.getBodyAsString()).thenReturn("");
+        assertThat(requestBody(mockMatcher).retrieveValue(req), is(""));
     }
     
     
