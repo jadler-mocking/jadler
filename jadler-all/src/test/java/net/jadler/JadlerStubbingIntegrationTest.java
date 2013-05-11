@@ -179,6 +179,7 @@ public class JadlerStubbingIntegrationTest {
         
         onRequest()
             .havingBodyEqualTo(STRING_WITH_DIACRITICS)
+            .havingRawBodyEqualTo(UTF_8_REPRESENTATION)
         .respond()
             .withStatus(201);
         
@@ -199,6 +200,7 @@ public class JadlerStubbingIntegrationTest {
         
         onRequest()
             .havingBodyEqualTo(STRING_WITH_DIACRITICS)
+            .havingRawBodyEqualTo(ISO_8859_2_REPRESENTATION)
         .respond()
             .withStatus(201);
         

@@ -6,6 +6,8 @@ package net.jadler;
 
 import java.nio.charset.Charset;
 import net.jadler.exception.JadlerException;
+import net.jadler.mocking.VerificationException;
+import net.jadler.mocking.Verifying;
 import net.jadler.stubbing.RequestStubbing;
 import net.jadler.stubbing.server.StubHttpServerManager;
 import net.jadler.stubbing.server.StubHttpServer;
@@ -16,26 +18,25 @@ import net.jadler.stubbing.ResponseStubbing;
  * <p>This class is a gateway to the whole Jadler library. Jadler is a powerful yet simple to use 
  * http mocking library for writing integration tests in the http environment. It provides a convenient way
  * to create a stub http server which serves all http requests sent during a test execution
- * by returning a stub response according to the defined rules.</p>
+ * by returning a stub response according to defined rules.</p>
  * 
  * <h3>Jadler Usage Basics</h3>
  * 
  * <p>Let's have a simple component with one operation: </p>
  * 
  * <pre>
- * public interface AccountGetter {
+ * public interface AccountManager {
  *   Account getAccount(String id);
  * }
  * </pre>
  * 
- * <p>An implementation of this component is supposed to send a GET http request to <tt>/accounts/{id}</tt>
- * where <tt>{id}</tt> stands for the method <tt>id</tt> parameter, deserialize the http response to
- * an <tt>Account</tt> instance and return it. If there is no such account (the GET request returned 404), <tt>null</tt>
- * must be returned. If some problem occurs (50x http response), a runtime exception must be thrown.</p>
+ * <p>An implementation of the {@code getAccount} operation is supposed to send a GET http request to
+ * {@code /accounts/{id}} where {@code {id}} stands for the method {@code id} parameter, deserialize the http response
+ * to an {@code Account} instance and return it. If there is no such account (the GET request returned 404),
+ * {@code null} must be returned. If some problem occurs (50x http response), a runtime exception must be thrown.</p>
  * 
- * <p>For the integration testing of this component it would be great to have an opportunity
- * to start a stub http server which would return predefined stub responses. This is where Jadler
- * comes to help.</p>
+ * <p>For the integration testing of this component it would be great to have a way to start a stub http server
+ * which would return predefined stub responses. This is where Jadler comes to help.</p>
  * 
  * <p>Let's write such an integration test using <a href="http://junit.org" target="_blank">jUnit</a>:</p>
  * 
@@ -44,71 +45,71 @@ import net.jadler.stubbing.ResponseStubbing;
  * import static net.jadler.Jadler.*;
  * ...
  * 
- * public class AccountGetterImplTest {
+ * public class AccountManagerImplTest {
  * 
- *   private static final String ID = "123";
- *   private static final String ACCOUNT_JSON = "{\"account\":{\"id\": \"123\"}}";
+ *     private static final String ID = "123";
+ *     private static final String ACCOUNT_JSON = "{\"account\":{\"id\": \"123\"}}";
  * 
  *
- *   {@literal @}Before
- *   public void setUp() {
- *     initJadler();
- *   }
+ *     {@literal @}Before
+ *     public void setUp() {
+ *         initJadler();
+ *     }
  *  
- *   {@literal @}After
- *   public void tearDown() {
- *     closeJadler();
- *   }
+ *     {@literal @}After
+ *     public void tearDown() {
+ *         closeJadler();
+ *     }
  *   
- *   {@literal @}Test
- *   public void getAccount() {
- *     onRequest()
- *         .havingMethodEqualTo("GET")
- *         .havingURIEqualTo("/accounts/" + ID)
- *     .respond()
- *         .withBody(ACCOUNT_JSON)
- *         .withStatus(200);
+ *     {@literal @}Test
+ *     public void getAccount() {
+ *         onRequest()
+ *             .havingMethodEqualTo("GET")
+ *             .havingURIEqualTo("/accounts/" + ID)
+ *         .respond()
+ *             .withBody(ACCOUNT_JSON)
+ *             .withStatus(200);
  * 
- *     final AccountGetter ag = new AccountGetterImpl("http", "localhost", port());
+ *         final AccountManager am = new AccountManagerImpl("http", "localhost", port());
  * 
- *     final Account account = ag.getAccount(ID);
+ *         final Account account = ag.getAccount(ID);
  *       
- *     assertThat(account, is(notNullValue()));
- *     assertThat(account.getId(), is(ID));
- *   }
+ *         assertThat(account, is(notNullValue()));
+ *         assertThat(account.getId(), is(ID));
+ *     }
  * }
  * </pre>
  * 
- * <p>There are three main parts of this test. The <em>setUp</em> phase just initializes Jadler (this includes
- * starting a stub http server as well), while the <em>tearDown</em> phase just closes all resources. Nothing
+ * <p>There are three main parts of this test. The <em>setUp</em> phase just initializes Jadler (which includes
+ * starting a stub http server), while the <em>tearDown</em> phase just closes all resources. Nothing
  * interesting so far.</p>
  * 
  * <p>All the magic happens in the test method. New http stub is defined, in the <em>THEN</em> part
  * the http stub server is instructed to return a specific http response
- * (200 http status with a body defined in the <tt>ACCOUNT_JSON</tt> constant) if the incoming http request
- * fits the given conditions defined in the <em>WHEN</em> part (must be a GET request to <tt>/projects/123</tt>).</p>
+ * (200 http status with a body defined in the {@code ACCOUNT_JSON} constant) if the incoming http request
+ * fits the given conditions defined in the <em>WHEN</em> part (must be a GET request to {@code /projects/123}).</p>
  * 
  * <p>In order to communicate with the http stub server instead of the real web service, the tested instance
- * must be configured to access <tt>localhost</tt> using the http protocol (https will be supported
+ * must be configured to access {@code localhost} using the http protocol (https will be supported
  * in Jadler 1.1) connecting to a port which can be retrieved using the {@link Jadler#port()} method.</p>
  * 
- * <p>The rest of the test method is business as usual. The <tt>getProject(String)</tt> is executed and some
+ * <p>The rest of the test method is business as usual. The {@code getProject(String)} is executed and some
  * assertions are evaluated.</p>
  * 
  * <p>Now lets write two more test methods to test the 404 and 500 scenarios:</p>
  * 
  * <pre>
  * {@literal @}Test
- * public void getAccountNonexisting() {
+ * public void getAccountNotFound() {
  *     onRequest()
  *         .havingMethodEqualTo("GET")
  *         .havingURIEqualTo("/projects/" + ID)
  *     .respond()
  *         .withStatus(404);
  * 
- *     final AccountGetter ag = new AccountGetterImpl("http", "localhost", port());
+ *     final AccountManager am = new AccountManagerImpl("http", "localhost", port());
  * 
- *     Account account = ag.getAccount(ID);
+ *     Account account = am.getAccount(ID);
  * 
  *     assertThat(account, is(nullValue()));
  * }
@@ -122,14 +123,14 @@ import net.jadler.stubbing.ResponseStubbing;
  *     .respond()
  *         .withStatus(500);
  * 
- *     final AccountGetter ag = new AccountGetterImpl("http", "localhost", port());
+ *     final AccountManager am = new AccountManagerImpl("http", "localhost", port());
  * 
  *     ag.getAccount(ID);
  * }
  * </pre>
  * 
- * <p>The first test method checks the <tt>getProject(String)</tt> method returns <tt>null</tt> if 404 is returned
- * from the server. The second one tests a runtime exception is throws upon 500 http response.</p>
+ * <p>The first test method checks the {@code getProject(String)} method returns {@code null} if 404 is returned
+ * from the server. The second one tests a runtime exception is thrown upon 500 http response.</p>
  * 
  * 
  * <h3>Multiple responses definition</h3> 
@@ -167,13 +168,13 @@ import net.jadler.stubbing.ResponseStubbing;
  *     .withStatus(202);
  * </pre>
  * 
- * <p>If a POST http request was sent to <tt>/projects</tt>, both rules would be applicable. However, the latter stub
- * gets priority over the former one. In this example, an http response with <tt>202</tt> status code would be
+ * <p>If a POST http request was sent to {@code /projects} both rules would be applicable. However, the latter stub
+ * gets priority over the former one. In this example, an http response with {@code 202} status code would be
  * returned.</p>
  * 
  * <h3>Advanced http stubbing</h3>
- * <h4>The <em>WHEN</em> part</h4>
- * <p>So far two <tt>having*</tt> methods have been introduced,
+ * <h4 id="stubbing">The <em>WHEN</em> part</h4>
+ * <p>So far two {@code having*} methods have been introduced,
  * {@link RequestStubbing#havingMethodEqualTo(java.lang.String)} to check the http method equality and
  * {@link RequestStubbing#havingURIEqualTo(java.lang.String)} to check the URI equality. But there's more!</p>
  * 
@@ -205,9 +206,9 @@ import net.jadler.stubbing.ResponseStubbing;
  *     .withStatus(201);
  * </pre>
  * 
- * <p>The 201 stub response will be returned if the incoming request was a <tt>POST</tt> request to <tt>/projects</tt>
- * with the specified body, <tt>application/json</tt> content type header and a <tt>force</tt> http parameter set to
- * <tt>1</tt>.</p>
+ * <p>The 201 stub response will be returned if the incoming request was a {@code POST} request to {@code /projects}
+ * with the specified body, {@code application/json} content type header and a {@code force} http parameter set to
+ * {@code 1}.</p>
  * 
  * <h4>The <em>THEN</em> part</h4>
  * <p>There are much more options than just setting the http response status using the
@@ -226,7 +227,7 @@ import net.jadler.stubbing.ResponseStubbing;
  * 
  * <p>Setting a stub response header is another common http stubbing use case. Just call
  * {@link net.jadler.stubbing.ResponseStubbing#withHeader(java.lang.String, java.lang.String)} to 
- * set such header. For setting the <tt>Content-Type</tt> header you can use specially tailored
+ * set such header. For setting the {@code Content-Type} header you can use specially tailored
  * {@link net.jadler.stubbing.ResponseStubbing#withContentType(java.lang.String)} method.</p>
  * 
  * <p>And finally sometimes you would like to simulate a network latency. To do so just call the
@@ -253,7 +254,7 @@ import net.jadler.stubbing.ResponseStubbing;
  * 
  * <p>If the incoming http request fulfills the <em>WHEN</em> part, a stub response will be returned after at least 
  * 2 seconds. The response will have 201 status code, defined json body encoded using UTF-8 and both
- * <tt>Content-Type</tt> and <tt>Location</tt> headers set to proper values.</p>
+ * {@code Content-Type} and {@code Location} headers set to proper values.</p>
  * 
  * 
  * <h3> Even more advanced http stubbing</h3>
@@ -294,14 +295,14 @@ import net.jadler.stubbing.ResponseStubbing;
  * <p>For adding predicates about request parameters and headers use
  * {@link RequestStubbing#havingHeader(java.lang.String, org.hamcrest.Matcher)} and
  * {@link RequestStubbing#havingParameter(java.lang.String, org.hamcrest.Matcher)} methods. Since a request header or 
- * parameter can have more than one value, these methods accept a list of strings predicate.</p>
+ * parameter can have more than one value, these methods accept a list of strings predicates.</p>
  * 
- * <p>All introduced methods allows user to add a predicate about a part of an http request (body, method, ...).
- * If you need to add a predicate about the whole request object (of type {@link javax.servlet.http.HttpServletRequest}),
+ * <p>All introduced methods allow user to add a predicate about a part of an http request (body, method, ...).
+ * If you need to add a predicate about the whole request object (of type {@link Request}),
  * you can use the {@link RequestStubbing#that(org.hamcrest.Matcher)} method: </p>
  * 
  * <pre>
- *   //meetsCriteria() is some factory method returning a Matcher&lt;HttpServletRequest&gt; instance
+ *   //meetsCriteria() is some factory method returning a Matcher&lt;Request&gt; instance
  * 
  * onRequest()
  *     .that(meetsCriteria())
@@ -319,8 +320,8 @@ import net.jadler.stubbing.ResponseStubbing;
  * <pre>
  *   {@literal @}Before
  *   public void setUp() {
- *     initJadler().that()
- *         .respondsWithDefaultStatus(200);
+ *       initJadler().that()
+ *           .respondsWithDefaultStatus(200);
  *   }
  * </pre>
  * 
@@ -342,15 +343,104 @@ import net.jadler.stubbing.ResponseStubbing;
  *   }
  * </pre>
  * 
- * <p>If not redefined in the particular stubbing, every stub response will have 200 http status, <tt>Content-Type</tt>
- * header set to <tt>text/plain</tt>, response body encoded using <tt>ISO-8859-1</tt> and a header named
- * <tt>X-DEFAULT-HEADER</tt> set to <tt>default_value</tt>.</p>
+ * <p>If not redefined in the particular stubbing, every stub response will have 200 http status, {@code Content-Type}
+ * header set to {@code text/plain}, response body encoded using {@code ISO-8859-1} and a header named
+ * {@code X-DEFAULT-HEADER} set to {@code default_value}.</p>
  * 
  * <p>If no default status code is defined 200 will be used. And if no default response body encoding is defined,
- * <tt>UTF-8</tt> will be used by default.</p>
+ * {@code UTF-8} will be used by default.</p>
  * 
+ * 
+ * <h3>Request Reception Verification</h3>
+ * 
+ * <p>While the Jadler library is invaluable in supporting your test scenarios by providing a stub http server,
+ * it has even more to offer.</p>
+ * 
+ * <p>Very often it's necessary not only to provide a stub http response but also to verify that a specific
+ * http request was received during a test execution. Let's add a removal operation to the already introduced
+ * {@code AccountManager} interface: </p>
+ * 
+ * <pre>
+ * public interface AccountManager {
+ *   Account getAccount(String id);
+ * 
+ *   void deleteAccount(String id);
+ * }
+ * </pre>
+ * 
+ * <p>The {@code deleteAccount} operation is supposed to delete an account by sending a {@code DELETE} http request
+ * to {@code /accounts/{id}} where {@code {id}} stands for the operation {@code id} parameter. If the response status is
+ * 204 the removal is considered successful and the execution is finished successfully. Let's write an integration
+ * test for this scenario:</p>
+ * 
+ * <pre>
+ * ...
+ * import static net.jadler.Jadler.*;
+ * ...
+ * 
+ * public class AccountManagerImplTest {
+ * 
+ *     private static final String ID = "123";
+ *     private static final String ACCOUNT_JSON = "{\"account\":{\"id\": \"123\"}}";
+ * 
+ *
+ *     {@literal @}Before
+ *     public void setUp() {
+ *         initJadler();
+ *     }
+ *  
+ *     {@literal @}After
+ *         public void tearDown() {
+ *         closeJadler();
+ *     }
+ *   
+ *     {@literal @}Test
+ *     public void getAccount() {
+ *         onRequest()
+ *             .havingMethodEqualTo("DELETE")
+ *             .havingURIEqualTo("/accounts/" + ID)
+ *         .respond()
+ *             .withStatus(204);
+ * 
+ *         final AccountManager am = new AccountManagerImpl("http", "localhost", port());
+ * 
+ *         final Account account = am.deleteAccount(ID);
+ *       
+ *         verifyThatRequest()
+ *             .havingMethodEqualTo("DELETE")
+ *             .havingURIEqualTo("/accounts/" + ID)
+           .receivedOnce();
+ *     }
+ * }
+ * </pre>
+ * 
+ * <p>The first part of this test is business as usual. An http stub is created and the tested method
+ * {@code deleteAccount} is invoked. However in this test case we would like to test whether the {@code DELETE} http
+ * request was really sent during the execution of the method.</p>
+ * 
+ * <p>This is where Jadler comes again to help. Calling {@link #verifyThatRequest()} signalizes an intention to
+ * verify a number of requests received so far meeting the given criteria. The criteria is defined using exactly
+ * the same {@code having*} methods which has been already described in the <a href="#stubbing">stubbing section</a>
+ * (the methods are defined in the {@link RequestMatching} interface).</p>
+ * 
+ * <p>The request definition must be followed by calling one of the {@code received*} methods. The already
+ * introduced {@link Verifying#receivedOnce()} method verifies there has been received exactly one request meeting
+ * the given criteria so far. If the verification fails a {@link VerificationException} instance is thrown.</p>
+ * 
+ * <p>There are three more verification methods. {@link Verifying#receivedNever()} verifies there has not been
+ * received any request meeting the given criteria so far. {@link Verifying#receivedTimes(int)} allows to define
+ * the exact number of requests meeting the given criteria. And finally
+ * {@link Verifying#receivedTimes(org.hamcrest.Matcher)} allows to apply a Hamcrest matcher on the number of
+ * requests meeting the given criteria. The following example shows how to verify there have been at most
+ * 3 DELETE requests sent so far:</p>
+ * 
+ * <pre>
+ * verifyThatRequest()
+ *     .havingMethodEqualTo("DELETE")
+ * .receivedTimes(lessThan(4));
+ * </pre>
  */
-public final class Jadler {
+public class Jadler {
     
     private static ThreadLocal<JadlerMocker> jadlerMockerContainer = new ThreadLocal<JadlerMocker>();
     private static String JETTY_SERVER_CLASS = "net.jadler.stubbing.server.jetty.JettyStubHttpServer";
@@ -364,7 +454,7 @@ public final class Jadler {
      * Initializes Jadler and starts a default stub server {@link net.jadler.stubbing.server.jetty.JettyStubHttpServer}
      * serving the http protocol listening on any free port. The port number can be retrieved using {@link #port()}.
      * <br /><br />
-     * This should be preferably called in the <tt>setUp</tt> method of the test suite
+     * This should be preferably called in the {@code setUp} method of the test suite
      * @return if additional tweaking needed on the initialized Jadler, call {@link AdditionalConfiguration#that()}
      * to add more configuration
      */
@@ -377,7 +467,7 @@ public final class Jadler {
      * Initializes Jadler and starts a default stub server {@link net.jadler.stubbing.server.jetty.JettyStubHttpServer}
      * serving the http protocol listening on the given port.
      * <br /><br />
-     * This should be preferably called in the <tt>setUp</tt> method of the test suite
+     * This should be preferably called in the {@code setUp} method of the test suite
      * @param port port the stub server will be listening on
      * @return if additional tweaking needed on the initialized Jadler, call {@link AdditionalConfiguration#that()}
      * to add more configuration
@@ -390,7 +480,7 @@ public final class Jadler {
     /**
      * Initializes Jadler and starts the given {@link StubHttpServer}.
      * <br /><br />
-     * This should be preferably called in the <tt>setUp</tt> method of the test suite
+     * This should be preferably called in the {@code setUp} method of the test suite
      * @param server stub http server instance
      * @return if additional tweaking needed on the initialized Jadler, call {@link AdditionalConfiguration#that()}
      * to add more configuration
@@ -403,7 +493,7 @@ public final class Jadler {
     /**
      * Stops the underlying {@link StubHttpServer} and closes Jadler.
      * <br /><br />
-     * This should be preferably called in the <tt>tearDown</tt> method of a test suite.
+     * This should be preferably called in the {@code tearDown} method of a test suite.
      */
     public static void closeJadler() {
         final StubHttpServerManager serverManager = jadlerMockerContainer.get();
@@ -434,6 +524,17 @@ public final class Jadler {
         checkInitialized();
         return jadlerMockerContainer.get().onRequest();
     }
+    
+    
+    /**
+     * Starts new verification (checking that an http request with given properties was or was not received)
+     * @return verifying object for ongoing verifying 
+     */
+    public static Verifying verifyThatRequest() {
+        checkInitialized();
+        return jadlerMockerContainer.get().verifyThatRequest();
+    }
+    
 
     private static void checkInitialized() {
         if (jadlerMockerContainer.get() == null) {
@@ -537,7 +638,7 @@ public final class Jadler {
         /**
          * Defines a default content type of every stub http response. This value will be used for all stub responses
          * with no specific content type defined. (see {@link ResponseStubbing#withContentType(java.lang.String)})
-         * @param defaultContentType default <tt>Content-Type</tt> header of every http stub response
+         * @param defaultContentType default {@code Content-Type} header of every http stub response
          * @return this ongoing configuration
          */
         public OngoingConfiguration respondsWithDefaultContentType(final String defaultContentType) {

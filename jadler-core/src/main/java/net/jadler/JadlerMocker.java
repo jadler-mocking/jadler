@@ -6,7 +6,6 @@ package net.jadler;
 
 import net.jadler.stubbing.Stubber;
 import net.jadler.stubbing.server.StubHttpServerManager;
-import net.jadler.stubbing.StubResponseProvider;
 import java.nio.charset.Charset;
 import net.jadler.stubbing.RequestStubbing;
 import net.jadler.stubbing.StubbingFactory;
@@ -16,21 +15,29 @@ import net.jadler.stubbing.StubRule;
 import net.jadler.exception.JadlerException;
 import net.jadler.stubbing.server.StubHttpServer;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Deque;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
+import net.jadler.mocking.Mocker;
+import net.jadler.mocking.Verifying;
 import org.apache.commons.collections.MultiMap;
 import org.apache.commons.collections.map.MultiValueMap;
 import org.apache.commons.lang.Validate;
+import org.hamcrest.Matcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static org.hamcrest.Matchers.allOf;
 
 
 /**
  * <p>This class represents the very hearth of the Jadler library. It acts as a great {@link Stubber} providing
  * a way to create new http stubs, {@link StubHttpServerManager} allowing the client to manage the state
- * of the underlying stub http server and {@link StubResponseProvider} providing stub response definitions
+ * of the underlying stub http server and {@link RequestManager} providing stub response definitions
  * according to a given http request.</p>
  * 
  * <p>An underlying stub http server instance is registered to an instance of this class during the instantiation.</p>
@@ -41,14 +48,15 @@ import org.slf4j.LoggerFactory;
  * 
  * <p>This class is stateful and thread-safe.</p>
  */
-public class JadlerMocker implements StubHttpServerManager, Stubber, StubResponseProvider {
+public class JadlerMocker implements StubHttpServerManager, Stubber, RequestManager, Mocker {
     
     //TODO AutoCloseable ???
 
     private final StubHttpServer server;
     private final StubbingFactory stubbingFactory;
     private final List<Stubbing> stubbings;
-    private Deque<StubRule> httpStubRules;
+    private  Deque<StubRule> httpStubRules;
+    private final Set<Request> receivedRequests;
 
     private MultiMap defaultHeaders;
     private int defaultStatus;
@@ -99,6 +107,8 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, StubRespons
         this.stubbingFactory = stubbingFactory;
         
         this.httpStubRules = new LinkedList<StubRule>();
+        
+        this.receivedRequests = new HashSet<Request>();
     }
 
     /**
@@ -112,7 +122,7 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, StubRespons
         
         logger.debug("starting the underlying stub server...");
         
-        this.server.registerResponseProvider(this);
+        this.server.registerRequestManager(this);
 
         try {
             server.start();
@@ -238,6 +248,8 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, StubRespons
                 this.configurable = false;
                 this.httpStubRules = this.createRules();
             }
+        
+            this.receivedRequests.add(request);
         }
         
         for (final Iterator<StubRule> it = this.httpStubRules.descendingIterator(); it.hasNext(); ) {
@@ -265,6 +277,38 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, StubRespons
         
         return NO_RULE_FOUND_RESPONSE;
     }
+    
+    
+    /**
+     * {@inheritDoc} 
+     */
+    @Override
+    public Verifying verifyThatRequest() {
+        return new Verifying(this);
+    }  
+    
+    
+    /**
+     * {@inheritDoc} 
+     */
+    @Override
+    public int numberOfRequestsMatching(Collection<Matcher<? super Request>> predicates) {
+        Validate.notNull(predicates, "predicates cannot be null");
+        
+        final Matcher<Request> all = allOf(predicates);
+        
+        int cnt = 0;
+        
+        synchronized(this) {
+            for (final Request req: this.receivedRequests) {
+                if (all.matches(req)) {
+                    cnt++;
+                }
+            }
+        }
+        
+        return cnt;
+    }  
     
     
     private Deque<StubRule> createRules() {

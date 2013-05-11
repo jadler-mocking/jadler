@@ -25,7 +25,7 @@ public class ParameterRequestMatcher extends RequestMatcher<List<String>> {
      * Protected constructor useful only when subtyping. For creating instances of this class use 
      * {@link #requestParameter(java.lang.String, org.hamcrest.Matcher)} instead.
      * @param pred a predicate to be applied on the given request parameter
-     * @param headerName name of a request parameter (case sensitive)
+     * @param paramName name of a request parameter (case sensitive)
      */
     public ParameterRequestMatcher(final Matcher<? super List<String>> pred, final String paramName) {
         super(pred);
@@ -33,7 +33,7 @@ public class ParameterRequestMatcher extends RequestMatcher<List<String>> {
         Validate.notEmpty(paramName, "paramName cannot be empty");
         this.paramName = paramName;
         
-        this.desc = "parameter " + paramName + " is";
+        this.desc = "parameter \"" + paramName + "\" is";
     }
 
 
@@ -60,7 +60,7 @@ public class ParameterRequestMatcher extends RequestMatcher<List<String>> {
 
     /**
      * Factory method to create new instance of this matcher.
-     * @param headerName name of a request parameter
+     * @param paramName name of a request parameter
      * @param pred a predicate to be applied on the request parameter
      * @return new instance of this matcher
      */

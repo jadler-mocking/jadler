@@ -7,10 +7,8 @@ package net.jadler.matchers;
 import net.jadler.Request;
 import org.junit.Test;
 import org.hamcrest.Matcher;
-
 import java.util.Collections;
 import java.util.List;
-
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.mockito.Mock;
@@ -73,6 +71,6 @@ public class ParameterRequestMatcherTest {
     @Test
     public void provideDescription() {
         assertThat(requestParameter(PARAMETER_NAME, mockMatcher).provideDescription(),
-                is("parameter " + PARAMETER_NAME + " is"));
+                is("parameter \"" + PARAMETER_NAME + "\" is"));
     }
 }

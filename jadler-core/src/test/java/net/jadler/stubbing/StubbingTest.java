@@ -4,27 +4,14 @@
  */
 package net.jadler.stubbing;
 
-import net.jadler.Request;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import net.jadler.exception.JadlerException;
-import net.jadler.matchers.BodyRequestMatcher;
-import net.jadler.matchers.HeaderRequestMatcher;
-import net.jadler.matchers.MethodRequestMatcher;
-import net.jadler.matchers.ParameterRequestMatcher;
-import net.jadler.matchers.QueryStringRequestMatcher;
-import net.jadler.matchers.URIRequestMatcher;
-import net.jadler.matchers.RawBodyRequestMatcher;
 import org.apache.commons.collections.MultiMap;
 import org.apache.commons.collections.map.MultiValueMap;
-import org.hamcrest.Matcher;
-import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
 import java.io.Reader;
 import java.io.StringReader;
 import java.nio.charset.Charset;
@@ -32,7 +19,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
@@ -45,7 +31,6 @@ import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 
 
-@RunWith(MockitoJUnitRunner.class)
 public class StubbingTest {
 
     private static final MultiValueMap DEFAULT_HEADERS = new MultiValueMap();
@@ -54,173 +39,10 @@ public class StubbingTest {
 
     private Stubbing stubbing;
 
-    @Mock
-    private Matcher<Object> matcher;
-
 
     @Before
     public void setUp() {
         this.stubbing = new Stubbing(DEFAULT_ENCODING, DEFAULT_STATUS, DEFAULT_HEADERS);
-    }
-    
-    
-    @Test(expected = IllegalArgumentException.class)
-    public void thatWrongParam() {
-        this.stubbing.that(null);
-    }
-
-
-    @Test
-    public void that() {
-        this.stubbing.that(matcher);
-
-          //Fuck Java generics. This thing is sick.
-        this.assertOneMatcher(Matchers.<Matcher<? super Request>>equalTo(matcher));
-    }
-
-
-    @Test
-    public void havingMethodEqualTo() {
-        this.stubbing.havingMethodEqualTo("GET");
-        this.assertOneMatcher(is(instanceOf(MethodRequestMatcher.class)));
-    }
-
-
-    @Test
-    public void havingMethod() {
-        this.stubbing.havingMethod(matcher);
-        this.assertOneMatcher(is(instanceOf(MethodRequestMatcher.class)));
-    }
-
-    
-    @Test(expected = IllegalArgumentException.class)
-    public void havingBodyEqualToWrongParam() {
-        this.stubbing.havingBodyEqualTo(null);
-    }
-    
-
-    @Test
-    public void havingBodyEqualTo() {
-        this.stubbing.havingBodyEqualTo("body");
-        this.assertOneMatcher(is(instanceOf(BodyRequestMatcher.class)));
-    }
-
-
-    @Test
-    public void havingBody() {
-        this.stubbing.havingBody(matcher);
-        this.assertOneMatcher(is(instanceOf(BodyRequestMatcher.class)));
-    }
-
-    
-    @Test(expected = IllegalArgumentException.class)
-    public void havingRawBodyEqualToWrongParam() {
-        this.stubbing.havingRawBodyEqualTo(null);
-    }
-    
-    
-    @Test
-    public void havingRawBodyEqualTo() {
-        this.stubbing.havingRawBodyEqualTo(new byte[0]);
-        this.assertOneMatcher(is(instanceOf(RawBodyRequestMatcher.class)));
-    }
-
-
-    @Test(expected = IllegalArgumentException.class)
-    public void havingURIMatchingWrongParam() {
-        this.stubbing.havingURIEqualTo("");
-    } 
-
-    
-    @Test
-    public void havingURIMatching() {
-        this.stubbing.havingURIEqualTo("/");
-        this.assertOneMatcher(is(instanceOf(URIRequestMatcher.class)));
-    }
-
-
-    @Test
-    public void havingURI() {
-        this.stubbing.havingURI(matcher);
-        this.assertOneMatcher(is(instanceOf(URIRequestMatcher.class)));
-    }
-
-
-    @Test
-    public void havingQueryStringEqualTo() {
-        this.stubbing.havingQueryStringEqualTo("a=b");
-        this.assertOneMatcher(is(instanceOf(QueryStringRequestMatcher.class)));
-    }
-
-
-    @Test
-    public void havingQueryString() {
-        this.stubbing.havingQueryString(matcher);
-        this.assertOneMatcher(is(instanceOf(QueryStringRequestMatcher.class)));
-    }
-
-
-    @Test
-    public void havingParameterEqualTo() {
-        this.stubbing.havingParameterEqualTo("name", "value");
-        this.assertOneMatcher(is(instanceOf(ParameterRequestMatcher.class)));
-    }
-
-
-    @Test
-    public void havingParameter() {
-        this.stubbing.havingParameter("name", matcher);
-        this.assertOneMatcher(is(instanceOf(ParameterRequestMatcher.class)));
-    }
-
-
-    @Test
-    public void havingParameterWithoutValue() {
-        this.stubbing.havingParameter("name");
-        this.assertOneMatcher(is(instanceOf(ParameterRequestMatcher.class)));
-    }
-
-
-    @Test
-    public void havingParameters() {
-        this.stubbing.havingParameters("name1", "name2");
-        assertThat(this.stubbing.getPredicates(), is(notNullValue()));
-        assertThat(this.stubbing.getPredicates(), hasSize(2));
-
-        assertThat(this.stubbing.getPredicates().get(0), is(instanceOf(ParameterRequestMatcher.class)));
-        assertThat(this.stubbing.getPredicates().get(1), is(instanceOf(ParameterRequestMatcher.class)));
-    }
-
-
-    @Test
-    public void havingHeaderEqualTo() {
-        this.stubbing.havingHeaderEqualTo("name", "value");
-        this.assertOneMatcher(is(instanceOf(HeaderRequestMatcher.class)));
-    }
-
-
-    @Test
-    public void havingHeader() {
-        this.stubbing.havingHeader("name", hasItem("value"));
-        this.assertOneMatcher(is(instanceOf(HeaderRequestMatcher.class)));
-    }
-
-
-    @Test
-    public void havingHeaderWithoutValue() {
-        this.stubbing.havingHeader("name");
-        this.assertOneMatcher(is(instanceOf(HeaderRequestMatcher.class)));
-    }
-
-
-    @Test
-    public void havingHeaders() {
-        this.stubbing.havingHeaders("name1", "name2");
-        assertThat(this.stubbing.getPredicates(), is(notNullValue()));
-        assertThat(this.stubbing.getPredicates(), hasSize(2));
-
-        assertThat(this.stubbing.getPredicates().get(0), is(instanceOf(HeaderRequestMatcher.class)));
-        assertThat(this.stubbing.getPredicates().get(1), is(instanceOf(HeaderRequestMatcher.class)));
     }
 
 
@@ -373,13 +195,5 @@ public class StubbingTest {
 
         assertThat(this.stubbing.getStubResponses().get(0), is(instanceOf(StubResponse.class)));
         return this.stubbing.getStubResponses().get(0);
-    }
-
-
-    private void assertOneMatcher(final Matcher<? super Matcher<? super Request>> matcher) {
-        assertThat(this.stubbing.getPredicates(), is(notNullValue()));
-        assertThat(this.stubbing.getPredicates(), hasSize(1));
-
-        assertThat(this.stubbing.getPredicates().get(0), matcher);
     }
 }

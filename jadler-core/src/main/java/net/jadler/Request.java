@@ -289,7 +289,8 @@ public class Request {
         
         /**
          * Sets the request headers. If not called, no headers will be set.
-         * @param headers request headers (cannot be null)
+         * @param name header name (cannot be empty)
+         * @param value header value (cannot be {@code null})
          * @return this builder 
          */
         public Builder header(final String name, final String value) {
