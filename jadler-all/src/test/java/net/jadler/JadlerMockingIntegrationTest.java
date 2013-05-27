@@ -4,6 +4,7 @@
  */
 package net.jadler;
 
+import net.jadler.mocking.VerificationException;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.ByteArrayRequestEntity;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -12,19 +13,21 @@ import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.Charset;
-import net.jadler.mocking.VerificationException;
 
-import static net.jadler.Jadler.port;
+import static net.jadler.Jadler.closeJadler;
 import static net.jadler.Jadler.initJadler;
 import static net.jadler.Jadler.onRequest;
-import static net.jadler.Jadler.closeJadler;
+import static net.jadler.Jadler.port;
 import static net.jadler.Jadler.verifyThatRequest;
 import static org.hamcrest.Matchers.anything;
+import static org.hamcrest.Matchers.both;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.hasItem;
@@ -32,12 +35,10 @@ import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.isEmptyOrNullString;
 import static org.hamcrest.Matchers.isEmptyString;
+import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
-import static org.hamcrest.Matchers.empty;
-import static org.hamcrest.Matchers.lessThan;
-import static org.hamcrest.Matchers.both;
 
 
 /**
@@ -378,34 +379,34 @@ public class JadlerMockingIntegrationTest {
     
     
     /*
-     * Tests the havingURI methods.
+     * Tests the havingPath methods.
      */
     @Test
-    public void havingURI() throws Exception {        
+    public void havingPath() throws Exception {
         final GetMethod method = new GetMethod("http://localhost:" + port() + "/a/b/c/d/%C5%99");
 
         client.executeMethod(method);
         
         verifyThatRequest()
-            .havingURIEqualTo("/a/b/c/d/%C5%99")
-            .havingURI(notNullValue())
+            .havingPathEqualTo("/a/b/c/d/%C5%99")
+            .havingPath(notNullValue())
         .receivedOnce();
     }
     
     
     /*
-     * Tests the havingURI methods for a root URI.
+     * Tests the havingPath methods for a root path.
      */
     @Test
-    public void havingRootURI() throws IOException {        
+    public void havingRootPath() throws IOException {
           //if there was no slash at the end, the GetMethod constructor would add it automatically
         final GetMethod method = new GetMethod("http://localhost:" + port() + "/");
 
         client.executeMethod(method);
         
         verifyThatRequest()
-            .havingURI(equalTo("/"))
-            .havingURI(not(isEmptyOrNullString()))
+            .havingPath(equalTo("/"))
+            .havingPath(not(isEmptyOrNullString()))
         .receivedOnce();
     }
     
