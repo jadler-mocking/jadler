@@ -13,13 +13,14 @@ import net.jadler.stubbing.server.jetty.JettyStubHttpServer;
 
 import static net.jadler.Jadler.*;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 import static org.hamcrest.Matchers.is;
 
 
 /**
  * Tests the {@link Jadler} facade.
  */
-public class JadlerIntegrationTest {
+public class JadlerFacadeIntegrationTest {
     
     private static final int EXPECTED_STATUS = 204;
     
@@ -35,6 +36,8 @@ public class JadlerIntegrationTest {
         finally {
             closeJadler();
         }
+        
+        fail("jadler cannot be initialized twice");
     }
     
     
@@ -54,6 +57,7 @@ public class JadlerIntegrationTest {
     @Test(expected=IllegalStateException.class)
     public void portBeforeInitialization() {
         port();
+        fail("cannot get the port value now, Jadler hasn't been initialized yet");
     }
     
     
@@ -63,7 +67,18 @@ public class JadlerIntegrationTest {
     @Test(expected=IllegalStateException.class)
     public void onRequestBeforeInitialization() {
         onRequest();
-    }    
+        fail("cannot do stubbing, Jadler hasn't been initialized yet");
+    }
+
+    
+    /*
+     * onRequest() must be called after initialization
+     */
+    @Test(expected=IllegalStateException.class)
+    public void verifyThatRequestBeforeInitialization() {
+        verifyThatRequest();
+        fail("cannot do verification, Jadler hasn't been initialized yet");
+    }
     
     
     /*

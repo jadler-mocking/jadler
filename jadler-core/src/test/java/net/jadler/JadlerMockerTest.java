@@ -7,15 +7,18 @@ package net.jadler;
 import java.net.URI;
 import net.jadler.stubbing.server.StubHttpServerManager;
 import java.nio.charset.Charset;
+import java.util.Collections;
 import java.util.List;
 import net.jadler.stubbing.Stubbing;
 import net.jadler.stubbing.StubRule;
 import net.jadler.stubbing.StubResponse;
 import net.jadler.stubbing.StubbingFactory;
 import net.jadler.exception.JadlerException;
+import net.jadler.mocking.Verifying;
 import net.jadler.stubbing.server.StubHttpServer;
 import org.apache.commons.collections.MultiMap;
 import org.apache.commons.collections.map.MultiValueMap;
+import org.hamcrest.Matcher;
 import org.junit.Test;
 
 import static org.junit.Assert.assertThat;
@@ -28,6 +31,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.anyInt;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyObject;
 import static org.mockito.Mockito.doThrow;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
@@ -111,7 +115,7 @@ public class JadlerMockerTest {
         jadlerMocker.start();
         
         verify(server, times(1)).start();
-        verify(server, times(1)).registerResponseProvider(eq(jadlerMocker));
+        verify(server, times(1)).registerRequestManager(eq(jadlerMocker));
         verifyNoMoreInteractions(server);
     }
     
@@ -392,7 +396,7 @@ public class JadlerMockerTest {
     //need a cooperation of two or more JadlerMocker methods.
     
     @Test
-    public void provideResponseFor() {
+    public void provideStubResponseFor() {
         final Request req = prepareEmptyMockRequest();
     
           //rule1 matches the given request (param of the provideResponseFor method) so it must be returned from
@@ -425,7 +429,7 @@ public class JadlerMockerTest {
     
     
     @Test
-    public void provideResponseFor2() {
+    public void provideStubResponseFor2() {
         final Request req = prepareEmptyMockRequest();
         
           //neither rule1 nor rule2 matches, default not-found response must be returned
@@ -463,7 +467,7 @@ public class JadlerMockerTest {
     
     
     @Test
-    public void provideResponseFor3() {
+    public void provideStubResponseFor3() {
         final Request req = prepareEmptyMockRequest();
         
           //both rules matches the request, the latter must be provided
@@ -493,6 +497,74 @@ public class JadlerMockerTest {
         mocker.onRequest();
         
         assertThat(mocker.provideStubResponseFor(req), is(resp2));
+    }
+    
+    
+    @Test
+    public void verifyThatRequest() {
+        final Verifying ongoingVerifying = new JadlerMocker(mock(StubHttpServer.class)).verifyThatRequest();
+        assertThat(ongoingVerifying, is(not(nullValue())));
+    }
+    
+    
+    @Test(expected=IllegalArgumentException.class)
+    public void numberOfRequestsMatchingInvalidArgument() {
+        new JadlerMocker(mock(StubHttpServer.class)).numberOfRequestsMatching(null);
+        fail("matchers cannot be null");
+    }
+    
+    
+    @Test
+    public void numberOfRequestsMatchingNoReceivedRequest() {
+        
+        @SuppressWarnings("unchecked")
+        final Matcher<? super Request> m1 = mock(Matcher.class);
+        when(m1.matches(anyObject())).thenReturn(true);
+        
+        final JadlerMocker mocker = new JadlerMocker(mock(StubHttpServer.class));
+        final int cnt = mocker.numberOfRequestsMatching(Collections.<Matcher<? super Request>>singletonList(m1));
+        
+        assertThat(cnt, is(0));  //no request received yet, must be zero
+    }
+    
+    
+    @Test
+    public void numberOfRequestsMatchingNoPredicates() {        
+        final JadlerMocker mocker = new JadlerMocker(mock(StubHttpServer.class));
+        
+          //calling provideStubResponseFor for all three requests so these get recorder in the mocker
+        mocker.provideStubResponseFor(mock(Request.class));
+        mocker.provideStubResponseFor(mock(Request.class));
+        mocker.provideStubResponseFor(mock(Request.class));
+        
+        final int cnt = mocker.numberOfRequestsMatching(Collections.<Matcher<? super Request>>emptyList());
+        
+        assertThat(cnt, is(3));
+    }
+    
+    
+    @Test
+    public void numberOfRequestsMatching() {
+        final Request req1 = mock(Request.class);
+        final Request req2 = mock(Request.class);
+        final Request req3 = mock(Request.class);
+        
+        @SuppressWarnings("unchecked")
+        final Matcher<? super Request> m1 = mock(Matcher.class);
+        when(m1.matches(req1)).thenReturn(true);
+        when(m1.matches(req2)).thenReturn(false);
+        when(m1.matches(req3)).thenReturn(true);
+        
+        final JadlerMocker mocker = new JadlerMocker(mock(StubHttpServer.class));
+        
+          //calling provideStubResponseFor for all three requests so these get recorder in the mocker
+        mocker.provideStubResponseFor(req1);
+        mocker.provideStubResponseFor(req2);
+        mocker.provideStubResponseFor(req3);
+        
+        final int cnt = mocker.numberOfRequestsMatching(Collections.<Matcher<? super Request>>singletonList(m1));
+        
+        assertThat(cnt, is(2));
     }
     
     

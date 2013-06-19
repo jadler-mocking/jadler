@@ -33,7 +33,7 @@ public class HeaderRequestMatcher extends RequestMatcher<List<String>> {
         Validate.notEmpty(headerName, "headerName cannot be empty");
         this.headerName = headerName;
         
-        this.desc = "header " + headerName + " is";
+        this.desc = "header \"" + headerName + "\" is";
     }
 
 
