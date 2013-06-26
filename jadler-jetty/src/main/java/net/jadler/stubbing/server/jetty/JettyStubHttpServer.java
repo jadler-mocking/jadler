@@ -4,7 +4,7 @@
  */
 package net.jadler.stubbing.server.jetty;
 
-import net.jadler.stubbing.StubResponseProvider;
+import net.jadler.RequestManager;
 import net.jadler.stubbing.server.StubHttpServer;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
@@ -42,7 +42,7 @@ public class JettyStubHttpServer implements StubHttpServer {
      * {@inheritDoc}
      */
     @Override
-    public void registerResponseProvider(final StubResponseProvider ruleProvider) {
+    public void registerRequestManager(final RequestManager ruleProvider) {
         Validate.notNull(ruleProvider, "ruleProvider cannot be null");
 
         final HandlerList handlers = new HandlerList();

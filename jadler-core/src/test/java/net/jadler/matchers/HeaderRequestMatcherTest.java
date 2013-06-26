@@ -54,6 +54,6 @@ public class HeaderRequestMatcherTest {
     @Test
     public void provideDescription() {
         assertThat(requestHeader(HEADER_NAME, mockMatcher).provideDescription(),
-                is("header " + HEADER_NAME + " is"));
+                is("header \"" + HEADER_NAME + "\" is"));
     }
 }

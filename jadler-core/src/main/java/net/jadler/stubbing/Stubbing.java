@@ -4,30 +4,19 @@
  */
 package net.jadler.stubbing;
 
-import net.jadler.Request;
 import net.jadler.exception.JadlerException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.io.IOUtils;
-import org.hamcrest.Matcher;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.nio.charset.Charset;
+import net.jadler.AbstractRequestMatching;
 import net.jadler.Jadler;
 import org.apache.commons.collections.MultiMap;
 import org.apache.commons.collections.map.MultiValueMap;
-import org.apache.commons.lang.Validate;
-
-import static org.hamcrest.Matchers.*;
-import static net.jadler.matchers.QueryStringRequestMatcher.requestQueryString;
-import static net.jadler.matchers.MethodRequestMatcher.requestMethod;
-import static net.jadler.matchers.BodyRequestMatcher.requestBody;
-import static net.jadler.matchers.RawBodyRequestMatcher.requestRawBody;
-import static net.jadler.matchers.URIRequestMatcher.requestURI;
-import static net.jadler.matchers.HeaderRequestMatcher.requestHeader;
-import static net.jadler.matchers.ParameterRequestMatcher.requestParameter;
 
 
 /**
@@ -35,11 +24,10 @@ import static net.jadler.matchers.ParameterRequestMatcher.requestParameter;
  * of this class on your own, please see {@link Jadler#onRequest()}
  * for more information on creating instances of this class.
  */
-public class Stubbing implements RequestStubbing, ResponseStubbing {
+public class Stubbing extends AbstractRequestMatching<RequestStubbing> implements RequestStubbing, ResponseStubbing {
     
     private static final String CONTENT_TYPE_HEADER = "Content-Type";
 
-    private final List<Matcher<? super Request>> predicates;
     private final List<StubResponse> stubResponses;
     private final MultiMap defaultHeaders;
     private final int defaultStatus;
@@ -55,7 +43,6 @@ public class Stubbing implements RequestStubbing, ResponseStubbing {
     @SuppressWarnings("unchecked")
     Stubbing(final Charset defaultEncoding, final int defaultStatus, final MultiMap defaultHeaders) {
         
-        this.predicates = new ArrayList<Matcher<? super Request>>();
         this.stubResponses = new ArrayList<StubResponse>();
         this.defaultHeaders = new MultiValueMap();
         this.defaultHeaders.putAll(defaultHeaders);
@@ -64,208 +51,6 @@ public class Stubbing implements RequestStubbing, ResponseStubbing {
     }
 
     
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public RequestStubbing that(final Matcher<? super Request> predicate) {
-        Validate.notNull(predicate, "predicate cannot be null");
-        
-        this.predicates.add(predicate);
-        return this;
-    }
-    
-    
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public RequestStubbing havingMethodEqualTo(final String method) {
-        Validate.notEmpty(method, "method cannot be empty");
-        
-        return havingMethod(equalToIgnoringCase(method));
-    }
-
-
-    /**
-     * {@inheritDoc}
-     */    
-    @Override
-    public RequestStubbing havingMethod(final Matcher<? super String> predicate) {
-        Validate.notNull(predicate, "predicate cannot be null");
-        
-        return that(requestMethod(predicate));
-    }
-    
-
-    /**
-     * {@inheritDoc}
-     */    
-    @Override
-    public RequestStubbing havingBodyEqualTo(final String requestBody) {
-        Validate.notNull(requestBody, "requestBody cannot be null, use an empty string instead");
-        
-        return havingBody(equalTo(requestBody));
-    }
-
-
-    /**
-     * {@inheritDoc}
-     */    
-    @Override
-    public RequestStubbing havingBody(final Matcher<? super String> predicate) {
-        Validate.notNull(predicate, "predicate cannot be null");
-        
-        return that(requestBody(predicate));
-    }
-    
-    
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public RequestStubbing havingRawBodyEqualTo(final byte[] requestBody) {
-        Validate.notNull(requestBody, "requestBody cannot be null, use an empty array instead");
-        
-        return that(requestRawBody(equalTo(requestBody)));
-    }
-    
-    
-    /**
-     * {@inheritDoc}
-     */    
-    @Override
-    public RequestStubbing havingURIEqualTo(final String uri) {
-        Validate.notEmpty(uri, "uri cannot be empty");
-        
-        return havingURI(equalTo(uri));
-    }
-
-
-    /**
-     * {@inheritDoc}
-     */    
-    @Override
-    public RequestStubbing havingURI(final Matcher<? super String> predicate) {
-        Validate.notNull(predicate, "predicate cannot be null");
-        
-        return that(requestURI(predicate));
-    }
-    
-    
-    /**
-     * {@inheritDoc}
-     */    
-    @Override
-    public RequestStubbing havingQueryStringEqualTo(final String queryString) {
-        return havingQueryString(equalTo(queryString));
-    }
-
-
-    /**
-     * {@inheritDoc}
-     */    
-    @Override
-    public RequestStubbing havingQueryString(final Matcher<? super String> predicate) {
-        Validate.notNull(predicate, "predicate cannot be null");
-        
-        return that(requestQueryString(predicate));
-    }
-    
-
-    /**
-     * {@inheritDoc}
-     */    
-    @Override
-    public RequestStubbing havingParameterEqualTo(final String name, final String value) {
-        Validate.notNull(value, "value cannot be null");
-        
-        return havingParameter(name, hasItem(value));
-    }
-    
-
-    /**
-     * {@inheritDoc}
-     */    
-    @Override
-    public RequestStubbing havingParameter(final String name, final Matcher<? super List<String>> predicate) {
-        Validate.notEmpty(name, "name cannot be empty");
-        Validate.notNull(predicate, "predicate cannot be null");
-        
-        return that(requestParameter(name, predicate));
-    }
-    
-
-    /**
-     * {@inheritDoc}
-     */    
-    @Override
-    public RequestStubbing havingParameter(final String name) {
-        return havingParameter(name, notNullValue());
-    }
-    
-
-    /**
-     * {@inheritDoc}
-     */    
-    @Override
-    public RequestStubbing havingParameters(final String... names) {
-        
-        for (final String name: names) {
-            havingParameter(name);
-        }
-        
-        return this;
-    }
-
-
-    /**
-     * {@inheritDoc}
-     */    
-    @Override
-    public RequestStubbing havingHeaderEqualTo(final String name, final String value) {
-        Validate.notNull(value, "value cannot be null");
-        
-        return havingHeader(name, hasItem(value));
-    }
-
-
-    /**
-     * {@inheritDoc}
-     */    
-    @Override
-    public RequestStubbing havingHeader(final String name, final Matcher<? super List<String>> predicate) {
-        Validate.notEmpty(name, "name cannot be empty");
-        Validate.notNull(predicate, "predicate cannot be null");
-        
-        return that(requestHeader(name, predicate));
-    }
-
-
-    /**
-     * {@inheritDoc}
-     */    
-    @Override
-    public RequestStubbing havingHeader(final String name) {
-        return havingHeader(name, notNullValue());
-    }
-    
-
-    /**
-     * {@inheritDoc}
-     */    
-    @Override
-    public RequestStubbing havingHeaders(final String... names) {
-        Validate.notNull(names, "names cannot be null");
-        
-        for (final String name: names) {
-            havingHeader(name);
-        }
-
-        return this;
-    }
-
-
     /**
      * {@inheritDoc}
      */
@@ -345,6 +130,9 @@ public class Stubbing implements RequestStubbing, ResponseStubbing {
     }
     
     
+    /**
+     * {@inheritDoc}
+     */ 
     @Override
     public ResponseStubbing withBody(final InputStream is) {
         try {
@@ -364,7 +152,10 @@ public class Stubbing implements RequestStubbing, ResponseStubbing {
         }
     }
 
-    
+
+    /**
+     * {@inheritDoc}
+     */ 
     @Override
     public ResponseStubbing withBody(final byte[] responseBody) {
         currentResponse().setBody(responseBody);
@@ -409,15 +200,6 @@ public class Stubbing implements RequestStubbing, ResponseStubbing {
      */
     public StubRule createRule() {
         return new StubRule(predicates, stubResponses);
-    }
-
-    
-    /**
-     * package private getter for testing purposes
-     * @return all registered predicates
-     */
-    List<Matcher<? super Request>> getPredicates() {
-        return new ArrayList<Matcher<? super Request>>(this.predicates);
     }
     
     

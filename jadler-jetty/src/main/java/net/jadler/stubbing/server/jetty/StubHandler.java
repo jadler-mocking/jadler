@@ -5,7 +5,7 @@
 package net.jadler.stubbing.server.jetty;
 
 import net.jadler.stubbing.StubResponse;
-import net.jadler.stubbing.StubResponseProvider;
+import net.jadler.RequestManager;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 import javax.servlet.ServletException;
@@ -22,11 +22,11 @@ import org.apache.commons.lang.Validate;
 
 public class StubHandler extends AbstractHandler {
 
-    private final StubResponseProvider ruleProvider;
+    private final RequestManager requestManager;
 
-    public StubHandler(final StubResponseProvider ruleProvider) {
-        Validate.notNull(ruleProvider, "ruleProvider cannot be null");
-        this.ruleProvider = ruleProvider;
+    public StubHandler(final RequestManager requestManager) {
+        Validate.notNull(requestManager, "requestManager cannot be null");
+        this.requestManager = requestManager;
     }
 
 
@@ -37,7 +37,7 @@ public class StubHandler extends AbstractHandler {
 
         net.jadler.Request req = RequestUtils.convert(request);
 
-        final StubResponse stubResponse = this.ruleProvider.provideStubResponseFor(req);
+        final StubResponse stubResponse = this.requestManager.provideStubResponseFor(req);
         setResponseHeaders(stubResponse.getHeaders(), response);
         setStatus(stubResponse.getStatus(), response);
         processTimeout(stubResponse.getTimeout());

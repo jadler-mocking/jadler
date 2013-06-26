@@ -57,7 +57,7 @@ public class StubRule {
     
     /**
      * @param request an http request to be checked whether it matches this stub rule.
-     * @return true if and only if all predicates defined in this rule were evaluated to <tt>true</tt>
+     * @return true if and only if all predicates defined in this rule were evaluated to {@code true}
      * by the given request.
      */
     public boolean matchedBy(final Request request) {
@@ -81,7 +81,7 @@ public class StubRule {
     
     /**
      * Returns a reason why the given request doesn't match this rule. This method should be called if
-     * and only if {@link  #matchedBy(Request)} would returned <tt>false</tt>.
+     * and only if {@link  #matchedBy(Request)} would return <tt>false</tt>.
      * However, this is not checked.
      * @param request an http request to describe the mismatch for
      * @return a human readable mismatch reason 
