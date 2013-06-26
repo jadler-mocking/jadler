@@ -194,12 +194,12 @@ public class Stubbing extends AbstractRequestMatching<RequestStubbing> implement
     
     
     /**
-     * Creates a {@link StubRule} instance from this Stubbing instance.
+     * Creates a {@link HttpStub} instance from this Stubbing instance.
      * Must be called once this stubbing has been finished.
-     * @return {@link StubRule} instance configured using values from this stubbing
+     * @return {@link HttpStub} instance configured using values from this stubbing
      */
-    public StubRule createRule() {
-        return new StubRule(predicates, stubResponses);
+    public HttpStub createRule() {
+        return new HttpStub(predicates, stubResponses);
     }
     
     
