@@ -10,7 +10,7 @@ import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.List;
 import net.jadler.stubbing.Stubbing;
-import net.jadler.stubbing.StubRule;
+import net.jadler.stubbing.HttpStub;
 import net.jadler.stubbing.StubResponse;
 import net.jadler.stubbing.StubbingFactory;
 import net.jadler.exception.JadlerException;
@@ -121,32 +121,32 @@ public class JadlerMockerTest {
     
     
     @Test(expected=IllegalStateException.class)
-    public void stopNotStarted() {
-        new JadlerMocker(mock(StubHttpServer.class)).stop();
+    public void closeNotStarted() {
+        new JadlerMocker(mock(StubHttpServer.class)).close();
         fail("mocker cannot be stopped without being started");
     }
     
     
     @Test(expected=JadlerException.class)
-    public void stopException() throws Exception {
+    public void closeException() throws Exception {
         final StubHttpServer server = mock(StubHttpServer.class);
         doThrow(new Exception()).when(server).start();
         final StubHttpServerManager mocker = new JadlerMocker(server);
         
         mocker.start();
-        mocker.stop();
+        mocker.close();
         
         fail("server threw an exception");
     }
     
     
     @Test
-    public void stop() throws Exception {
+    public void close() throws Exception {
         final StubHttpServer server = mock(StubHttpServer.class);
         final JadlerMocker mocker = new JadlerMocker(server);
         
         mocker.start();
-        mocker.stop();
+        mocker.close();
         
         verify(server, times(1)).stop();
     }
@@ -160,7 +160,7 @@ public class JadlerMockerTest {
         assertThat(jadlerMocker.isStarted(), is(false));
         jadlerMocker.start();
         assertThat(jadlerMocker.isStarted(), is(true));
-        jadlerMocker.stop();
+        jadlerMocker.close();
         assertThat(jadlerMocker.isStarted(), is(false));
     }
     
@@ -181,32 +181,6 @@ public class JadlerMockerTest {
         final StubHttpServerManager serverManager = new JadlerMocker(server);
         serverManager.start();
         assertThat(serverManager.getStubHttpServerPort(), is(PORT));
-    }
-    
-    
-    @Test(expected=IllegalArgumentException.class)
-    public void setDefaultHeadersWrongParam() {
-        new JadlerMocker(mock(StubHttpServer.class)).setDefaultHeaders(null);
-        fail("defaultHeaders cannot be null");
-    }
-    
-    
-    @Test(expected=IllegalStateException.class)
-    public void setDefaultHeadersWrongState() {
-        final JadlerMocker mocker = new JadlerMocker(mock(StubHttpServer.class));
-        
-          //calling provideStubResponseFor finishes the configuration phase, default headers cannot be set anymore
-        mocker.provideStubResponseFor(prepareEmptyMockRequest());
-        
-        mocker.setDefaultHeaders(new MultiValueMap());
-        fail("default headers cannot be set anymore");
-    }
-    
-    
-    @Test
-    public void setDefaultHeaders() {
-        final JadlerMocker mocker = new JadlerMocker(mock(StubHttpServer.class));
-        mocker.setDefaultHeaders(new MultiValueMap());
     }
     
     
@@ -329,17 +303,17 @@ public class JadlerMockerTest {
         
         final JadlerMocker mocker = new JadlerMocker(server, sf);
         
-        final MultiMap defaultHeaders = new MultiValueMap();
-        defaultHeaders.put(HEADER_NAME1, HEADER_VALUE1);
-        defaultHeaders.put(HEADER_NAME2, HEADER_VALUE2);
-        
         mocker.setDefaultStatus(DEFAULT_STATUS);
-        mocker.setDefaultHeaders(defaultHeaders);
+        mocker.addDefaultHeader(HEADER_NAME1, HEADER_VALUE1);
+        mocker.addDefaultHeader(HEADER_NAME2, HEADER_VALUE2);
         mocker.setDefaultEncoding(DEFAULT_ENCODING);
 
         mocker.onRequest();
         
           //verify the Stubbing instance was created with the given defaults
+        final MultiMap defaultHeaders = new MultiValueMap();
+        defaultHeaders.put(HEADER_NAME1, HEADER_VALUE1);
+        defaultHeaders.put(HEADER_NAME2, HEADER_VALUE2);
         verify(sf, times(1)).createStubbing(eq(DEFAULT_ENCODING), eq(DEFAULT_STATUS), eq(defaultHeaders));
     }
     
@@ -401,18 +375,18 @@ public class JadlerMockerTest {
     
           //rule1 matches the given request (param of the provideResponseFor method) so it must be returned from
           //the tested method
-        final StubRule rule1 = mock(StubRule.class);
+        final HttpStub rule1 = mock(HttpStub.class);
         final Stubbing stubbing1 = mock(Stubbing.class);
         when(stubbing1.createRule()).thenReturn(rule1);
-        when(rule1.matchedBy(eq(req))).thenReturn(true);
+        when(rule1.matches(eq(req))).thenReturn(true);
         final StubResponse resp1 = new StubResponse();
         when(rule1.nextResponse()).thenReturn(resp1);
         
           //rule2 doesn't match the given request
-        final StubRule rule2  = mock(StubRule.class);
+        final HttpStub rule2  = mock(HttpStub.class);
         final Stubbing stubbing2 = mock(Stubbing.class);
         when(stubbing2.createRule()).thenReturn(rule2);
-        when(rule2.matchedBy(eq(req))).thenReturn(false);
+        when(rule2.matches(eq(req))).thenReturn(false);
         
         final StubbingFactory sf = mock(StubbingFactory.class);
         when(sf.createStubbing(any(Charset.class), anyInt(), any(MultiMap.class))).thenReturn(stubbing1, stubbing2);
@@ -433,16 +407,16 @@ public class JadlerMockerTest {
         final Request req = prepareEmptyMockRequest();
         
           //neither rule1 nor rule2 matches, default not-found response must be returned
-        final StubRule rule1 = mock(StubRule.class);
+        final HttpStub rule1 = mock(HttpStub.class);
         final Stubbing stubbing1 = mock(Stubbing.class);
         when(stubbing1.createRule()).thenReturn(rule1);
-        when(rule1.matchedBy(eq(req))).thenReturn(false);
+        when(rule1.matches(eq(req))).thenReturn(false);
         
         
-        final StubRule rule2  = mock(StubRule.class);
+        final HttpStub rule2  = mock(HttpStub.class);
         final Stubbing stubbing2 = mock(Stubbing.class);
         when(stubbing2.createRule()).thenReturn(rule2);
-        when(rule2.matchedBy(eq(req))).thenReturn(false);
+        when(rule2.matches(eq(req))).thenReturn(false);
         
         final StubbingFactory sf = mock(StubbingFactory.class);
         when(sf.createStubbing(any(Charset.class), anyInt(), any(MultiMap.class)))
@@ -471,17 +445,17 @@ public class JadlerMockerTest {
         final Request req = prepareEmptyMockRequest();
         
           //both rules matches the request, the latter must be provided
-        final StubRule rule1 = mock(StubRule.class);
+        final HttpStub rule1 = mock(HttpStub.class);
         final Stubbing stubbing1 = mock(Stubbing.class);
         when(stubbing1.createRule()).thenReturn(rule1);
-        when(rule1.matchedBy(eq(req))).thenReturn(true);
+        when(rule1.matches(eq(req))).thenReturn(true);
         final StubResponse resp1 = new StubResponse();
         when(rule1.nextResponse()).thenReturn(resp1);
         
-        final StubRule rule2  = mock(StubRule.class);
+        final HttpStub rule2  = mock(HttpStub.class);
         final Stubbing stubbing2 = mock(Stubbing.class);
         when(stubbing2.createRule()).thenReturn(rule2);
-        when(rule2.matchedBy(eq(req))).thenReturn(true);
+        when(rule2.matches(eq(req))).thenReturn(true);
         final StubResponse resp2 = new StubResponse();
         when(rule2.nextResponse()).thenReturn(resp2);
         

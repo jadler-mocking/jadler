@@ -19,10 +19,9 @@ import static org.hamcrest.Matchers.*;
 
 
 /**
- * TODO: shouldn't this be called HttpStub instead of StubRule?
- * A stub rule is a <i>WHEN</i>-<i>THEN</i> pair (when a http request with specific properties arrives, then respond
- * with a defined http response).
- * The <i>WHEN<i> part is a list of predicates (in form of Hamcrest matchers) applied to a request. All of these
+ * An http stub is a <i>WHEN</i>-<i>THEN</i> pair (when an http request with specific properties arrives, then respond
+ * with a defined response).
+ * The <i>WHEN<i> part is a list of predicates (in form of Hamcrest matchers) applicable to a request. All of these
  * matchers must be evaluated to <tt>true</tt> in order to apply the <i>THEN</i> part.
  * 
  * The <i>THEN</i> part if defined by a non-empty list of stub response definition (in form of {@link StubResponse}
@@ -33,7 +32,7 @@ import static org.hamcrest.Matchers.*;
  * 
  * One should never create new instances of this class directly, see {@link net.jadler.Jadler} for explanation and tutorial.
  */
-public class StubRule {
+public class HttpStub {
 
     private final Collection<Matcher<? super Request>> predicates;
     private final List<StubResponse> stubResponses;
@@ -45,7 +44,7 @@ public class StubRule {
      * be matched by every request)
      * @param stubResponses list of stub response definitions. Must contain at least one stub response.
      */
-    public StubRule(final Collection<Matcher<? super Request>> predicates,
+    public HttpStub(final Collection<Matcher<? super Request>> predicates,
             final List<StubResponse> stubResponses) {
         Validate.notNull(predicates, "predicates cannot be null, use an empty list instead");
         this.predicates = new ArrayList<Matcher<? super Request>>(predicates);
@@ -60,7 +59,7 @@ public class StubRule {
      * @return true if and only if all predicates defined in this rule were evaluated to {@code true}
      * by the given request.
      */
-    public boolean matchedBy(final Request request) {
+    public boolean matches(final Request request) {
         return allOf(this.predicates).matches(request);
     }
 

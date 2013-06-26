@@ -11,7 +11,7 @@ import net.jadler.stubbing.RequestStubbing;
 import net.jadler.stubbing.StubbingFactory;
 import net.jadler.stubbing.Stubbing;
 import net.jadler.stubbing.StubResponse;
-import net.jadler.stubbing.StubRule;
+import net.jadler.stubbing.HttpStub;
 import net.jadler.exception.JadlerException;
 import net.jadler.stubbing.server.StubHttpServer;
 import java.util.ArrayList;
@@ -49,13 +49,11 @@ import static org.hamcrest.Matchers.allOf;
  * <p>This class is stateful and thread-safe.</p>
  */
 public class JadlerMocker implements StubHttpServerManager, Stubber, RequestManager, Mocker {
-    
-    //TODO AutoCloseable ???
 
     private final StubHttpServer server;
     private final StubbingFactory stubbingFactory;
     private final List<Stubbing> stubbings;
-    private  Deque<StubRule> httpStubRules;
+    private  Deque<HttpStub> httpStubs;
     private final Set<Request> receivedRequests;
 
     private MultiMap defaultHeaders;
@@ -106,7 +104,7 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, RequestMana
         Validate.notNull(stubbingFactory, "stubbingFactory cannot be null");
         this.stubbingFactory = stubbingFactory;
         
-        this.httpStubRules = new LinkedList<StubRule>();
+        this.httpStubs = new LinkedList<HttpStub>();
         
         this.receivedRequests = new HashSet<Request>();
     }
@@ -137,7 +135,7 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, RequestMana
      * {@inheritDoc}
      */
     @Override
-    public void stop() {
+    public void close() {
         if (!this.started) {
             throw new IllegalStateException("The stub server hasn't been started yet.");
         }
@@ -171,20 +169,6 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, RequestMana
             throw new IllegalStateException("The stub http server hasn't been started yet.");
         }
         return server.getPort();
-    }
-
-
-    /**
-     * Defines default headers to be added to every stub http response
-     * @param defaultHeaders default headers to be added to every stub http response 
-     * //TODO what about removing this method completely so the MultiMap bullshit is not exposed to the client?
-     */
-    @SuppressWarnings("unchecked")
-    public void setDefaultHeaders(final MultiMap defaultHeaders) {
-        Validate.notNull(defaultHeaders, "defaultHeaders cannot be null, use an empty map instead");
-        this.checkConfigurable();
-        this.defaultHeaders = new MultiValueMap();
-        this.defaultHeaders.putAll(defaultHeaders);
     }
     
     
@@ -246,15 +230,15 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, RequestMana
         synchronized(this) {
             if (this.configurable) {
                 this.configurable = false;
-                this.httpStubRules = this.createRules();
+                this.httpStubs = this.createHttpStubs();
             }
         
             this.receivedRequests.add(request);
         }
         
-        for (final Iterator<StubRule> it = this.httpStubRules.descendingIterator(); it.hasNext(); ) {
-            final StubRule rule = it.next();
-            if (rule.matchedBy(request)) {
+        for (final Iterator<HttpStub> it = this.httpStubs.descendingIterator(); it.hasNext(); ) {
+            final HttpStub rule = it.next();
+            if (rule.matches(request)) {
                 final StringBuilder sb = new StringBuilder();
                 sb.append("Following rule will be applied:\n");
                 sb.append(rule);
@@ -266,7 +250,7 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, RequestMana
         
         final StringBuilder sb = new StringBuilder();
         sb.append("No suitable rule found. Reason:\n");
-        for (final StubRule rule: this.httpStubRules) {
+        for (final HttpStub rule: this.httpStubs) {
             sb.append("The rule '");
             sb.append(rule);
             sb.append("' cannot be applied. Mismatch:\n");
@@ -311,12 +295,12 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, RequestMana
     }  
     
     
-    private Deque<StubRule> createRules() {
-        final Deque<StubRule> rules = new LinkedList<StubRule>();
+    private Deque<HttpStub> createHttpStubs() {
+        final Deque<HttpStub> stubs = new LinkedList<HttpStub>();
         for (final Stubbing stub : stubbings) {
-            rules.add(stub.createRule());
+            stubs.add(stub.createRule());
         }
-        return rules;
+        return stubs;
     }
     
     

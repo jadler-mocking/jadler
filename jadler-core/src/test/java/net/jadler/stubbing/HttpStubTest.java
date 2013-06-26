@@ -21,21 +21,21 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.anything;
 
 
-public class StubRuleTest {
+public class HttpStubTest {
     
     private static final List<StubResponse> DUMB_RESPONSE = Arrays.asList(new StubResponse());
     
 
     @Test(expected=IllegalArgumentException.class)
     public void constructor1() {
-        new StubRule(null, DUMB_RESPONSE);
+        new HttpStub(null, DUMB_RESPONSE);
         fail("predicates cannot be null");
     }
     
     
     @Test(expected=IllegalArgumentException.class)
     public void constructor2() {
-        new StubRule(Collections.<Matcher<? super Request>>emptyList(),
+        new HttpStub(Collections.<Matcher<? super Request>>emptyList(),
                 Collections.<StubResponse>emptyList());
         fail("stubResponses cannot be empty");
     }
@@ -43,22 +43,22 @@ public class StubRuleTest {
     
     @Test
     public void constructor3() {
-        new StubRule(Collections.<Matcher<? super Request>>emptyList(), DUMB_RESPONSE);
+        new HttpStub(Collections.<Matcher<? super Request>>emptyList(), DUMB_RESPONSE);
     }
     
     
     @Test
     @SuppressWarnings("unchecked")
-    public void matchedBy() {
+    public void matches() {
         final Matcher<? super Request> m1 = mock(Matcher.class);
         
         when(m1.matches(any())).thenReturn(false);
         
-        final StubRule rule = new StubRule(
+        final HttpStub rule = new HttpStub(
                 Arrays.<Matcher<? super Request>>asList(anything(), m1, anything()), DUMB_RESPONSE);
         
           //one matcher returns false, this rule is not applicable
-        assertThat(rule.matchedBy(mock(Request.class)), is(false));
+        assertThat(rule.matches(mock(Request.class)), is(false));
     }
     
     
@@ -67,7 +67,7 @@ public class StubRuleTest {
         final StubResponse r1 = new StubResponse();
         final StubResponse r2 = new StubResponse();
         
-        final StubRule rule = new StubRule(Collections.<Matcher<? super Request>>emptyList(),
+        final HttpStub rule = new HttpStub(Collections.<Matcher<? super Request>>emptyList(),
                 Arrays.asList(r1, r2));
         
         assertThat(rule.nextResponse(), is(r1));
