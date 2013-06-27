@@ -65,7 +65,7 @@ import net.jadler.stubbing.ResponseStubbing;
  *     public void getAccount() {
  *         onRequest()
  *             .havingMethodEqualTo("GET")
- *             .havingURIEqualTo("/accounts/" + ID)
+ *             .havingPathEqualTo("/accounts/" + ID)
  *         .respond()
  *             .withBody(ACCOUNT_JSON)
  *             .withStatus(200);
@@ -103,7 +103,7 @@ import net.jadler.stubbing.ResponseStubbing;
  * public void getAccountNotFound() {
  *     onRequest()
  *         .havingMethodEqualTo("GET")
- *         .havingURIEqualTo("/projects/" + ID)
+ *         .havingPathEqualTo("/projects/" + ID)
  *     .respond()
  *         .withStatus(404);
  * 
@@ -119,7 +119,7 @@ import net.jadler.stubbing.ResponseStubbing;
  * public void getAccountError() {
  *     onRequest()
  *         .havingMethodEqualTo("GET")
- *         .havingURIEqualTo("/projects/" + ID)
+ *         .havingPathEqualTo("/projects/" + ID)
  *     .respond()
  *         .withStatus(500);
  * 
@@ -139,7 +139,7 @@ import net.jadler.stubbing.ResponseStubbing;
  * 
  * <pre>
  * onRequest()
- *     .havingURIEqualTo("/projects")
+ *     .havingPathEqualTo("/projects")
  *     .havingMethodEqualTo("POST")
  * .respond()
  *     .withStatus(500)
@@ -158,7 +158,7 @@ import net.jadler.stubbing.ResponseStubbing;
  * 
  * <pre>
  * onRequest()
- *     .havingURIEqualTo("/projects")
+ *     .havingPathEqualTo("/projects")
  * .respond()
  *     .withStatus(201);
  * 
@@ -176,7 +176,7 @@ import net.jadler.stubbing.ResponseStubbing;
  * <h4 id="stubbing">The <em>WHEN</em> part</h4>
  * <p>So far two {@code having*} methods have been introduced,
  * {@link RequestStubbing#havingMethodEqualTo(java.lang.String)} to check the http method equality and
- * {@link RequestStubbing#havingURIEqualTo(java.lang.String)} to check the URI equality. But there's more!</p>
+ * {@link RequestStubbing#havingPathEqualTo(java.lang.String)} to check the path equality. But there's more!</p>
  * 
  * <p>You can use {@link RequestStubbing#havingBodyEqualTo(java.lang.String)} and
  * {@link RequestStubbing#havingRawBodyEqualTo(byte[])}} to check the request body equality
@@ -198,7 +198,7 @@ import net.jadler.stubbing.ResponseStubbing;
  * <pre>
  * onRequest()
  *     .havingMethodEqualTo("POST")
- *     .havingURIEqualTo("/projects")
+ *     .havingPathEqualTo("/projects")
  *     .havingBodyEqualTo("{\"project\":{}}")
  *     .havingHeaderEqualTo("Content-Type", "application/json")
  *     .havingParameterEqualTo("force", "1")
@@ -239,7 +239,7 @@ import net.jadler.stubbing.ResponseStubbing;
  * <pre>
  * onRequest()
  *     .havingMethodEqualTo("POST")
- *     .havingURIEqualTo("/projects")
+ *     .havingPathEqualTo("/projects")
  *     .havingBodyEqualTo("{\"project\":{}}")
  *     .havingHeaderEqualTo("Content-Type", "application/json")
  *     .havingParameterEqualTo("force", "1")
@@ -270,13 +270,13 @@ import net.jadler.stubbing.ResponseStubbing;
  * <a href="http://code.google.com/p/hamcrest/wiki/Tutorial" target="_blank">tutorial</a>.</p>
  * 
  * <p>So let's write the following stub: if an incoming request has a non-empty body and the request method
- * is not PUT and the URI value starts with <em>/projects</em> then return an empty response
+ * is not PUT and the path value starts with <em>/projects</em> then return an empty response
  * with the 200 http status:</p>
  * 
  * <pre>
  * onRequest()
  *     .havingBody(not(isEmptyOrNullString()))
- *     .havingURI(startsWith("/projects"))
+ *     .havingPath(startsWith("/projects"))
  *     .havingMethod(not(equalToIgnoringCase("PUT")))
  * .respond()
  *     .withStatus(200);
@@ -289,7 +289,7 @@ import net.jadler.stubbing.ResponseStubbing;
  *   <li>{@link RequestStubbing#havingBody(org.hamcrest.Matcher)}</li>
  *   <li>{@link RequestStubbing#havingMethod(org.hamcrest.Matcher)}</li>
  *   <li>{@link RequestStubbing#havingQueryString(org.hamcrest.Matcher)}</li>
- *   <li>{@link RequestStubbing#havingURI(org.hamcrest.Matcher)}</li>
+ *   <li>{@link RequestStubbing#havingPath(org.hamcrest.Matcher)}</li>
  * </ul>
  * 
  * <p>For adding predicates about request parameters and headers use
@@ -398,7 +398,7 @@ import net.jadler.stubbing.ResponseStubbing;
  *     public void getAccount() {
  *         onRequest()
  *             .havingMethodEqualTo("DELETE")
- *             .havingURIEqualTo("/accounts/" + ID)
+ *             .havingPathEqualTo("/accounts/" + ID)
  *         .respond()
  *             .withStatus(204);
  * 
@@ -408,7 +408,7 @@ import net.jadler.stubbing.ResponseStubbing;
  *       
  *         verifyThatRequest()
  *             .havingMethodEqualTo("DELETE")
- *             .havingURIEqualTo("/accounts/" + ID)
+ *             .havingPathEqualTo("/accounts/" + ID)
            .receivedOnce();
  *     }
  * }

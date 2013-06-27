@@ -430,13 +430,13 @@ public class JadlerStubbingIntegrationTest {
     
     
     /*
-     * Tests the <tt>havingURI</tt> methods.
+     * Tests the <tt>havingPath</tt> methods.
      */
     @Test
-    public void havingURI() throws Exception {
+    public void havingPath() throws Exception {
         onRequest()
-            .havingURIEqualTo("/a/b/c/d/%C5%99")
-            .havingURI(notNullValue())
+            .havingPathEqualTo("/a/b/c/d/%C5%99")
+            .havingPath(notNullValue())
         .respond()
             .withStatus(201);
         
@@ -448,13 +448,13 @@ public class JadlerStubbingIntegrationTest {
     
     
     /*
-     * Tests the <tt>havingURI</tt> methods for a root URI.
+     * Tests the <tt>havingPath</tt> methods for a root path.
      */
     @Test
-    public void havingRootURI() throws IOException {
+    public void havingRootPath() throws IOException {
         onRequest()
-            .havingURI(equalTo("/"))
-            .havingURI(not(isEmptyOrNullString()))
+            .havingPath(equalTo("/"))
+            .havingPath(not(isEmptyOrNullString()))
         .respond()
             .withStatus(201);
         
@@ -467,8 +467,8 @@ public class JadlerStubbingIntegrationTest {
     
     
     @Test @Ignore
-    public void havingURISockets() throws IOException {
-        onRequest().havingURIEqualTo("/").respond().withStatus(201);
+    public void havingPathSockets() throws IOException {
+        onRequest().havingPathEqualTo("/").respond().withStatus(201);
         
         final Socket sock = new Socket("localhost", port());
         final OutputStream out = sock.getOutputStream();
@@ -716,7 +716,7 @@ public class JadlerStubbingIntegrationTest {
      * Tests overriding the default status during stubbing
      */
     @Test
-    public void overridenDefaultStatus() throws Exception {
+    public void overriddenDefaultStatus() throws Exception {
         onRequest().respond().withStatus(201);
         
         final GetMethod method = new GetMethod("http://localhost:" + port());
@@ -731,7 +731,7 @@ public class JadlerStubbingIntegrationTest {
      * are sent in the stub response.
      */
     @Test
-    public void overridenDefaultHeader() throws Exception {
+    public void overriddenDefaultHeader() throws Exception {
         onRequest().respond().withHeader(DEFAULT_HEADER1_NAME, "value3");
         
         final GetMethod method = new GetMethod("http://localhost:" + port());

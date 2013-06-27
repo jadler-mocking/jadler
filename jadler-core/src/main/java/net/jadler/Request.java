@@ -233,7 +233,7 @@ public class Request {
     public String toString() {
         return "Request{" +
                 "method='" + method + '\'' +
-                ", requestUri=" + requestURI +
+                ", requestURI=" + requestURI +
                 ", parameters=" + parameters +
                 ", headers=" + headers +
                 '}';

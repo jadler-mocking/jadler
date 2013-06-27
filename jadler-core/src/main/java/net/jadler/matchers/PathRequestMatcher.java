@@ -12,20 +12,22 @@ import org.hamcrest.Matcher;
 /**
  * A {@link RequestMatcher} used for matching the request path.
  */
-public class URIRequestMatcher extends RequestMatcher<String> {
+public class PathRequestMatcher extends RequestMatcher<String> {
 
     /**
-     * Protected constructor useful only when subtyping. For creating instances of this class use 
-     * {@link #requestURI(org.hamcrest.Matcher)} instead.
+     * Protected constructor useful only when subtyping. For creating instances of this class use
+     * {@link #requestPath(org.hamcrest.Matcher)} instead.
+     *
      * @param pred a predicate to be applied on the request path
      */
-    protected URIRequestMatcher(final Matcher<? super String> pred) {
+    protected PathRequestMatcher(final Matcher<? super String> pred) {
         super(pred);
     }
 
 
     /**
      * Retrieves the path of the given request. The value is percent-encoded.
+     *
      * @param req request to retrieve the path from
      * @return request path (never returns {@code null})
      */
@@ -33,24 +35,25 @@ public class URIRequestMatcher extends RequestMatcher<String> {
     public String retrieveValue(final Request req) {
         return req.getURI().getRawPath();
     }
-    
-    
+
+
     /**
-     * {@inheritDoc} 
+     * {@inheritDoc}
      */
     @Override
     protected String provideDescription() {
-        return "URI is";
+        return "Path is";
     }
 
 
     /**
      * Factory method to create new instance of this matcher.
+     *
      * @param pred a predicate to be applied on the request path
      * @return new instance of this matcher
      */
     @Factory
-    public static URIRequestMatcher requestURI(final Matcher<? super String> pred) {
-        return new URIRequestMatcher(pred);
+    public static PathRequestMatcher requestPath(final Matcher<? super String> pred) {
+        return new PathRequestMatcher(pred);
     }
 }

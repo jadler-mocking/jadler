@@ -4,8 +4,9 @@
  */
 package net.jadler;
 
-import java.util.List;
 import org.hamcrest.Matcher;
+
+import java.util.List;
 
 
 /**
@@ -71,21 +72,21 @@ public interface RequestMatching<T extends RequestMatching<T>> {
 
     /**
      * Adds a request path predicate. The request path must be equal to the given value. A root path can be matched
-     * by {@code havingURIEqualTo("/")}. Please note the path value doesn't contain a query string portion and is
+     * by {@code havingPathEqualTo("/")}. Please note the path value doesn't contain a query string portion and is
      * percent-encoded.
-     * @param uri expected path of the incoming http request
+     * @param path expected path of the incoming http request
      * @return this ongoing request matching
      */
-    T havingURIEqualTo(String uri);
+    T havingPathEqualTo(String path);
 
 
     /**
-     * Adds a request path predicate. A root path can be matched by {@code havingURI(equalTo("/"))} for example.
+     * Adds a request path predicate. A root path can be matched by {@code havingPath(equalTo("/"))} for example.
      * Please note the path value doesn't contain a query string portion and is percent-encoded.
      * @param predicate request path predicate (cannot be {@code null})
      * @return this ongoing request matching
      */
-    T havingURI(Matcher<? super String> predicate);
+    T havingPath(Matcher<? super String> predicate);
     
     
     /**
