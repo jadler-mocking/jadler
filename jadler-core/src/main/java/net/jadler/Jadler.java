@@ -498,7 +498,7 @@ public class Jadler {
     public static void closeJadler() {
         final StubHttpServerManager serverManager = jadlerMockerContainer.get();
         if (serverManager != null && serverManager.isStarted()) {
-            serverManager.stop();
+            serverManager.close();
         }
         
         jadlerMockerContainer.set(null);

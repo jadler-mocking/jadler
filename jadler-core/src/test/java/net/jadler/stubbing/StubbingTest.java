@@ -171,7 +171,7 @@ public class StubbingTest {
     @Test
     public void createRule() {
         this.stubbing.thenRespond();
-        final StubRule rule = this.stubbing.createRule();
+        final HttpStub rule = this.stubbing.createRule();
 
         assertThat(rule, is(notNullValue()));
     }

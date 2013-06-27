@@ -7,7 +7,6 @@ package net.jadler.stubbing.server;
 
 /**
  * An implementation of this interface can manage an underlying stub http server.
- * //TODO closable? Auto-closable?
  */
 public interface StubHttpServerManager {
         
@@ -24,7 +23,7 @@ public interface StubHttpServerManager {
      * @throws JadlerException if an error occurred while stopping the stub http server.
      * @throws IllegalStateException if the stub server hasn't been started yet or has been stopped already.
      */
-    void stop();
+    void close();
     
     
     /**
