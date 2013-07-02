@@ -18,7 +18,7 @@ import static org.apache.commons.lang.StringUtils.abbreviate;
 
 /**
  * A definition of a stub http response. Defines the response status, encoding, body and headers as well as
- * a timeout the response will be returned after. Instances of this class are mutable so the stub response definition
+ * a delay the response will be returned after. Instances of this class are mutable so the stub response definition
  * can be constructed on the fly.
  * 
  * One should never create new instances of this class directly, see {@link net.jadler.Jadler} for explanation and tutorial.
@@ -29,7 +29,7 @@ public class StubResponse {
     private String stringBody;
     private byte[] rawBody;
     private int status;
-    private long timeout;
+    private long delay;
 
     
     /**
@@ -170,18 +170,18 @@ public class StubResponse {
     
     
     /**
-     * @return a timeout (in millis) this stub response will be returned after
+     * @return a delay (in millis) this stub response will be returned after
      */
-    public long getTimeout() {
-        return this.timeout;
+    public long getDelay() {
+        return this.delay;
     }
     
     
     /**
-     * @param timeout a timeout (in millis) this stub response will be returned after 
+     * @param delay a delay (in millis) this stub response will be returned after 
      */
-    public void setTimeout(final long timeout) {
-        this.timeout = timeout;
+    public void setDelay(final long delay) {
+        this.delay = delay;
     }
     
     
@@ -220,7 +220,7 @@ public class StubResponse {
             }
         }
                 
-        sb.append("), timeout=").append(this.timeout).append("ms");
+        sb.append("), delay=").append(this.delay).append("ms");
         return sb.toString();
     }
 }

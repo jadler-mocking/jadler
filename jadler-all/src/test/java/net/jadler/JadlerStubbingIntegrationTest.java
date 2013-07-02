@@ -755,8 +755,8 @@ public class JadlerStubbingIntegrationTest {
      * Tests the stub response is returned after at least three seconds as set during the stubbing
      */
     @Test
-    public void timeout() throws IOException {
-        onRequest().respond().withTimeout(1, TimeUnit.SECONDS);
+    public void delay() throws IOException {
+        onRequest().respond().withDelay(1, TimeUnit.SECONDS);
         
         final GetMethod method = new GetMethod("http://localhost:" + port());
         
