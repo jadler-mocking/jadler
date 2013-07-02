@@ -432,7 +432,7 @@ public class JadlerMockerTest {
         final StubResponse res = mocker.provideStubResponseFor(req);
         assertThat(res, is(not(nullValue())));
         assertThat(res.getStatus(), is(404));
-        assertThat(res.getTimeout(), is(0L));
+        assertThat(res.getDelay(), is(0L));
         assertThat(res.getBody(), is("No stub response found for the incoming request".getBytes()));
         assertThat(res.getEncoding(), is(Charset.forName("UTF-8")));
         assertThat(res.getHeaders().size(), is(1));

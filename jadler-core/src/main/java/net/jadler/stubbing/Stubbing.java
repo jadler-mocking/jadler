@@ -187,8 +187,8 @@ public class Stubbing extends AbstractRequestMatching<RequestStubbing> implement
      * {@inheritDoc}
      */
     @Override
-    public ResponseStubbing withTimeout(long timeout, TimeUnit timeUnit) {
-        currentResponse().setTimeout(java.util.concurrent.TimeUnit.MILLISECONDS.convert(timeout, timeUnit));
+    public ResponseStubbing withDelay(long delayValue, TimeUnit delayUnit) {
+        currentResponse().setDelay(java.util.concurrent.TimeUnit.MILLISECONDS.convert(delayValue, delayUnit));
         return this;
     }
     

@@ -113,13 +113,13 @@ public interface ResponseStubbing {
 
     
     /**
-     * Sets the response timeout. The stub http response is returned after the specified amount of time.
+     * Sets the response delay. The stub http response is returned after the specified amount of time.
      * Calling this method overrides any previous calls of this method.
-     * @param timeoutValue timeout value
-     * @param timeoutUnit unit of the timeout parameter
+     * @param delayValue delay value
+     * @param delayUnit unit of the delay parameter
      * @return this ongoing stubbing
      */
-    ResponseStubbing withTimeout(long timeoutValue, TimeUnit timeoutUnit);
+    ResponseStubbing withDelay(long delayValue, TimeUnit delayUnit);
 
     
     /**

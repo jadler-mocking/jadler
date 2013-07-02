@@ -40,7 +40,7 @@ public class StubHandler extends AbstractHandler {
         final StubResponse stubResponse = this.requestManager.provideStubResponseFor(req);
         setResponseHeaders(stubResponse.getHeaders(), response);
         setStatus(stubResponse.getStatus(), response);
-        processTimeout(stubResponse.getTimeout());
+        processDelay(stubResponse.getDelay());
         writeResponseBody(stubResponse.getBody(), response);
 
         baseRequest.setHandled(true);
@@ -73,10 +73,10 @@ public class StubHandler extends AbstractHandler {
     }
 
 
-    private void processTimeout(long timeout) {
-        if (timeout > 0) {
+    private void processDelay(long delay) {
+        if (delay > 0) {
             try {
-                Thread.sleep(timeout);
+                Thread.sleep(delay);
             } catch (InterruptedException ignored) {
             }
         }

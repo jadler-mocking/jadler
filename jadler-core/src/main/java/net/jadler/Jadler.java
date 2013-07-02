@@ -231,7 +231,7 @@ import net.jadler.stubbing.ResponseStubbing;
  * {@link net.jadler.stubbing.ResponseStubbing#withContentType(java.lang.String)} method.</p>
  * 
  * <p>And finally sometimes you would like to simulate a network latency. To do so just call the
- * {@link net.jadler.stubbing.ResponseStubbing#withTimeout(long, java.util.concurrent.TimeUnit)} method.
+ * {@link net.jadler.stubbing.ResponseStubbing#withDelay(long, java.util.concurrent.TimeUnit)} method.
  * The stub response will be returned at least after the specified amount of time.</p>
  * 
  * <p>Let's define the <em>THEN</em> part precisely:</p>
@@ -244,7 +244,7 @@ import net.jadler.stubbing.ResponseStubbing;
  *     .havingHeaderEqualTo("Content-Type", "application/json")
  *     .havingParameterEqualTo("force", "1")
  * .respond()
- *     .withTimeout(2, SECONDS)
+ *     .withDelay(2, SECONDS)
  *     .withStatus(201)
  *     .withBody("{\"project\":{\"id\" : 1}}")
  *     .withEncoding(Charset.forName("UTF-8"))
