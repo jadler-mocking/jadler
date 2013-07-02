@@ -4,14 +4,13 @@
  */
 package net.jadler;
 
-import java.util.List;
 import net.jadler.matchers.BodyRequestMatcher;
 import net.jadler.matchers.HeaderRequestMatcher;
 import net.jadler.matchers.MethodRequestMatcher;
 import net.jadler.matchers.ParameterRequestMatcher;
+import net.jadler.matchers.PathRequestMatcher;
 import net.jadler.matchers.QueryStringRequestMatcher;
 import net.jadler.matchers.RawBodyRequestMatcher;
-import net.jadler.matchers.URIRequestMatcher;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.junit.Before;
@@ -19,6 +18,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+
+import java.util.List;
 
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
@@ -106,22 +107,22 @@ public class AbstractRequestMatchingTest {
 
 
     @Test(expected = IllegalArgumentException.class)
-    public void havingURIMatchingWrongParam() {
-        this.stubbing.havingURIEqualTo("");
+    public void havingPathMatchingWrongParam() {
+        this.stubbing.havingPathEqualTo("");
     } 
 
     
     @Test
-    public void havingURIMatching() {
-        this.stubbing.havingURIEqualTo("/");
-        this.assertOneMatcher(is(instanceOf(URIRequestMatcher.class)));
+    public void havingPathMatching() {
+        this.stubbing.havingPathEqualTo("/");
+        this.assertOneMatcher(is(instanceOf(PathRequestMatcher.class)));
     }
 
 
     @Test
-    public void havingURI() {
-        this.stubbing.havingURI(matcher);
-        this.assertOneMatcher(is(instanceOf(URIRequestMatcher.class)));
+    public void havingPath() {
+        this.stubbing.havingPath(matcher);
+        this.assertOneMatcher(is(instanceOf(PathRequestMatcher.class)));
     }
 
 

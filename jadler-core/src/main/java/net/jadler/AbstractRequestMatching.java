@@ -4,18 +4,19 @@
  */
 package net.jadler;
 
-import java.util.ArrayList;
-import java.util.List;
 import org.apache.commons.lang.Validate;
 import org.hamcrest.Matcher;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static net.jadler.matchers.BodyRequestMatcher.requestBody;
 import static net.jadler.matchers.HeaderRequestMatcher.requestHeader;
 import static net.jadler.matchers.MethodRequestMatcher.requestMethod;
 import static net.jadler.matchers.ParameterRequestMatcher.requestParameter;
+import static net.jadler.matchers.PathRequestMatcher.requestPath;
 import static net.jadler.matchers.QueryStringRequestMatcher.requestQueryString;
 import static net.jadler.matchers.RawBodyRequestMatcher.requestRawBody;
-import static net.jadler.matchers.URIRequestMatcher.requestURI;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.equalToIgnoringCase;
 import static org.hamcrest.Matchers.hasItem;
@@ -112,10 +113,10 @@ public abstract class AbstractRequestMatching<T extends RequestMatching<T>> impl
      * {@inheritDoc}
      */    
     @Override
-    public T havingURIEqualTo(final String uri) {
-        Validate.notEmpty(uri, "uri cannot be empty");
+    public T havingPathEqualTo(final String path) {
+        Validate.notEmpty(path, "path cannot be empty");
         
-        return havingURI(equalTo(uri));
+        return havingPath(equalTo(path));
     }
 
 
@@ -123,10 +124,10 @@ public abstract class AbstractRequestMatching<T extends RequestMatching<T>> impl
      * {@inheritDoc}
      */    
     @Override
-    public T havingURI(final Matcher<? super String> predicate) {
+    public T havingPath(final Matcher<? super String> predicate) {
         Validate.notNull(predicate, "predicate cannot be null");
         
-        return that(requestURI(predicate));
+        return that(requestPath(predicate));
     }
     
     

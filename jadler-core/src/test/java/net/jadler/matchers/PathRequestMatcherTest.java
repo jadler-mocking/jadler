@@ -5,47 +5,48 @@
 package net.jadler.matchers;
 
 
-import java.net.URI;
 import net.jadler.Request;
-import org.junit.Test;
 import org.hamcrest.Matcher;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.net.URI;
+
+import static net.jadler.matchers.PathRequestMatcher.requestPath;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
-import static net.jadler.matchers.URIRequestMatcher.requestURI;
-import static org.hamcrest.Matchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 
 @RunWith(MockitoJUnitRunner.class)
-public class URIRequestMatcherTest {
+public class PathRequestMatcherTest {
 
     private static final String PATH = "/a/%C5%99";
-    
+
     @Mock
     private Matcher<String> mockMatcher;
 
 
-   @Test
+    @Test
     public void retrieveValue() throws Exception {
-       final Request req = when(mock(Request.class).getURI()).thenReturn(new URI("http://localhost" + PATH)).getMock();
-        assertThat(requestURI(mockMatcher).retrieveValue(req), is(PATH));
+        final Request req = when(mock(Request.class).getURI()).thenReturn(new URI("http://localhost" + PATH)).getMock();
+        assertThat(requestPath(mockMatcher).retrieveValue(req), is(PATH));
     }
-   
-   
-   @Test
+
+
+    @Test
     public void retrieveValueRootPath() throws Exception {
-       final Request req = when(mock(Request.class).getURI()).thenReturn(new URI("http://localhost/")).getMock();
-        assertThat(requestURI(mockMatcher).retrieveValue(req), is("/"));
+        final Request req = when(mock(Request.class).getURI()).thenReturn(new URI("http://localhost/")).getMock();
+        assertThat(requestPath(mockMatcher).retrieveValue(req), is("/"));
     }
-    
-    
+
+
     @Test
     public void provideDescription() {
-        assertThat(requestURI(mockMatcher).provideDescription(), is("URI is"));
+        assertThat(requestPath(mockMatcher).provideDescription(), is("Path is"));
     }
 
 }
