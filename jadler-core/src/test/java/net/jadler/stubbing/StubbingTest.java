@@ -159,12 +159,12 @@ public class StubbingTest {
 
 
     @Test
-    public void withTimeout() {
-        final long timeout = 2;
-        this.stubbing.respond().withTimeout(timeout, TimeUnit.MILLISECONDS);
+    public void withDelay() {
+        final long delay = 2;
+        this.stubbing.respond().withDelay(delay, TimeUnit.MILLISECONDS);
 
         final StubResponse response = assertAndGetOneResponse();
-        assertThat(response.getTimeout(), is(timeout));
+        assertThat(response.getDelay(), is(delay));
     }
 
 
