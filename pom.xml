@@ -93,6 +93,16 @@ This program is made available under the terms of the MIT License.
                 <artifactId>commons-collections</artifactId>
                 <version>3.2.1</version>
             </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-server</artifactId>
+                <version>8.1.11.v20130520</version> <!-- Jetty 8 is the last JDK1.6 compatible version-->
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty.orbit</groupId>
+                <artifactId>javax.servlet</artifactId>
+                <version>3.0.0.v201112011016</version>
+            </dependency>
 
             <!-- TEST dependencies -->
             <dependency> 
