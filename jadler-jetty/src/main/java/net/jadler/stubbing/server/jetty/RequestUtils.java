@@ -10,9 +10,9 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.util.Enumeration;
-import org.apache.commons.io.IOUtils;
 
-import static org.apache.commons.lang.StringUtils.*;
+import static org.apache.commons.io.IOUtils.toByteArray;
+import static org.apache.commons.lang.StringUtils.isNotBlank;
 
 
 /**
@@ -29,7 +29,7 @@ class RequestUtils {
         final Request.Builder builder = new Request.Builder()
                 .method(source.getMethod())
                 .requestURI(URI.create(source.getRequestURL() + getQueryString(source)))
-                .body(IOUtils.toByteArray(source.getInputStream()));
+                .body(toByteArray(source.getInputStream()));
         
         if (encoding != null) {
             builder.encoding(encoding);

@@ -11,7 +11,9 @@ import java.io.IOException;
 import java.net.URI;
 
 import static org.junit.Assert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 
 
 public class RequestUtilsTest {
