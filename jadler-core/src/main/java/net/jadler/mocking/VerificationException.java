@@ -4,8 +4,6 @@
  */
 package net.jadler.mocking;
 
-import net.jadler.exception.JadlerException;
-
 
 /**
  * A runtime exception signalizing a failure of verification.
@@ -13,12 +11,12 @@ import net.jadler.exception.JadlerException;
  * @see net.jadler.Jadler#verifyThatRequest() 
  * @see Mocker#verifyThatRequest() 
  */
-public class VerificationException extends JadlerException {
+public class VerificationException extends AssertionError {
 
     /**
      * @param message verification result text description
      */
-    public VerificationException(String message) {
+    public VerificationException(final String message) {
         super(message);
     }
     
