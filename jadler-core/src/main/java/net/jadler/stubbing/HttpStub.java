@@ -80,7 +80,7 @@ public class HttpStub {
     
     /**
      * Returns a reason why the given request doesn't match this rule. This method should be called if
-     * and only if {@link  #matchedBy(Request)} would return <tt>false</tt>.
+     * and only if {@link  #matches(net.jadler.Request)} would return <tt>false</tt>.
      * However, this is not checked.
      * @param request an http request to describe the mismatch for
      * @return a human readable mismatch reason 
