@@ -14,7 +14,6 @@ import net.jadler.stubbing.StubResponse;
 import net.jadler.stubbing.HttpStub;
 import net.jadler.exception.JadlerException;
 import net.jadler.stubbing.server.StubHttpServer;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.HashSet;
@@ -96,7 +95,7 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, RequestMana
         Validate.notNull(server, "server cannot be null");
         this.server = server;
         
-        this.stubbings = new ArrayList<Stubbing>();
+        this.stubbings = new LinkedList<Stubbing>();
         this.defaultHeaders = new MultiValueMap();
         this.defaultStatus = 200; //OK
         this.defaultEncoding =  Charset.forName("UTF-8");
@@ -292,7 +291,19 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, RequestMana
         }
         
         return cnt;
-    }  
+    }
+
+    /**
+     * Resets JadlerMocker so it can be reused without restarting.
+     */
+    public void reset() {
+        synchronized(this) {
+            this.stubbings.clear();
+            this.httpStubs.clear();
+            this.receivedRequests.clear();
+            this.configurable = true;
+        }
+    }
     
     
     private Deque<HttpStub> createHttpStubs() {

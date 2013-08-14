@@ -290,7 +290,7 @@ public class JadlerMockerTest {
         
         assertThat(result, is(stubbing));
     }
-    
+
     
     /*
      * Tests that defaults (status, headers, encoding) are used correctly when creating a stubbing instance.
@@ -471,6 +471,45 @@ public class JadlerMockerTest {
         mocker.onRequest();
         
         assertThat(mocker.provideStubResponseFor(req), is(resp2));
+    }
+
+    @Test
+    public void mockerCanBeReused() {
+        final Request req = prepareEmptyMockRequest();
+
+          //rule1 matches the given request (param of the provideResponseFor method) so it must be returned from
+          //the tested method
+        final HttpStub rule1 = mock(HttpStub.class);
+        final Stubbing stubbing1 = mock(Stubbing.class);
+        when(stubbing1.createRule()).thenReturn(rule1);
+        when(rule1.matches(eq(req))).thenReturn(true);
+        final StubResponse resp1 = new StubResponse();
+        when(rule1.nextResponse()).thenReturn(resp1);
+
+          //rule2 doesn't match the given request
+        final HttpStub rule2  = mock(HttpStub.class);
+        final Stubbing stubbing2 = mock(Stubbing.class);
+        when(stubbing2.createRule()).thenReturn(rule2);
+        when(rule2.matches(eq(req))).thenReturn(false);
+
+        final StubbingFactory sf = mock(StubbingFactory.class);
+        when(sf.createStubbing(any(Charset.class), anyInt(), any(MultiMap.class))).thenReturn(stubbing1, stubbing2, stubbing1, stubbing2);
+
+        final StubHttpServer server = mock(StubHttpServer.class);
+        final JadlerMocker mocker = new JadlerMocker(server, sf);
+
+        //calling onRequest twice so stubbing1 and stubbing2 are created in the JadlerMocker instance
+        mocker.onRequest();
+        mocker.onRequest();
+
+        assertThat(mocker.provideStubResponseFor(req), is(resp1));
+
+        mocker.reset();
+
+        //calling onRequest twice so stubbing1 and stubbing2 are created in the JadlerMocker instance
+        mocker.onRequest();
+        mocker.onRequest();
+        assertThat(mocker.provideStubResponseFor(req), is(resp1));
     }
     
     

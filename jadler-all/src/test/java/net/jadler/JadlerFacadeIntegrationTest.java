@@ -159,5 +159,6 @@ public class JadlerFacadeIntegrationTest {
         final HttpClient client = new HttpClient();
         final GetMethod method = new GetMethod("http://localhost:" + port() + "/");
         assertThat(client.executeMethod(method), is(EXPECTED_STATUS));
+        method.releaseConnection();
     }
 }
