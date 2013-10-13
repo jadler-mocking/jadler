@@ -17,6 +17,7 @@ import net.jadler.AbstractRequestMatching;
 import net.jadler.Jadler;
 import org.apache.commons.collections.MultiMap;
 import org.apache.commons.collections.map.MultiValueMap;
+import org.apache.commons.lang.Validate;
 
 
 /**
@@ -28,7 +29,8 @@ public class Stubbing extends AbstractRequestMatching<RequestStubbing> implement
     
     private static final String CONTENT_TYPE_HEADER = "Content-Type";
 
-    private final List<StubResponse> stubResponses;
+    Responder responder;
+    final List<MutableStubResponse> stubResponses;
     private final MultiMap defaultHeaders;
     private final int defaultStatus;
     private final Charset defaultEncoding;
@@ -43,11 +45,12 @@ public class Stubbing extends AbstractRequestMatching<RequestStubbing> implement
     @SuppressWarnings("unchecked")
     Stubbing(final Charset defaultEncoding, final int defaultStatus, final MultiMap defaultHeaders) {
         
-        this.stubResponses = new ArrayList<StubResponse>();
+        this.stubResponses = new ArrayList<MutableStubResponse>();
         this.defaultHeaders = new MultiValueMap();
         this.defaultHeaders.putAll(defaultHeaders);
         this.defaultStatus = defaultStatus;
-        this.defaultEncoding = defaultEncoding;
+        this.defaultEncoding = defaultEncoding;        
+        this.responder = null;
     }
 
     
@@ -65,7 +68,7 @@ public class Stubbing extends AbstractRequestMatching<RequestStubbing> implement
      */
     @Override
     public ResponseStubbing thenRespond() {
-        final StubResponse response = new StubResponse();
+        final MutableStubResponse response = new MutableStubResponse();
         
         response.addHeaders(defaultHeaders);
         response.setStatus(defaultStatus);
@@ -74,6 +77,17 @@ public class Stubbing extends AbstractRequestMatching<RequestStubbing> implement
         
         stubResponses.add(response);
         return this;
+    }
+    
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void respondUsing(final Responder responder) {
+        Validate.notNull(responder, "responder cannot be null");
+        
+        this.responder = responder;
     }
     
 
@@ -142,7 +156,7 @@ public class Stubbing extends AbstractRequestMatching<RequestStubbing> implement
                 responseBody = IOUtils.toByteArray(is);
             }
             catch (final IOException e) {
-                throw new JadlerException("ERROR");
+                throw new JadlerException("A problem occurred while reading the given input stream", e);
             }
         
             return this.withBody(responseBody);
@@ -199,20 +213,20 @@ public class Stubbing extends AbstractRequestMatching<RequestStubbing> implement
      * @return {@link HttpStub} instance configured using values from this stubbing
      */
     public HttpStub createRule() {
-        return new HttpStub(predicates, stubResponses);
-    }
-    
-    
-    /**
-     * package private getter for testing purposes
-     * @return all defined stub responses
-     */
-    List<StubResponse> getStubResponses() {
-        return new ArrayList<StubResponse>(this.stubResponses);
+        if (this.responder != null) {
+            return new HttpStub(predicates, this.responder);
+        }
+        
+        final List<StubResponse> res = new ArrayList<StubResponse>(this.stubResponses.size());
+        for(final MutableStubResponse msr: this.stubResponses) {
+            res.add(msr.toStubResponse());
+        }
+        
+        return new HttpStub(predicates, new StaticResponder(res));
     }
     
 
-    private StubResponse currentResponse() {
+    private MutableStubResponse currentResponse() {
         return stubResponses.get(stubResponses.size() - 1);
     }
 }

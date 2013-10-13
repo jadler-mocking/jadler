@@ -13,7 +13,6 @@ import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;

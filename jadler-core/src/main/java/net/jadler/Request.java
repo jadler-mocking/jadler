@@ -19,12 +19,13 @@ import java.util.Set;
 
 
 /**
- * <p>Http request abstraction. It insulates the code from an implementation and serves as immutable copy to keep
- * values after the original instance has been recycled.</p>
+ * <p>Immutable http request abstraction. Provides request method, URI, body, parameters and headers.</p>
  * 
- * <p>To create instances of this class use a {@link Request.Builder} instance.</p>
+ * <p>To create instances of this class use {@link #builder()}.</p>
  */
 public class Request {
+    
+    private static final Charset DEFAULT_ENCODING = Charset.forName("ISO-8859-1");
 
     private final String method;
 
@@ -49,7 +50,6 @@ public class Request {
         Validate.notNull(requestURI, "requestURI cannot be null");
         this.requestURI = requestURI;
         
-        Validate.notNull(encoding, "encoding cannot be null");
         this.encoding = encoding;
         
         Validate.notNull(body, "body cannot be null, use an empty array instead");
@@ -122,7 +122,7 @@ public class Request {
     public String getParameterValue(final String name) {
         final List<String> parameterValues = getParameterValues(name);
         return parameterValues != null ? parameterValues.get(0) : null;
-    }    
+    }
 
     
     /**
@@ -157,21 +157,47 @@ public class Request {
     public InputStream getBodyAsStream() {
         return new ByteArrayInputStream(body);
     }
+    
+    
+    /**
+     * @return request body as an array of bytes
+     */
+    public byte[] getBodyAsBytes() {
+        return this.body.clone();
+    }
 
     
     /**
-     * @return request body as a string (if the body is empty, returns an empty string)
+     * @return request body as a string (if the body is empty, returns an empty string). If no encoding was
+     * set using the {@code Content-Type} header ISO-8859-1 will be used
+     * (http://www.w3.org/Protocols/rfc2616/rfc2616-sec3.html).
      */
     public String getBodyAsString() {
-        return new String(body, this.encoding);
+        return new String(this.body, this.getEffectiveEncoding());
     }
 
 
     /**
-     * @return value of the <tt>content-type</tt> header.
+     * @return value of the {@code Content-Type} header.
      */
     public String getContentType() {
         return this.getHeaderValue("content-type");
+    }
+    
+    
+    /**
+     * @return request body encoding set by the {@code Content-Type} header or {@code null} if not set
+     */
+    public Charset getEncoding() {
+        return this.encoding;
+    }
+    
+    
+    /**
+     * @return new builder for creating {@link Request} instances
+     */
+    public static Builder builder() {
+        return new Builder();
     }
       
 
@@ -198,7 +224,7 @@ public class Request {
 
     
     private MultiMap readParametersFromBody() {
-        return this.readParametersFromString(new String(this.body, this.encoding));
+        return this.readParametersFromString(new String(this.body, this.getEffectiveEncoding()));
     }
 
     
@@ -209,7 +235,6 @@ public class Request {
             return res;
         }
 
-        final String enc = this.encoding.name();
         final String[] pairs = parametersString.split("&");
 
         for (final String pair : pairs) {
@@ -228,6 +253,11 @@ public class Request {
         return res;
     }
     
+    
+    private Charset getEffectiveEncoding() {
+        return this.encoding == null ? DEFAULT_ENCODING : this.encoding;
+    }
+    
 
     @Override
     public String toString() {
@@ -241,17 +271,15 @@ public class Request {
     
     
     /**
-     * Builder class for {@link Request} instances.
+     * A builder class for {@link Request} instances.
      */
     public static class Builder {
-        
-        private static final Charset DEFAULT_ENCODING = Charset.forName("ISO-8859-1");
         
         private String method;
         private URI requestURI;
         private byte[] body = new byte[0];
         private MultiMap headers = new MultiValueMap();
-        private Charset encoding = DEFAULT_ENCODING;
+        private Charset encoding = null;
         
         
         /**
@@ -303,9 +331,9 @@ public class Request {
         
         
         /**
-         * Sets the request encoding. If not called ISO-8859-1 will be used as a default encoding
-         * (http://www.w3.org/Protocols/rfc2616/rfc2616-sec3.html).
-         * @param encoding request encoding
+         * Sets the request encoding. If not set {@code null} value will be used signalizing no encoding was set
+         * in the incoming request (using the {@code Content-Type} header)
+         * @param encoding request encoding (can be {@code null})
          * @return this builder
          */
         public Builder encoding(final Charset encoding) {
@@ -320,6 +348,5 @@ public class Request {
         public Request build() {
             return new Request(method, requestURI, headers, body, encoding);
         }
-        
     }
 }

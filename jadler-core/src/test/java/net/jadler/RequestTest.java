@@ -65,19 +65,7 @@ public class RequestTest {
         assertThat(request.getBodyAsString(), is(""));
         
         assertThat(request.getBodyAsStream(), is(notNullValue()));
-        assertThat(IOUtils.toByteArray(request.getBodyAsStream()).length, is(0));
-    }
-    
-    
-    @Test
-    public void emptyEncoding() throws IOException {
-        final Request req = new Request.Builder()
-                .method("POST")
-                .requestURI(create("http://localhost/"))
-                .body(ISO_8859_1_REPRESENTATION)  //ISO-8859-1 is the default encoding
-                .build();
-        
-        assertThat(req.getBodyAsString(), is(STRING_WITH_DIACRITICS));
+        assertThat(request.getBodyAsBytes().length, is(0));
     }
     
     
@@ -555,6 +543,30 @@ public class RequestTest {
         assertThat(IOUtils.toByteArray(req.getBodyAsStream()), is(BINARY_BODY));
     }
     
+
+    @Test
+    public void getBodyAsBytesEmpty() throws IOException {
+        final Request req = new Request.Builder()
+                .method("POST")
+                .requestURI(create("http://localhost/"))
+                .body(new byte[0])
+                .build();
+        
+        assertThat(req.getBodyAsBytes().length, is(0));
+    }
+    
+    
+    @Test
+    public void getBodyAsBytes() throws IOException {
+        final Request req = new Request.Builder()
+                .method("POST")
+                .requestURI(create("http://localhost/"))
+                .body(BINARY_BODY)
+                .build();
+        
+        assertThat(req.getBodyAsBytes(), is(BINARY_BODY));
+    }
+    
     
     @Test
     public void getBodyAsStringEmpty() throws IOException {
@@ -595,6 +607,18 @@ public class RequestTest {
     
     
     @Test
+    public void getBodyAsStringDefaultEncoding() throws IOException {
+        final Request req = new Request.Builder()
+                .method("POST")
+                .requestURI(create("http://localhost/"))
+                .body(ISO_8859_1_REPRESENTATION)  //ISO-8859-1 is the default encoding
+                .build();
+        
+        assertThat(req.getBodyAsString(), is(STRING_WITH_DIACRITICS));
+    }
+    
+    
+    @Test
     public void getContentTypeNone() {
         final Request req = new Request.Builder()
                 .method(METHOD)
@@ -614,6 +638,28 @@ public class RequestTest {
                 .build();
         
         assertThat(req.getContentType(), is(CONTENT_TYPE));
+    }
+    
+    
+    @Test
+    public void getEncodingNone() {
+        final Request req = new Request.Builder()
+                .method(METHOD)
+                .requestURI(create("http://localhost/"))
+                .build();
         
+        assertThat(req.getEncoding(), is(nullValue()));        
+    }
+    
+    
+    @Test
+    public void getEncoding() {
+        final Request req = new Request.Builder()
+                .method(METHOD)
+                .requestURI(create("http://localhost/"))
+                .encoding(UTF_8_CHARSET)
+                .build();
+        
+        assertThat(req.getEncoding(), is(UTF_8_CHARSET));        
     }
 }

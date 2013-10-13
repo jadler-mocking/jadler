@@ -13,10 +13,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map.Entry;
-import org.apache.commons.collections.MultiMap;
+import net.jadler.stubbing.Headers;
 import org.apache.commons.lang.Validate;
 
 
@@ -63,14 +60,11 @@ class JadlerHandler extends AbstractHandler {
     }
 
     
-    private void insertResponseHeaders(final MultiMap headers, final HttpServletResponse response) {
-        for (@SuppressWarnings("unchecked") final Iterator<Entry<String, Collection<String>>> it 
-                = headers.entrySet().iterator(); it.hasNext(); ) {
+    private void insertResponseHeaders(final Headers headers, final HttpServletResponse response) {
+        for (final String name: headers.getNames()) {
             
-            final Entry<String, Collection<String>> e = it.next();
-            
-            for (final String value: e.getValue()) {
-                response.addHeader(e.getKey(), value);
+            for (final String value: headers.getValues(name)) {
+                response.addHeader(name, value);
             }
         }
     }

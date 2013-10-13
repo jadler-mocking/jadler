@@ -26,7 +26,7 @@ class RequestUtils {
                 ? Charset.forName(source.getCharacterEncoding())
                 : null;
         
-        final Request.Builder builder = new Request.Builder()
+        final Request.Builder builder = Request.builder()
                 .method(source.getMethod())
                 .requestURI(URI.create(source.getRequestURL() + getQueryString(source)))
                 .body(toByteArray(source.getInputStream()));

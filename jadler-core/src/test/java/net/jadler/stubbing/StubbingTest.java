@@ -15,6 +15,7 @@ import org.junit.Test;
 import java.io.Reader;
 import java.io.StringReader;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -22,7 +23,9 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.empty;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.spy;
@@ -36,13 +39,14 @@ public class StubbingTest {
     private static final MultiValueMap DEFAULT_HEADERS = new MultiValueMap();
     private static final int DEFAULT_STATUS = 200;
     private static final Charset DEFAULT_ENCODING = Charset.forName("UTF-8");
+    private static final Responder RESPONDER = mock(Responder.class);
 
-    private Stubbing stubbing;
+    private TestStubbing stubbing;
 
 
     @Before
     public void setUp() {
-        this.stubbing = new Stubbing(DEFAULT_ENCODING, DEFAULT_STATUS, DEFAULT_HEADERS);
+        this.stubbing = new TestStubbing(DEFAULT_ENCODING, DEFAULT_STATUS, DEFAULT_HEADERS);
     }
 
 
@@ -50,6 +54,7 @@ public class StubbingTest {
     public void respond() {
         this.stubbing.respond();
         assertOneDefaultResponse();
+        assertThat(this.stubbing.getResponder(), is(nullValue()));
     }
 
 
@@ -57,6 +62,22 @@ public class StubbingTest {
     public void thenRespond() {
         this.stubbing.thenRespond();
         assertOneDefaultResponse();
+        assertThat(this.stubbing.getResponder(), is(nullValue()));
+    }
+    
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void respondUsingWrongParam() {
+        this.stubbing.respondUsing(null);
+    }
+    
+    
+    @Test
+    public void respondUsing() {
+        this.stubbing.respondUsing(RESPONDER);
+        
+        assertThat(this.stubbing.getStubResponses(), is(empty()));
+        assertThat(this.stubbing.getResponder(), is(RESPONDER));
     }
 
 
@@ -140,11 +161,9 @@ public class StubbingTest {
 
         final StubResponse response = assertAndGetOneResponse();
         assertThat(response.getHeaders(), is(notNullValue()));
-        assertThat(response.getHeaders().size(), is(1));
-        assertThat(response.getHeaders().containsKey(name), is(true));
-        assertThat(response.getHeaders().get(name), is(notNullValue()));
-        assertThat(((List) response.getHeaders().get(name)).size(), is(1));
-        assertThat(((List) response.getHeaders().get(name)).get(0), is(equalTo((Object) value)));
+        
+        final Headers expected = new Headers().add(name, value);
+        assertThat(response.getHeaders(), is(expected));
     }
 
 
@@ -160,13 +179,21 @@ public class StubbingTest {
 
     @Test
     public void withDelay() {
-        final long delay = 2;
-        this.stubbing.respond().withDelay(delay, TimeUnit.MILLISECONDS);
+        this.stubbing.respond().withDelay(2, TimeUnit.SECONDS);
 
         final StubResponse response = assertAndGetOneResponse();
-        assertThat(response.getDelay(), is(delay));
+        assertThat(response.getDelay(), is(2000L));
     }
 
+    
+    @Test
+    public void createRuleWithResponder() {
+        this.stubbing.respondUsing(RESPONDER);
+        final HttpStub rule = this.stubbing.createRule();
+        
+        assertThat(rule, is(notNullValue()));
+    }
+    
 
     @Test
     public void createRule() {
@@ -183,7 +210,7 @@ public class StubbingTest {
         assertThat(this.stubbing.getStubResponses(), is(notNullValue()));
         assertThat(this.stubbing.getStubResponses(), hasSize(1));
 
-        assertThat(this.stubbing.getStubResponses().get(0), is(instanceOf(StubResponse.class)));
+        assertThat(this.stubbing.getStubResponses().get(0), is(instanceOf(MutableStubResponse.class)));
         assertThat(this.stubbing.getStubResponses().get(0).getHeaders(), equalTo((MultiMap) DEFAULT_HEADERS));
         assertThat(this.stubbing.getStubResponses().get(0).getStatus(), equalTo(DEFAULT_STATUS));
     }
@@ -192,8 +219,28 @@ public class StubbingTest {
     private StubResponse assertAndGetOneResponse() {
         assertThat(this.stubbing.getStubResponses(), is(notNullValue()));
         assertThat(this.stubbing.getStubResponses(), hasSize(1));
-
-        assertThat(this.stubbing.getStubResponses().get(0), is(instanceOf(StubResponse.class)));
-        return this.stubbing.getStubResponses().get(0);
+        
+        assertThat(this.stubbing.getStubResponses().get(0), is(instanceOf(MutableStubResponse.class)));
+        
+        return this.stubbing.getStubResponses().get(0).toStubResponse();
+    }
+    
+    
+    /*
+     * This is a test only extension of the Stubbing class which provides a getter to all StubResponses and to the
+     * Responder
+     */
+    private static class TestStubbing extends Stubbing {
+        TestStubbing(final Charset defaultEncoding, final int defaultStatus, final MultiMap defaultHeaders) {
+            super(defaultEncoding, defaultStatus, defaultHeaders);
+        }
+        
+        List<MutableStubResponse> getStubResponses() {
+            return new ArrayList<MutableStubResponse>(this.stubResponses);
+        }
+        
+        Responder getResponder() {
+            return this.responder;
+        }
     }
 }
