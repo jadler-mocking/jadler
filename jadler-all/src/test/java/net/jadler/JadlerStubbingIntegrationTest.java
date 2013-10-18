@@ -13,19 +13,18 @@ import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.apache.commons.io.IOUtils;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringReader;
 import java.net.HttpURLConnection;
-import java.net.Socket;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.concurrent.TimeUnit;
+import net.jadler.stubbing.Responder;
+import net.jadler.stubbing.StubResponse;
 
 import static net.jadler.Jadler.port;
 import static net.jadler.Jadler.initJadler;
@@ -466,21 +465,28 @@ public class JadlerStubbingIntegrationTest {
     }
     
     
-    @Test @Ignore
-    public void havingPathSockets() throws IOException {
-        onRequest().havingPathEqualTo("/").respond().withStatus(201);
+    @Test
+    public void respondUsingResponder() throws IOException {
+        onRequest()
+            .havingMethodEqualTo("POST")
+        .respondUsing(new Responder() {
+
+            @Override
+            public StubResponse nextResponse(final Request request) {
+                
+                return StubResponse.builder()
+                        .status(201)
+                        .header("Content-Type", "text/plain; charset=" + request.getEncoding().name())
+                        .body(request.getBodyAsBytes())
+                        .build();
+            }
+        });
         
-        final Socket sock = new Socket("localhost", port());
-        final OutputStream out = sock.getOutputStream();
-        out.write("GET / HTTP/1.1\r\nHost:localhost\r\n\r\n".getBytes());
-        
-        InputStream in = sock.getInputStream();
-        
-        int b;
-        while ((b = in.read()) != -1) {
-            char res= (char) b;
-            System.out.print(res);
-        }
+        final PostMethod method = new PostMethod("http://localhost:" + port());
+        method.setRequestEntity(new StringRequestEntity(STRING_WITH_DIACRITICS, UTF_8_TYPE, null));
+        final int status = client.executeMethod(method);
+        assertThat(status, is(201));
+        assertThat(method.getResponseBodyAsString(), is(STRING_WITH_DIACRITICS));
     }
     
     
@@ -673,6 +679,28 @@ public class JadlerStubbingIntegrationTest {
         final GetMethod method = new GetMethod("http://localhost:" + port());
         final int status = client.executeMethod(method);
         assertThat(status, is(203));
+    }
+    
+    
+    /*
+     * Tests more stub responses defined during stubbing.
+     */
+    @Test
+    public void multipleStubResponses() throws IOException {
+        onRequest().respond().withStatus(200).thenRespond().withStatus(201);
+        
+        final GetMethod method1 = new GetMethod("http://localhost:" + port());
+        final int status1 = client.executeMethod(method1);
+        assertThat(status1, is(200));
+        
+        final GetMethod method2 = new GetMethod("http://localhost:" + port());
+        final int status2 = client.executeMethod(method2);
+        assertThat(status2, is(201));
+        
+          //the 201 status must be repeated for every subsequent request
+        final GetMethod method3 = new GetMethod("http://localhost:" + port());
+        final int status3 = client.executeMethod(method3);
+        assertThat(status3, is(201));
     }
     
     

@@ -45,7 +45,7 @@ public class HeaderRequestMatcher extends RequestMatcher<List<String>> {
      */
     @Override
     protected List<String> retrieveValue(final Request req) {
-        return req.getHeaderValues(this.headerName);
+        return req.getHeaders().getValues(this.headerName);
     }
     
 

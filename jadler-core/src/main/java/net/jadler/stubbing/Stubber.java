@@ -6,11 +6,11 @@ package net.jadler.stubbing;
 
 /**
  * An implementation of this interface provides a way to create new stubbing process
- * (ongoing definition of a <i>WHEN</i>-<i>THEN</i> rule).
+ * (ongoing definition of a <em>WHEN</em>-<em>THEN</em> rule).
  */
 public interface Stubber {
     /**
-     * Starts new stubbing (definition of a <i>WHEN</i>-<i>THEN</i> rule).
+     * Starts new stubbing (definition of a <em>WHEN</em>-<em>THEN</em> rule).
      * @return stubbing object to continue the stubbing
      */
     RequestStubbing onRequest(); 

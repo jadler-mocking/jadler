@@ -115,7 +115,8 @@ public interface ResponseStubbing {
     /**
      * Sets the response delay. The stub http response is returned after the specified amount of time.
      * Calling this method overrides any previous calls of this method.
-     * @param delayValue delay value
+     * @param delayValue a delay (in units defined by the {@code delayUnit} parameter) 
+     * this stub response will be returned after
      * @param delayUnit unit of the delay parameter
      * @return this ongoing stubbing
      */

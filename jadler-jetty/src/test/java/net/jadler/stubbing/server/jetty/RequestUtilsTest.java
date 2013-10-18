@@ -45,9 +45,9 @@ public class RequestUtilsTest {
 
         final Request req = RequestUtils.convert(httpRequest);
         
-        assertThat(req.getHeaderNames(), containsInAnyOrder("header1", "header2"));
-        assertThat(req.getHeaderValues("header1"), contains("value11"));
-        assertThat(req.getHeaderValues("header2"), contains("value21", "value22"));
+        assertThat(req.getHeaders().getKeys(), containsInAnyOrder("header1", "header2"));
+        assertThat(req.getHeaders().getValues("header1"), contains("value11"));
+        assertThat(req.getHeaders().getValues("header2"), contains("value21", "value22"));
     }
 
     
@@ -59,9 +59,9 @@ public class RequestUtilsTest {
         httpRequest.addHeader("content-type", "application/x-www-form-urlencoded");
 
         final Request req = RequestUtils.convert(httpRequest);
-        assertThat(req.getParameterNames(), containsInAnyOrder("a", "b"));
-        assertThat(req.getParameterValues("a"), contains("1", "2"));
-        assertThat(req.getParameterValues("b"), contains("3"));
+        assertThat(req.getParameters().getKeys(), containsInAnyOrder("a", "b"));
+        assertThat(req.getParameters().getValues("a"), contains("1", "2"));
+        assertThat(req.getParameters().getValues("b"), contains("3"));
     }
     
     
@@ -73,9 +73,9 @@ public class RequestUtilsTest {
         httpRequest.addHeader("content-type", "application/x-www-form-urlencoded");
 
         final Request req = RequestUtils.convert(httpRequest);
-        assertThat(req.getParameterNames(), containsInAnyOrder("param1%20name", "param2%20name"));
-        assertThat(req.getParameterValues("param1%20name"), contains("param1%20value"));
-        assertThat(req.getParameterValues("param2%20name"), contains("param2%20value"));
+        assertThat(req.getParameters().getKeys(), containsInAnyOrder("param1%20name", "param2%20name"));
+        assertThat(req.getParameters().getValues("param1%20name"), contains("param1%20value"));
+        assertThat(req.getParameters().getValues("param2%20name"), contains("param2%20value"));
     }
     
 

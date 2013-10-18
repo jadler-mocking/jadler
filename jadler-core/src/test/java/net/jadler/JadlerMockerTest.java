@@ -8,7 +8,6 @@ import java.net.URI;
 import net.jadler.stubbing.server.StubHttpServerManager;
 import java.nio.charset.Charset;
 import java.util.Collections;
-import java.util.List;
 import net.jadler.stubbing.Stubbing;
 import net.jadler.stubbing.HttpStub;
 import net.jadler.stubbing.StubResponse;
@@ -379,8 +378,8 @@ public class JadlerMockerTest {
         final Stubbing stubbing1 = mock(Stubbing.class);
         when(stubbing1.createRule()).thenReturn(rule1);
         when(rule1.matches(eq(req))).thenReturn(true);
-        final StubResponse resp1 = new StubResponse();
-        when(rule1.nextResponse()).thenReturn(resp1);
+        final StubResponse resp1 = StubResponse.EMPTY;
+        when(rule1.nextResponse(eq(req))).thenReturn(resp1);
         
           //rule2 doesn't match the given request
         final HttpStub rule2  = mock(HttpStub.class);
@@ -435,8 +434,9 @@ public class JadlerMockerTest {
         assertThat(res.getDelay(), is(0L));
         assertThat(res.getBody(), is("No stub response found for the incoming request".getBytes()));
         assertThat(res.getEncoding(), is(Charset.forName("UTF-8")));
-        assertThat(res.getHeaders().size(), is(1));
-        assertThat((String)((List) res.getHeaders().get("Content-Type")).get(0), is("text/plain; charset=utf-8"));
+        
+        final KeyValues expectedHeaders = new KeyValues().add("Content-Type", "text/plain; charset=utf-8");
+        assertThat(res.getHeaders(), is(expectedHeaders));
     }
     
     
@@ -449,15 +449,15 @@ public class JadlerMockerTest {
         final Stubbing stubbing1 = mock(Stubbing.class);
         when(stubbing1.createRule()).thenReturn(rule1);
         when(rule1.matches(eq(req))).thenReturn(true);
-        final StubResponse resp1 = new StubResponse();
-        when(rule1.nextResponse()).thenReturn(resp1);
+        final StubResponse resp1 = StubResponse.EMPTY;
+        when(rule1.nextResponse(eq(req))).thenReturn(resp1);
         
         final HttpStub rule2  = mock(HttpStub.class);
         final Stubbing stubbing2 = mock(Stubbing.class);
         when(stubbing2.createRule()).thenReturn(rule2);
         when(rule2.matches(eq(req))).thenReturn(true);
-        final StubResponse resp2 = new StubResponse();
-        when(rule2.nextResponse()).thenReturn(resp2);
+        final StubResponse resp2 = StubResponse.EMPTY;
+        when(rule2.nextResponse(eq(req))).thenReturn(resp2);
         
         final StubbingFactory sf = mock(StubbingFactory.class);
         when(sf.createStubbing(any(Charset.class), anyInt(), any(MultiMap.class)))
@@ -543,7 +543,7 @@ public class JadlerMockerTest {
     
     
     private Request prepareEmptyMockRequest() {
-        return new Request.Builder()
+        return Request.builder()
                 .method("GET")
                 .requestURI(URI.create("http://localhost/"))
                 .build();
