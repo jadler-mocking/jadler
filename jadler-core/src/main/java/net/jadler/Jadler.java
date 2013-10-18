@@ -351,7 +351,7 @@ import net.jadler.stubbing.ResponseStubbing;
  * {@code UTF-8} will be used by default.</p>
  * 
  * 
- * <h3>Request Reception Verification</h3>
+ * <h3>Request Receipt Verification</h3>
  * 
  * <p>While the Jadler library is invaluable in supporting your test scenarios by providing a stub http server,
  * it has even more to offer.</p>
@@ -381,8 +381,6 @@ import net.jadler.stubbing.ResponseStubbing;
  * public class AccountManagerImplTest {
  * 
  *     private static final String ID = "123";
- *     private static final String ACCOUNT_JSON = "{\"account\":{\"id\": \"123\"}}";
- * 
  *
  *     {@literal @}Before
  *     public void setUp() {
@@ -395,7 +393,7 @@ import net.jadler.stubbing.ResponseStubbing;
  *     }
  *   
  *     {@literal @}Test
- *     public void getAccount() {
+ *     public void deleteAccount() {
  *         onRequest()
  *             .havingMethodEqualTo("DELETE")
  *             .havingPathEqualTo("/accounts/" + ID)
