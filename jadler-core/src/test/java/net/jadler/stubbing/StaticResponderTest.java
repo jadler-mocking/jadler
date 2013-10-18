@@ -33,14 +33,14 @@ public class StaticResponderTest {
     
     @Test
     public void constructor() {
-        new StaticResponder(Collections.singletonList(new StubResponse.Builder().build()));
+        new StaticResponder(Collections.singletonList(StubResponse.EMPTY));
     }
     
 
     @Test
     public void nextResponse() {
-        final StubResponse r1 = new StubResponse.Builder().build();
-        final StubResponse r2 = new StubResponse.Builder().build();
+        final StubResponse r1 = StubResponse.builder().build();
+        final StubResponse r2 = StubResponse.builder().build();
         
         final StaticResponder producer = new StaticResponder(Arrays.asList(r1, r2));        
         assertThat(producer.nextResponse(null), is(r1));

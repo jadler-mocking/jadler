@@ -18,6 +18,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import net.jadler.KeyValues;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -162,7 +163,7 @@ public class StubbingTest {
         final StubResponse response = assertAndGetOneResponse();
         assertThat(response.getHeaders(), is(notNullValue()));
         
-        final Headers expected = new Headers().add(name, value);
+        final KeyValues expected = new KeyValues().add(name, value);
         assertThat(response.getHeaders(), is(expected));
     }
 

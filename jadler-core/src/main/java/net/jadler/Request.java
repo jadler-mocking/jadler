@@ -4,18 +4,12 @@
  */
 package net.jadler;
 
-import org.apache.commons.collections.MultiMap;
-import org.apache.commons.collections.map.MultiValueMap;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.HashSet;
-import java.util.Set;
 
 
 /**
@@ -33,15 +27,15 @@ public class Request {
 
     private final byte[] body;
 
-    private final MultiMap parameters;
+    private final KeyValues parameters;
 
-    private final MultiMap headers;
+    private final KeyValues headers;
 
     private final Charset encoding;
 
     
     @SuppressWarnings("unchecked")
-    private Request(final String method, final URI requestURI, final MultiMap headers, final byte[] body, 
+    private Request(final String method, final URI requestURI, final KeyValues headers, final byte[] body, 
             final Charset encoding) {
         
         Validate.notEmpty(method, "method cannot be empty");
@@ -55,9 +49,8 @@ public class Request {
         Validate.notNull(body, "body cannot be null, use an empty array instead");
         this.body = body;
         
-        Validate.notNull(headers, "headers cannot be null, use an empty map instead");
-        this.headers = new MultiValueMap();
-        this.headers.putAll(headers);
+        Validate.notNull(headers, "headers cannot be null");
+        this.headers = headers;
         
         this.parameters = readParameters();
     }
@@ -77,77 +70,24 @@ public class Request {
     public URI getURI() {
         return this.requestURI;
     }
-    
+
     
     /**
-     * Returns the first value of the given request header.
-     * @param name header name (case insensitive)
-     * @return single (first) value of the given header or null, if there is no such a header in this request
+     * @return all http parameters (read from both query string and request body) from this request.
+     * Never returns {@code null}
      */
-    public String getHeaderValue(final String name) {
-        final List<String> headerValues = this.getHeaderValues(name);
-        return headerValues != null ? headerValues.get(0) : null;
+    public KeyValues getParameters() {
+        return this.parameters;
     }
 
     
     /**
-     * Returns all values of the given request header.
-     * @param name header name (case insensitive)
-     * @return all values of the given header or null, if there is no such a header in this request 
+     * @return all http headers from this request. Never returns {@code null}
      */
-    public List<String> getHeaderValues(final String name) {
-        Validate.notEmpty(name, "name cannot be empty");
-        
-        @SuppressWarnings("unchecked")
-        final List<String> result = (List<String>) headers.get(name.toLowerCase());
-        return result == null || result.isEmpty() ? null : new ArrayList<String>(result);
+    public KeyValues getHeaders() {
+        return this.headers;
     }
     
-    
-    /**
-     * @return all header names (lower-cased) of this request (never returns {@code null})
-     */
-    public Set<String> getHeaderNames() {
-        @SuppressWarnings("unchecked")
-        final Set<String> result = new HashSet<String>(this.headers.keySet());
-        return result;
-    }
-    
-    
-    /**
-     * Returns the first value of the given request parameter.
-     * @param name parameter name
-     * @return single (first) value of the given parameter or null, if there is no such a parameter in this request
-     */
-    public String getParameterValue(final String name) {
-        final List<String> parameterValues = getParameterValues(name);
-        return parameterValues != null ? parameterValues.get(0) : null;
-    }
-
-    
-    /**
-     * Returns all values of the given request parameter.
-     * @param name parameter name
-     * @return all values of the given parameter or null, if there is no such a parameter in this request 
-     */
-    public List<String> getParameterValues(String name) {
-        Validate.notEmpty(name, "name cannot be empty");
-        
-        @SuppressWarnings("unchecked")
-        final List<String> result = (List<String>) parameters.get(name);
-        return result == null || result.isEmpty() ? null : new ArrayList<String>(result);
-    }
-    
-    
-    /**
-     * @return all parameter names of this request (never returns <tt>null</tt>)
-     */
-    public Set<String> getParameterNames() {
-        @SuppressWarnings("unchecked")
-        final Set<String> result = new HashSet<String>(this.parameters.keySet());
-        return result;
-    }
-
     
     /**
      * Returns the body content as an {@link InputStream} instance. This method can be called multiple times
@@ -181,7 +121,7 @@ public class Request {
      * @return value of the {@code Content-Type} header.
      */
     public String getContentType() {
-        return this.getHeaderValue("content-type");
+        return this.headers.getValue("content-type");
     }
     
     
@@ -202,15 +142,15 @@ public class Request {
       
 
     @SuppressWarnings("unchecked")
-    private MultiMap readParameters() {
-        final MultiMap params = readParametersFromQueryString();
+    private KeyValues readParameters() {
+        KeyValues params = readParametersFromQueryString();
 
         //TODO: shitty attempt to check whether the body contains html form data. Please refactor.
         if (!StringUtils.isBlank(this.getContentType())
                 && this.getContentType().contains("application/x-www-form-urlencoded")) {
 
             if ("POST".equalsIgnoreCase(this.getMethod()) || "PUT".equalsIgnoreCase(this.getMethod())) {
-                params.putAll(this.readParametersFromBody());
+                params = params.addAll(this.readParametersFromBody());
             }
         }
 
@@ -218,18 +158,18 @@ public class Request {
     }
     
 
-    private MultiMap readParametersFromQueryString() {
+    private KeyValues readParametersFromQueryString() {
         return this.readParametersFromString(this.requestURI.getRawQuery());
     }
 
     
-    private MultiMap readParametersFromBody() {
+    private KeyValues readParametersFromBody() {
         return this.readParametersFromString(new String(this.body, this.getEffectiveEncoding()));
     }
 
     
-    private MultiMap readParametersFromString(final String parametersString) {
-        final MultiMap res = new MultiValueMap();
+    private KeyValues readParametersFromString(final String parametersString) {
+        KeyValues res = new KeyValues();
 
         if (StringUtils.isBlank(parametersString)) {
             return res;
@@ -242,11 +182,11 @@ public class Request {
             if (idx > -1) {
                 final String name = StringUtils.substring(pair, 0, idx);
                 final String value = StringUtils.substring(pair, idx + 1);
-                res.put(name, value);
+                res = res.add(name, value);
 
             }
             else {
-                res.put(pair, "");
+                res = res.add(pair, "");
             }
         }
 
@@ -278,8 +218,15 @@ public class Request {
         private String method;
         private URI requestURI;
         private byte[] body = new byte[0];
-        private MultiMap headers = new MultiValueMap();
+        private KeyValues headers = new KeyValues();
         private Charset encoding = null;
+        
+        
+        /**
+         * Private constructor. Use {@link Request#builder()} instead.
+         */
+        private Builder() {
+        }
         
         
         /**
@@ -306,7 +253,7 @@ public class Request {
 
         /**
          * Sets the request body. If not called, an empty body will be used.
-         * @param body request body (cannot be null)
+         * @param body request body (cannot be {@code null})
          * @return this builder
          */
         public Builder body(final byte[] body) {
@@ -316,7 +263,20 @@ public class Request {
         
         
         /**
-         * Sets the request headers. If not called, no headers will be set.
+         * Sets the request headers (all previously defined headers will be lost).
+         * @param headers request headers (cannot be {@code null})
+         * @return this builder
+         */
+        public Builder headers(final KeyValues headers) {
+            Validate.notNull(headers, "headers cannot be null");
+            
+            this.headers = headers;
+            return this;
+        }
+        
+        
+        /**
+         * Adds a request header to the constructed request instance.
          * @param name header name (cannot be empty)
          * @param value header value (cannot be {@code null})
          * @return this builder 
@@ -325,7 +285,7 @@ public class Request {
             Validate.notEmpty(name, "name cannot be blank");
             Validate.notNull(value, "value cannot be null");
             
-            this.headers.put(name.toLowerCase(), value);
+            this.headers = this.headers.add(name.toLowerCase(), value);
             return this;
         }
         

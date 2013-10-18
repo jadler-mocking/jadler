@@ -13,7 +13,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
-import net.jadler.stubbing.Headers;
+import net.jadler.KeyValues;
 import org.apache.commons.lang.Validate;
 
 
@@ -60,11 +60,11 @@ class JadlerHandler extends AbstractHandler {
     }
 
     
-    private void insertResponseHeaders(final Headers headers, final HttpServletResponse response) {
-        for (final String name: headers.getNames()) {
+    private void insertResponseHeaders(final KeyValues headers, final HttpServletResponse response) {
+        for (final String key: headers.getKeys()) {
             
-            for (final String value: headers.getValues(name)) {
-                response.addHeader(name, value);
+            for (final String value: headers.getValues(key)) {
+                response.addHeader(key, value);
             }
         }
     }

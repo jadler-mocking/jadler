@@ -7,6 +7,7 @@ package net.jadler.stubbing;
 import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.Set;
+import net.jadler.KeyValues;
 import org.apache.commons.collections.MultiMap;
 import org.apache.commons.collections.map.MultiValueMap;
 import org.junit.Before;
@@ -31,7 +32,7 @@ public class MutableStubResponseTest {
         HEADERS_MAP.put("header2", "value2_1");
         HEADERS_MAP.put("header3", "value3_1");
     }
-    private static final Headers HEADERS = new Headers()
+    private static final KeyValues HEADERS = new KeyValues()
             .add("header1", "value1_1")
             .add("header2", "value2_1")
             .add("header3", "value3_1");
@@ -157,7 +158,6 @@ public class MutableStubResponseTest {
         assertThat(resp.getStatus(), is(STATUS));
         assertThat(resp.getDelay(), is(DELAY));
         assertThat(resp.getEncoding(), is(CHARSET));
-        new Headers();
         assertThat(resp.getHeaders(), is(HEADERS));
         assertThat(resp.getBody(), is(STRING_BODY.getBytes(CHARSET)));
     }

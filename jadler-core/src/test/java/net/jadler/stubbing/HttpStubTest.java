@@ -31,7 +31,7 @@ public class HttpStubTest {
         
         @Override
         public StubResponse nextResponse(final Request request) {
-            return new StubResponse.Builder().build();
+            return StubResponse.EMPTY;
         }
     };
     
@@ -143,14 +143,4 @@ public class HttpStubTest {
         final HttpStub stub = new HttpStub(Arrays.<Matcher<? super Request>>asList(m1, m2), responder);
         assertThat(stub.toString(), is("WHEN request (\n  matcher_m1 AND\n  matcher_m2)\nTHEN respond with a responder"));
     }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
 }

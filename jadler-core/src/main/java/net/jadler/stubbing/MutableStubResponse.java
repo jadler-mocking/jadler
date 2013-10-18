@@ -8,6 +8,7 @@ import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
+import net.jadler.KeyValues;
 import org.apache.commons.collections.MultiMap;
 import org.apache.commons.collections.map.MultiValueMap;
 
@@ -178,7 +179,7 @@ class MutableStubResponse {
      * @return a {@link StubResponse} instance created from data stored in this object
      */
     StubResponse toStubResponse() {
-        final StubResponse.Builder builder = new StubResponse.Builder()
+        final StubResponse.Builder builder = StubResponse.builder()
                 .status(status)
                 .delay(delay, TimeUnit.MILLISECONDS)
                 .headers(this.createHeaders());
@@ -204,8 +205,8 @@ class MutableStubResponse {
     }
     
     
-    private Headers createHeaders() {
-        Headers res = new Headers();
+    private KeyValues createHeaders() {
+        KeyValues res = new KeyValues();
         
         for (@SuppressWarnings("unchecked") final Iterator<String> itKey =
                 (Iterator<String>) this.headers.keySet().iterator(); itKey.hasNext();) {

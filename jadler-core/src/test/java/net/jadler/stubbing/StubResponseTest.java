@@ -7,6 +7,7 @@ package net.jadler.stubbing;
 
 import java.nio.charset.Charset;
 import java.util.concurrent.TimeUnit;
+import net.jadler.KeyValues;
 import org.junit.Test;
 
 import static org.mockito.Mockito.when;
@@ -17,7 +18,6 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.notNullValue;
 
 
-//TODO testovani defaultu (delay, status, body)
 public class StubResponseTest {
     
     private static final String STRING_WITH_DIACRITICS = "\u00e1\u0159\u017e";
@@ -25,7 +25,7 @@ public class StubResponseTest {
             {(byte)0xC3, (byte)0xA1, (byte)0xC5, (byte)0x99, (byte)0xC5, (byte)0xBE};
     private static final Charset UTF_8_CHARSET = Charset.forName("UTF-8");
     private static final String HEADERS_TO_STRING = "headers_to_string";
-    private static final Headers DEFAULT_HEADERS = new Headers()
+    private static final KeyValues DEFAULT_HEADERS = new KeyValues()
             .add("header_1", "value_1_1").add("header_2", "value_2_1");
     
     
@@ -37,12 +37,12 @@ public class StubResponseTest {
     
     @Test
     public void builderDefaultResponse() {
-        final StubResponse resp = new StubResponse.Builder().build();
+        final StubResponse resp = StubResponse.builder().build();
         assertThat(resp.getBody(), is(new byte[0]));
         assertThat(resp.getDelay(), is(0L));
         assertThat(resp.getEncoding(), is(nullValue()));
         assertThat(resp.getHeaders(), is(notNullValue()));
-        assertThat(resp.getHeaders(), is(new Headers()));
+        assertThat(resp.getHeaders(), is(new KeyValues()));
         assertThat(resp.getStatus(), is(200));
     }
     
@@ -96,7 +96,7 @@ public class StubResponseTest {
     
     @Test
     public void builderHeaders() {
-        final Headers newHeaders = new Headers()
+        final KeyValues newHeaders = new KeyValues()
                 .add("header_3", "value_3_1")
                 .add("header_4", "value_4_1");
         
@@ -138,7 +138,7 @@ public class StubResponseTest {
                 .header("header_3", "value_3_1")  //adds new header
                 .build();
         
-        final Headers expected = new Headers()
+        final KeyValues expected = new KeyValues()
                 .add("header_1", "value_1_1")
                 .add("header_2", "value_2_1")
                 .add("header_2", "value_2_2")
@@ -197,7 +197,7 @@ public class StubResponseTest {
     
     @Test
     public void testToStringHeaders() {
-        final Headers headers = mock(Headers.class);
+        final KeyValues headers = mock(KeyValues.class);
         when(headers.toString()).thenReturn(HEADERS_TO_STRING);
         final StubResponse resp = StubResponse.builder().headers(headers).build();
         assertThat(resp.toString(),

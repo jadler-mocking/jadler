@@ -8,14 +8,12 @@ import java.net.URI;
 import net.jadler.stubbing.server.StubHttpServerManager;
 import java.nio.charset.Charset;
 import java.util.Collections;
-import java.util.List;
 import net.jadler.stubbing.Stubbing;
 import net.jadler.stubbing.HttpStub;
 import net.jadler.stubbing.StubResponse;
 import net.jadler.stubbing.StubbingFactory;
 import net.jadler.exception.JadlerException;
 import net.jadler.mocking.Verifying;
-import net.jadler.stubbing.Headers;
 import net.jadler.stubbing.server.StubHttpServer;
 import org.apache.commons.collections.MultiMap;
 import org.apache.commons.collections.map.MultiValueMap;
@@ -437,7 +435,7 @@ public class JadlerMockerTest {
         assertThat(res.getBody(), is("No stub response found for the incoming request".getBytes()));
         assertThat(res.getEncoding(), is(Charset.forName("UTF-8")));
         
-        final Headers expectedHeaders = new Headers().add("Content-Type", "text/plain; charset=utf-8");
+        final KeyValues expectedHeaders = new KeyValues().add("Content-Type", "text/plain; charset=utf-8");
         assertThat(res.getHeaders(), is(expectedHeaders));
     }
     
@@ -545,7 +543,7 @@ public class JadlerMockerTest {
     
     
     private Request prepareEmptyMockRequest() {
-        return new Request.Builder()
+        return Request.builder()
                 .method("GET")
                 .requestURI(URI.create("http://localhost/"))
                 .build();

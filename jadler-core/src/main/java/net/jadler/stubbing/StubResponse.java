@@ -6,6 +6,7 @@ package net.jadler.stubbing;
 
 import java.nio.charset.Charset;
 import java.util.concurrent.TimeUnit;
+import net.jadler.KeyValues;
 import org.apache.commons.lang.Validate;
 
 import static org.apache.commons.lang.StringUtils.abbreviate;
@@ -15,7 +16,7 @@ import static org.apache.commons.lang.StringUtils.abbreviate;
  * Definition of a stub http response. For creating new instances use the {@link #builder()} static method.
  */
 public class StubResponse {
-    private final Headers headers;
+    private final KeyValues headers;
     private final byte[] body;
     private final Charset encoding;
     private final int status;
@@ -26,11 +27,11 @@ public class StubResponse {
     /**
      * An empty stub response containing nothing but defaults (empty body, http status 200, no headers and no delay)
      */
-    public static final StubResponse EMPTY = new StubResponse.Builder().build();
+    public static final StubResponse EMPTY = builder().build();
 
     
     private StubResponse(final int status, final byte[] body, final Charset encoding,
-            final Headers headers, final long delayValue, final TimeUnit delayUnit) {
+            final KeyValues headers, final long delayValue, final TimeUnit delayUnit) {
         
         this.status = status;
         this.body = body;
@@ -68,7 +69,7 @@ public class StubResponse {
     /**
      * @return stub response headers
      */
-    public Headers getHeaders() {
+    public KeyValues getHeaders() {
         return this.headers;
     }
     
@@ -122,19 +123,19 @@ public class StubResponse {
         private int status;
         private byte[] body;
         private Charset encoding;
-        private Headers headers;
+        private KeyValues headers;
         private long delayValue;
         private TimeUnit delayUnit;
         
         
         /**
-         * Private package constructor. Use {@link StubResponse#builder()} instead.
+         * Private constructor. Use {@link StubResponse#builder()} instead.
          */
-        Builder() {
+        private Builder() {
             this.status = 200;
             this.body = new byte[0];
             this.encoding = null;
-            this.headers = new Headers();
+            this.headers = new KeyValues();
             this.delayValue = 0;
             this.delayUnit = TimeUnit.MILLISECONDS;
         }
@@ -188,7 +189,7 @@ public class StubResponse {
          * @param headers stub response headers (cannot be {@code null})
          * @return this builder
          */
-        public Builder headers(final Headers headers) {
+        public Builder headers(final KeyValues headers) {
             Validate.notNull(headers, "headers cannot be null");
             this.headers = headers;
             return this;

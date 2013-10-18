@@ -45,7 +45,7 @@ public class ParameterRequestMatcher extends RequestMatcher<List<String>> {
      */
     @Override
     protected List<String> retrieveValue(final Request req) {
-        return req.getParameterValues(this.paramName);
+        return req.getParameters().getValues(this.paramName);
     }
     
     
