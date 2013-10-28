@@ -65,11 +65,11 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, RequestMana
     
     private static final StubResponse NO_RULE_FOUND_RESPONSE;
     static {
-        NO_RULE_FOUND_RESPONSE = new StubResponse();
-        NO_RULE_FOUND_RESPONSE.setStatus(404);
-        NO_RULE_FOUND_RESPONSE.setBody("No stub response found for the incoming request");
-        NO_RULE_FOUND_RESPONSE.setEncoding(Charset.forName("UTF-8"));
-        NO_RULE_FOUND_RESPONSE.setHeaderCaseInsensitive("Content-Type", "text/plain; charset=utf-8");
+        NO_RULE_FOUND_RESPONSE = StubResponse.builder()
+                .status(404)
+                .body("No stub response found for the incoming request", Charset.forName("UTF-8"))
+                .header("Content-Type", "text/plain; charset=utf-8")
+                .build();
     }
     
     private static final Logger logger = LoggerFactory.getLogger(JadlerMocker.class);
@@ -244,7 +244,7 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, RequestMana
                 sb.append(rule);
                 logger.debug(sb.toString());
                 
-                return rule.nextResponse();
+                return rule.nextResponse(request);
             }
         }
         
