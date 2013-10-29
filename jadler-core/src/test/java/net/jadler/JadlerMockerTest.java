@@ -7,6 +7,7 @@ package net.jadler;
 import java.net.URI;
 import net.jadler.stubbing.server.StubHttpServerManager;
 import java.nio.charset.Charset;
+import java.util.Collection;
 import java.util.Collections;
 import net.jadler.stubbing.Stubbing;
 import net.jadler.stubbing.HttpStub;
@@ -290,7 +291,7 @@ public class JadlerMockerTest {
         
         assertThat(result, is(stubbing));
     }
-    
+
     
     /*
      * Tests that defaults (status, headers, encoding) are used correctly when creating a stubbing instance.
@@ -472,6 +473,41 @@ public class JadlerMockerTest {
         
         assertThat(mocker.provideStubResponseFor(req), is(resp2));
     }
+
+    @Test
+    public void reset() {
+        final Request req = prepareEmptyMockRequest();
+
+        final HttpStub rule1 = mock(HttpStub.class);
+        final Stubbing stubbing1 = mock(Stubbing.class);
+        when(stubbing1.createRule()).thenReturn(rule1);
+        when(rule1.matches(eq(req))).thenReturn(true);
+        final StubResponse resp1 = StubResponse.builder().build();
+        when(rule1.nextResponse(eq(req))).thenReturn(resp1);
+        
+        final HttpStub rule2 = mock(HttpStub.class);
+        final Stubbing stubbing2 = mock(Stubbing.class);
+        when(stubbing2.createRule()).thenReturn(rule2);
+        when(rule2.matches(eq(req))).thenReturn(true);
+        final StubResponse resp2 = StubResponse.builder().build();
+        when(rule2.nextResponse(eq(req))).thenReturn(resp2);
+
+        final StubbingFactory sf = mock(StubbingFactory.class);
+        when(sf.createStubbing(any(Charset.class), anyInt(), any(MultiMap.class))).thenReturn(stubbing1, stubbing2);
+
+        final StubHttpServer server = mock(StubHttpServer.class);
+        final JadlerMocker mocker = new JadlerMocker(server, sf);
+
+        //calling onRequest so stubbing1 is created in the JadlerMocker instance
+        mocker.onRequest();
+        assertThat(mocker.provideStubResponseFor(req), is(resp1));
+
+        mocker.reset();
+
+        //calling onRequest stubbing2 is created in the JadlerMocker instance
+        mocker.onRequest();
+        assertThat(mocker.provideStubResponseFor(req), is(resp2));
+    }
     
     
     @Test
@@ -536,9 +572,14 @@ public class JadlerMockerTest {
         mocker.provideStubResponseFor(req2);
         mocker.provideStubResponseFor(req3);
         
-        final int cnt = mocker.numberOfRequestsMatching(Collections.<Matcher<? super Request>>singletonList(m1));
+        final Collection<Matcher<? super Request>> singletonMatcher =
+                Collections.<Matcher<? super Request>>singletonList(m1);
         
-        assertThat(cnt, is(2));
+        assertThat(mocker.numberOfRequestsMatching(singletonMatcher), is(2));
+        
+        mocker.reset();
+        
+        assertThat(mocker.numberOfRequestsMatching(singletonMatcher), is(0));
     }
     
     

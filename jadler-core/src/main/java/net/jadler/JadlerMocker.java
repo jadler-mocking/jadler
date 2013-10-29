@@ -14,7 +14,6 @@ import net.jadler.stubbing.StubResponse;
 import net.jadler.stubbing.HttpStub;
 import net.jadler.exception.JadlerException;
 import net.jadler.stubbing.server.StubHttpServer;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.HashSet;
@@ -96,7 +95,7 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, RequestMana
         Validate.notNull(server, "server cannot be null");
         this.server = server;
         
-        this.stubbings = new ArrayList<Stubbing>();
+        this.stubbings = new LinkedList<Stubbing>();
         this.defaultHeaders = new MultiValueMap();
         this.defaultStatus = 200; //OK
         this.defaultEncoding =  Charset.forName("UTF-8");
@@ -292,7 +291,76 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, RequestMana
         }
         
         return cnt;
-    }  
+    }
+
+    /**
+     * <p>Resets this mocker instance so it can be reused. This method clears all previously created stubs as well as
+     * stored received requests (for mocking purpose,
+     * see {@link RequestManager#numberOfRequestsMatching(java.util.Collection)}). Once this method has been called
+     * new stubs can be created again using {@link #onRequest()}.</p>
+     * 
+     * <p>Please note that calling this method in a test body <strong>always</strong> signalizes a poorly written test
+     * with a problem with the granularity. In this case consider writing more fine grained tests instead of using this
+     * method.</p>
+     * 
+     * <p>While the standard Jadler lifecycle consists of creating new instance of this class and starting the
+     * underlying stub server (using {@link #start()}) in the <em>before</em> section of a test and stopping
+     * the server (using {@link #close()}) in the <em>after</em> section, in some specific scenarios it could be useful
+     * to reuse one instance of this class in all tests instead.</p>
+     * 
+     * <p>When more than just a once instance of this class is used in a test suite (for mocking more http servers) it
+     * could take some time to start all underlying stub servers before and stop these after every test method. This is
+     * a typical use case this method might come to help.</p>
+     * 
+     * <p>Here's an example code using jUnit which demonstrates usage of this method in a test lifecycle:</p>
+     * 
+     * <pre>
+     * public class JadlerResetIntegrationTest {
+     *     private static final JadlerMocker mocker = new JadlerMocker(new JettyStubHttpServer());
+     * 
+     *     {@literal @}BeforeClass
+     *     public static void beforeTests() {
+     *         mocker.start();
+     *     }
+     * 
+     *     {@literal @}AfterClass
+     *     public static void afterTests() {
+     *         mocker.close();
+     *     }
+     *
+     *     {@literal @}After
+     *     public void reset() {
+     *         mocker.reset();
+     *     }
+     * 
+     *     {@literal @}Test
+     *     public void test1() {
+     *         mocker.onRequest().respond().withStatus(201);
+     * 
+     *         //do an http request here, 201 should be returned from the stub server 
+     *
+     *         verifyThatRequest().receivedOnce();
+     *     }
+     * 
+     *     {@literal @}Test
+     *     public void test2() {
+     *         mocker.onRequest().respond().withStatus(400);
+     * 
+     *         //do an http request here, 400 should be returned from the stub server 
+     *
+     *         verifyThatRequest().receivedOnce(); 
+     *     }
+     * }
+     * </pre>
+     */
+    public void reset() {
+        synchronized(this) {
+            this.stubbings.clear();
+            this.httpStubs.clear();
+            this.receivedRequests.clear();
+            this.configurable = true;
+        }
+    }
     
     
     private Deque<HttpStub> createHttpStubs() {
