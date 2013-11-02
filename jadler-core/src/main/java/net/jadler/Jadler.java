@@ -9,6 +9,7 @@ import net.jadler.exception.JadlerException;
 import net.jadler.mocking.VerificationException;
 import net.jadler.mocking.Verifying;
 import net.jadler.stubbing.RequestStubbing;
+import net.jadler.stubbing.Responder;
 import net.jadler.stubbing.server.StubHttpServerManager;
 import net.jadler.stubbing.server.StubHttpServer;
 import net.jadler.stubbing.ResponseStubbing;
@@ -87,13 +88,13 @@ import net.jadler.stubbing.ResponseStubbing;
  * <p>All the magic happens in the test method. New http stub is defined, in the <em>THEN</em> part
  * the http stub server is instructed to return a specific http response
  * (200 http status with a body defined in the {@code ACCOUNT_JSON} constant) if the incoming http request
- * fits the given conditions defined in the <em>WHEN</em> part (must be a GET request to {@code /projects/123}).</p>
+ * fits the given conditions defined in the <em>WHEN</em> part (must be a GET request to {@code /accounts/123}).</p>
  * 
  * <p>In order to communicate with the http stub server instead of the real web service, the tested instance
  * must be configured to access {@code localhost} using the http protocol (https will be supported
  * in Jadler 1.1) connecting to a port which can be retrieved using the {@link Jadler#port()} method.</p>
  * 
- * <p>The rest of the test method is business as usual. The {@code getProject(String)} is executed and some
+ * <p>The rest of the test method is business as usual. The {@code getAccount(String)} is executed and some
  * assertions are evaluated.</p>
  * 
  * <p>Now lets write two more test methods to test the 404 and 500 scenarios:</p>
@@ -103,7 +104,7 @@ import net.jadler.stubbing.ResponseStubbing;
  * public void getAccountNotFound() {
  *     onRequest()
  *         .havingMethodEqualTo("GET")
- *         .havingPathEqualTo("/projects/" + ID)
+ *         .havingPathEqualTo("/accounts/" + ID)
  *     .respond()
  *         .withStatus(404);
  * 
@@ -119,7 +120,7 @@ import net.jadler.stubbing.ResponseStubbing;
  * public void getAccountError() {
  *     onRequest()
  *         .havingMethodEqualTo("GET")
- *         .havingPathEqualTo("/projects/" + ID)
+ *         .havingPathEqualTo("/accounts/" + ID)
  *     .respond()
  *         .withStatus(500);
  * 
@@ -129,7 +130,7 @@ import net.jadler.stubbing.ResponseStubbing;
  * }
  * </pre>
  * 
- * <p>The first test method checks the {@code getProject(String)} method returns {@code null} if 404 is returned
+ * <p>The first test method checks the {@code getAccount(String)} method returns {@code null} if 404 is returned
  * from the server. The second one tests a runtime exception is thrown upon 500 http response.</p>
  * 
  * 
@@ -139,7 +140,7 @@ import net.jadler.stubbing.ResponseStubbing;
  * 
  * <pre>
  * onRequest()
- *     .havingPathEqualTo("/projects")
+ *     .havingPathEqualTo("/accounts")
  *     .havingMethodEqualTo("POST")
  * .respond()
  *     .withStatus(500)
@@ -158,7 +159,7 @@ import net.jadler.stubbing.ResponseStubbing;
  * 
  * <pre>
  * onRequest()
- *     .havingPathEqualTo("/projects")
+ *     .havingPathEqualTo("/accounts")
  * .respond()
  *     .withStatus(201);
  * 
@@ -168,7 +169,7 @@ import net.jadler.stubbing.ResponseStubbing;
  *     .withStatus(202);
  * </pre>
  * 
- * <p>If a POST http request was sent to {@code /projects} both rules would be applicable. However, the latter stub
+ * <p>If a POST http request was sent to {@code /accounts} both rules would be applicable. However, the latter stub
  * gets priority over the former one. In this example, an http response with {@code 202} status code would be
  * returned.</p>
  * 
@@ -198,15 +199,15 @@ import net.jadler.stubbing.ResponseStubbing;
  * <pre>
  * onRequest()
  *     .havingMethodEqualTo("POST")
- *     .havingPathEqualTo("/projects")
- *     .havingBodyEqualTo("{\"project\":{}}")
+ *     .havingPathEqualTo("/accounts")
+ *     .havingBodyEqualTo("{\"account\":{}}")
  *     .havingHeaderEqualTo("Content-Type", "application/json")
  *     .havingParameterEqualTo("force", "1")
  * .respond()
  *     .withStatus(201);
  * </pre>
  * 
- * <p>The 201 stub response will be returned if the incoming request was a {@code POST} request to {@code /projects}
+ * <p>The 201 stub response will be returned if the incoming request was a {@code POST} request to {@code /accounts}
  * with the specified body, {@code application/json} content type header and a {@code force} http parameter set to
  * {@code 1}.</p>
  * 
@@ -239,17 +240,17 @@ import net.jadler.stubbing.ResponseStubbing;
  * <pre>
  * onRequest()
  *     .havingMethodEqualTo("POST")
- *     .havingPathEqualTo("/projects")
- *     .havingBodyEqualTo("{\"project\":{}}")
+ *     .havingPathEqualTo("/accounts")
+ *     .havingBodyEqualTo("{\"account\":{}}")
  *     .havingHeaderEqualTo("Content-Type", "application/json")
  *     .havingParameterEqualTo("force", "1")
  * .respond()
  *     .withDelay(2, SECONDS)
  *     .withStatus(201)
- *     .withBody("{\"project\":{\"id\" : 1}}")
+ *     .withBody("{\"account\":{\"id\" : 1}}")
  *     .withEncoding(Charset.forName("UTF-8"))
  *     .withContentType("application/json; charset=UTF-8")
- *     .withHeader("Location", "/projects/1");
+ *     .withHeader("Location", "/accounts/1");
  * </pre>
  * 
  * <p>If the incoming http request fulfills the <em>WHEN</em> part, a stub response will be returned after at least 
@@ -270,13 +271,13 @@ import net.jadler.stubbing.ResponseStubbing;
  * <a href="http://code.google.com/p/hamcrest/wiki/Tutorial" target="_blank">tutorial</a>.</p>
  * 
  * <p>So let's write the following stub: if an incoming request has a non-empty body and the request method
- * is not PUT and the path value starts with <em>/projects</em> then return an empty response
+ * is not PUT and the path value starts with <em>/accounts</em> then return an empty response
  * with the 200 http status:</p>
  * 
  * <pre>
  * onRequest()
  *     .havingBody(not(isEmptyOrNullString()))
- *     .havingPath(startsWith("/projects"))
+ *     .havingPath(startsWith("/accounts"))
  *     .havingMethod(not(equalToIgnoringCase("PUT")))
  * .respond()
  *     .withStatus(200);
@@ -318,11 +319,11 @@ import net.jadler.stubbing.ResponseStubbing;
  * every stubbing Jadler can be instructed to use 200 as a default http status: </p>
  * 
  * <pre>
- *   {@literal @}Before
- *   public void setUp() {
- *       initJadler().that()
- *           .respondsWithDefaultStatus(200);
- *   }
+ * {@literal @}Before
+ * public void setUp() {
+ *     initJadler().that()
+ *         .respondsWithDefaultStatus(200);
+ * }
  * </pre>
  * 
  * <p>The {@link AdditionalConfiguration#that()} method here simply indicates Jadler will not only be initialized
@@ -349,6 +350,53 @@ import net.jadler.stubbing.ResponseStubbing;
  * 
  * <p>If no default status code is defined 200 will be used. And if no default response body encoding is defined,
  * {@code UTF-8} will be used by default.</p>
+ * 
+ * 
+ * <h3>Generating a stub response dynamically</h3>
+ * 
+ * <p>In some integration testing scenarios it's necessary to generate a stub http response dynamically. This
+ * is a case where the {@code with*} methods aren't sufficient. However Jadler comes to help here with with
+ * the {@link net.jadler.stubbing.Responder} interface which allows to define the stub response dynamically
+ * according to the received request: </p>
+ * 
+ * <pre>
+ * onRequest()
+ *     .havingMethodEqualTo("POST")
+ *     .havingPathEqualTo("/accounts")
+ *     .respondUsing(new Responder() {
+ *
+ *         private final AtomicInteger cnt = new AtomicInteger(1);
+ * 
+ *         {@literal @}Override
+ *         public StubResponse nextResponse(final Request request) {
+ *              final int current = cnt.getAndIncrement();
+ *              final String headerValue = request.getHeaders().getValue("x-custom-request-header");
+ *              return StubResponse.builder()
+ *                      .status(current % 2 == 0 ? 200 : 500)
+ *                      .header("x-custom-response-header", headerValue)
+ *                      .build();
+ *         }
+ *     });
+ * </pre>
+ * 
+ * <p>The intention to define the stub response dynamically is expressed by using
+ * {@link net.jadler.stubbing.RequestStubbing#respondUsing(net.jadler.stubbing.Responder)}. This method takes
+ * a {@link net.jadler.stubbing.Responder} implementation as a parameter, Jadler subsequently uses the
+ * {@link net.jadler.stubbing.Responder#nextResponse(net.jadler.Request)} method to generate stub responses for
+ * all requests fitting the given <em>WHEN</em> part.</p>
+ * 
+ * <p>In the previous example the http status of a stub response is {@code 200} for even requests and {@code 500}
+ * for odd requests. And the value of the {@code x-custom-request-header} request header is used as
+ * a response header.</p>
+ * 
+ * <p>As you can see in the example this {@link net.jadler.stubbing.Responder} implementation is thread-safe 
+ * (by using {@link java.util.concurrent.atomic.AtomicInteger} here). This is important for tests of parallel nature
+ * (more than one client can send requests fitting the <em>WHEN</em> part in parallel). Of course if requests are sent
+ * in a serial way (which is the most common case) there is no need for the thread-safety of the implementation.</p>
+ * 
+ * <p>Please note this dynamic way of defining stub responses should be used as rarely as possible as
+ * it very often signalizes a problem either with test granularity or somewhere in the tested code. However there
+ * could be very specific testing scenarios where this functionality might be handy.</p>
  * 
  * 
  * <h3>Request Receipt Verification</h3>
