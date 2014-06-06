@@ -21,18 +21,28 @@
         <dependency>
             <groupId>net.jadler</groupId>
             <artifactId>jadler-core</artifactId>
-            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>net.jadler</groupId>
             <artifactId>jadler-jetty</artifactId>
-            <version>${project.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <scope>compile</scope>
         </dependency>
+        
+        <!-- test dependencies -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-core</artifactId>
+        </dependency>
+            
     </dependencies>
 
 </project>

@@ -19,7 +19,7 @@ import net.jadler.stubbing.ResponseStubbing;
  * <p>This class is a gateway to the whole Jadler library. Jadler is a powerful yet simple to use 
  * http mocking library for writing integration tests in the http environment. It provides a convenient way
  * to create a stub http server which serves all http requests sent during a test execution
- * by returning a stub response according to defined rules.</p>
+ * by returning stub responses according to defined rules.</p>
  * 
  * <h3>Jadler Usage Basics</h3>
  * 
@@ -92,7 +92,7 @@ import net.jadler.stubbing.ResponseStubbing;
  * 
  * <p>In order to communicate with the http stub server instead of the real web service, the tested instance
  * must be configured to access {@code localhost} using the http protocol (https will be supported
- * in Jadler 1.1) connecting to a port which can be retrieved using the {@link Jadler#port()} method.</p>
+ * in a latter version of Jadler) connecting to a port which can be retrieved using the {@link Jadler#port()} method.</p>
  * 
  * <p>The rest of the test method is business as usual. The {@code getAccount(String)} is executed and some
  * assertions are evaluated.</p>
@@ -233,7 +233,7 @@ import net.jadler.stubbing.ResponseStubbing;
  * 
  * <p>And finally sometimes you would like to simulate a network latency. To do so just call the
  * {@link net.jadler.stubbing.ResponseStubbing#withDelay(long, java.util.concurrent.TimeUnit)} method.
- * The stub response will be returned at least after the specified amount of time.</p>
+ * The stub response will be returned after the specified amount of time or later.</p>
  * 
  * <p>Let's define the <em>THEN</em> part precisely:</p>
  * 
@@ -485,6 +485,28 @@ import net.jadler.stubbing.ResponseStubbing;
  *     .havingMethodEqualTo("DELETE")
  * .receivedTimes(lessThan(4));
  * </pre>
+ * 
+ * <h3>Simplified Jadler Lifecycle Management</h3>
+ * 
+ * <p>In all previous examples the jUnit {@literal @}Before and {@literal @}After sections were used to manage
+ * the Jadler lifecycle. If jUnit 4.11 (or newer) is on the classpath a simple Jadler 
+ * <a href="https://github.com/junit-team/junit/wiki/Rules">rule</a> {@link net.jadler.junit.rule.JadlerRule}
+ * can be used instead:</p>
+ * 
+ * <pre>
+ * public class AccountManagerImplTest {
+ *
+ *     {@literal @}Rule
+ *     public JadlerRule jadlerRule = new JadlerRule();
+ * 
+ *     ...
+ * }
+ * </pre>
+ * 
+ * <p>This piece of code starts Jadler on a random port at the beginning of each test and closes it at the end.
+ * A specific port can be defined as well: {@code new JadlerRule(12345);}.</p>
+ * 
+ * <p>To use this rule please note the {@code jadler-junit} artifact must be on the classpath.</p>
  */
 public class Jadler {
     

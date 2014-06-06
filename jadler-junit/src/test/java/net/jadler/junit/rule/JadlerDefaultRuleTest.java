@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2014 Jadler contributors
+ * This program is made available under the terms of the MIT License.
+ */
 package net.jadler.junit.rule;
 
 import net.jadler.Jadler;

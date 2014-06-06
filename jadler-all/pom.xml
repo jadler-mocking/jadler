@@ -89,5 +89,9 @@ This program is made available under the terms of the MIT License.
             <artifactId>hamcrest-library</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-core</artifactId>
+        </dependency>
     </dependencies>
 </project>
