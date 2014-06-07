@@ -52,6 +52,10 @@ This program is made available under the terms of the MIT License.
             <groupId>net.jadler</groupId>
             <artifactId>jadler-jetty</artifactId>
         </dependency>
+        <dependency>
+            <groupId>net.jadler</groupId>
+            <artifactId>jadler-junit</artifactId>
+        </dependency>
         
         <!-- TEST -->
         <dependency> 
@@ -84,6 +88,10 @@ This program is made available under the terms of the MIT License.
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest-library</artifactId>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-core</artifactId>
         </dependency>
     </dependencies>
 </project>

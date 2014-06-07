@@ -10,6 +10,7 @@ import org.junit.Test;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.GetMethod;
 import net.jadler.stubbing.server.jetty.JettyStubHttpServer;
+import org.springframework.util.SocketUtils;
 
 import static net.jadler.Jadler.*;
 import static org.junit.Assert.assertThat;
@@ -103,7 +104,7 @@ public class JadlerFacadeIntegrationTest {
      */
     @Test
     public void portConfiguration() throws IOException {
-        initJadlerListeningOn(34565);
+        initJadlerListeningOn(SocketUtils.findAvailableTcpPort());
         
         try {
             onRequest().respond().withStatus(EXPECTED_STATUS);

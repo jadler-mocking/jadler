@@ -10,16 +10,15 @@ import org.apache.commons.httpclient.methods.ByteArrayRequestEntity;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.Charset;
+import net.jadler.junit.rule.JadlerRule;
+import org.junit.Rule;
 
-import static net.jadler.Jadler.closeJadler;
-import static net.jadler.Jadler.initJadler;
 import static net.jadler.Jadler.onRequest;
 import static net.jadler.Jadler.port;
 import static net.jadler.Jadler.verifyThatRequest;
@@ -60,19 +59,14 @@ public class JadlerMockingIntegrationTest {
     private HttpClient client;
     
     
+    @Rule
+    public JadlerRule jadlerRule = new JadlerRule();
+    
     @Before
     public void setUp() {
-        
-        initJadler();
         onRequest().respond().withStatus(200);
         
         this.client = new HttpClient();
-    }
-    
-    
-    @After
-    public void tearDown() {
-        closeJadler();
     }
     
     
