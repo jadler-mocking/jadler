@@ -581,6 +581,13 @@ public class JadlerMockerTest {
         
         assertThat(mocker.numberOfRequestsMatching(singletonMatcher), is(0));
     }
+
+    @Test(expected = IllegalStateException.class)
+    public void noRequestRecording() {
+        final JadlerMocker mocker = new JadlerMocker(mock(StubHttpServer.class));
+        mocker.setRecordRequests(false);
+        mocker.verifyThatRequest();
+    }
     
     
     private Request prepareEmptyMockRequest() {

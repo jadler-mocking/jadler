@@ -58,6 +58,7 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, RequestMana
     private MultiMap defaultHeaders;
     private int defaultStatus;
     private Charset defaultEncoding;
+    private boolean recordRequests = true;
     
     private boolean started = false;
     private boolean configurable = true;
@@ -182,7 +183,16 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, RequestMana
         this.checkConfigurable();
         this.defaultHeaders.put(name, value);
     }
-    
+
+    /**
+     * Switches request recording. If request recording is switched off, validation
+     * is not allowed. Switch-off the recording for long-running performance tests.
+     * @param recordRequests should we record requests
+     */
+    public void setRecordRequests(final boolean recordRequests) {
+        this.checkConfigurable();
+        this.recordRequests = recordRequests;
+    }
 
     /**
      * Defines a default status to be returned in every stub http response (if not redefined in the
@@ -231,8 +241,10 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, RequestMana
                 this.configurable = false;
                 this.httpStubs = this.createHttpStubs();
             }
-        
-            this.receivedRequests.add(request);
+
+            if (recordRequests) {
+                this.receivedRequests.add(request);
+            }
         }
         
         for (final Iterator<HttpStub> it = this.httpStubs.descendingIterator(); it.hasNext(); ) {
@@ -267,6 +279,7 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, RequestMana
      */
     @Override
     public Verifying verifyThatRequest() {
+        checkRequestRecording();
         return new Verifying(this);
     }  
     
@@ -277,7 +290,8 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, RequestMana
     @Override
     public int numberOfRequestsMatching(Collection<Matcher<? super Request>> predicates) {
         Validate.notNull(predicates, "predicates cannot be null");
-        
+        checkRequestRecording();
+
         final Matcher<Request> all = allOf(predicates);
         
         int cnt = 0;
@@ -376,6 +390,12 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, RequestMana
         if (!this.configurable) {
             throw new IllegalStateException("Once first http request has been served, "
                     + "you can't do any stubbing anymore.");
+        }
+    }
+
+    private synchronized void checkRequestRecording() {
+        if (!this.recordRequests) {
+            throw new IllegalStateException("Request recording is switched off. Can not validate.");
         }
     }
 }
