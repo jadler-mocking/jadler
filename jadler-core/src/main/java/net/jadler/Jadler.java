@@ -486,6 +486,23 @@ import net.jadler.stubbing.ResponseStubbing;
  * .receivedTimes(lessThan(4));
  * </pre>
  * 
+ * <p>This verification feature is implemented by recording all incoming http requests (including their bodies). In
+ * some very specific corner cases this implementation can cause troubles. For example imagine a long running
+ * performance test using Jadler for stubbing some remote http service. Since such a test can issue thousands
+ * or even millions of requests the memory consumption probably would affect the test results (either
+ * by a performance slowdown or even crashes). In this specific scenarios you should consider disabling
+ * the incoming requests recording:</p>
+ * 
+ * <pre>
+ * public void setUp() {
+ *     initJadler().that()
+ *             .skipsRequestsRecording();
+ * }
+ * </pre>
+ * 
+ * <p>Please note you should ignore this option almost every time you use Jadler unless you are really
+ * convinced about it. Because premature optimization is the root of all evil, you know.</p>
+ * 
  * <h3>Simplified Jadler Lifecycle Management</h3>
  * 
  * <p>In all previous examples the jUnit {@literal @}Before and {@literal @}After sections were used to manage
@@ -699,6 +716,24 @@ public class Jadler {
          */
         public OngoingConfiguration respondsWithDefaultEncoding(final Charset defaultEncoding) {
             jadlerMockerContainer.get().setDefaultEncoding(defaultEncoding);
+            return this;
+        }
+        
+        
+        /**
+         * <p>Disables incoming http requests recording.</p>
+         * 
+         * <p>Jadler mocking (verification) capabilities are implemented by storing all incoming requests (including their
+         * bodies). This could cause troubles in some very specific testing scenarios, for further explanation jump
+         * straight to {@link JadlerMocker#setRecordRequests(boolean)}.</p>
+         * 
+         * <p>Please note this method should be used very rarely and definitely should not be treated as a default.</p>
+         * 
+         * @see JadlerMocker#setRecordRequests(boolean)
+         * @return this ongoing configuration 
+         */
+        public OngoingConfiguration skipsRequestsRecording() {
+            jadlerMockerContainer.get().setRecordRequests(false);
             return this;
         }
         

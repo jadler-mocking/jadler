@@ -183,16 +183,7 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, RequestMana
         this.checkConfigurable();
         this.defaultHeaders.put(name, value);
     }
-
-    /**
-     * Switches request recording. If request recording is switched off, validation
-     * is not allowed. Switch-off the recording for long-running performance tests.
-     * @param recordRequests should we record requests
-     */
-    public void setRecordRequests(final boolean recordRequests) {
-        this.checkConfigurable();
-        this.recordRequests = recordRequests;
-    }
+    
 
     /**
      * Defines a default status to be returned in every stub http response (if not redefined in the
@@ -242,7 +233,7 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, RequestMana
                 this.httpStubs = this.createHttpStubs();
             }
 
-            if (recordRequests) {
+            if (this.recordRequests) {
                 this.receivedRequests.add(request);
             }
         }
@@ -288,7 +279,7 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, RequestMana
      * {@inheritDoc} 
      */
     @Override
-    public int numberOfRequestsMatching(Collection<Matcher<? super Request>> predicates) {
+    public int numberOfRequestsMatching(final Collection<Matcher<? super Request>> predicates) {
         Validate.notNull(predicates, "predicates cannot be null");
         checkRequestRecording();
 
@@ -307,6 +298,7 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, RequestMana
         return cnt;
     }
 
+    
     /**
      * <p>Resets this mocker instance so it can be reused. This method clears all previously created stubs as well as
      * stored received requests (for mocking purpose,
@@ -377,6 +369,30 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, RequestMana
     }
     
     
+    /**
+     * <p>By default Jadler records all incoming requests (including their bodies) so it can provide mocking
+     * (verification) features defined in {@link net.jadler.mocking.Mocker}.</p>
+     * 
+     * <p>In some very specific corner cases this implementation of mocking can cause troubles. For example imagine
+     * a long running performance test using Jadler for stubbing some remote http service. Since such a test can issue
+     * thousands or even millions of requests the memory consumption probably would affect the test results (either
+     * by a performance slowdown or even crashes). In this specific scenarios you should consider disabling
+     * the incoming requests recording using this method.</p>
+     * 
+     * <p>When disabled calling {@link net.jadler.mocking.Mocker#verifyThatRequest()} will result in
+     * {@link java.lang.IllegalStateException}</p>
+     * 
+     * <p>Please note you should ignore this option almost every time you use Jadler unless you are really
+     * convinced about it. Because premature optimization is the root of all evil, you know.</p>
+     * 
+     * @param recordRequests {@code true} for enabling http requests recording, {@code false} for disabling it
+     */
+    public void setRecordRequests(final boolean recordRequests) {
+        this.checkConfigurable();
+        this.recordRequests = recordRequests;
+    }
+    
+    
     private Deque<HttpStub> createHttpStubs() {
         final Deque<HttpStub> stubs = new LinkedList<HttpStub>();
         for (final Stubbing stub : stubbings) {
@@ -395,7 +411,7 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, RequestMana
 
     private synchronized void checkRequestRecording() {
         if (!this.recordRequests) {
-            throw new IllegalStateException("Request recording is switched off. Can not validate.");
+            throw new IllegalStateException("Request recording is switched off, cannot do any request verification");
         }
     }
 }

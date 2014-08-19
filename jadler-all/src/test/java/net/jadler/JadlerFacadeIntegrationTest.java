@@ -144,7 +144,6 @@ public class JadlerFacadeIntegrationTest {
                 .respondsWithDefaultContentType("text/plain")
                 .respondsWithDefaultEncoding(Charset.forName("ISO-8859-1"))
                 .respondsWithDefaultHeader("default_header", "value");
-                
         
         try {
             onRequest().respond().withStatus(EXPECTED_STATUS);
@@ -155,6 +154,23 @@ public class JadlerFacadeIntegrationTest {
         }
     }
     
+    
+    /*
+     * Tests the additional defaults configuration option.
+     */
+    @Test(expected=IllegalStateException.class)
+    public void additionalConfiguration_skipRequestRecording() throws IOException {
+        initJadler().that().skipsRequestsRecording();
+        
+        try {
+            verifyThatRequest();
+            fail("request recording disabled, verification must fail");
+        }
+        finally {
+            closeJadler();
+        }
+    }
+
     
     private void assertExpectedStatus() throws IOException {
         final HttpClient client = new HttpClient();

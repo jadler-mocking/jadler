@@ -510,6 +510,14 @@ public class JadlerMockerTest {
     }
     
     
+    @Test(expected = IllegalStateException.class)
+    public void verifyThatRequest_noRequestRecording() {
+        final JadlerMocker mocker = new JadlerMocker(mock(StubHttpServer.class));
+        mocker.setRecordRequests(false);
+        mocker.verifyThatRequest();
+    }
+    
+    
     @Test
     public void verifyThatRequest() {
         final Verifying ongoingVerifying = new JadlerMocker(mock(StubHttpServer.class)).verifyThatRequest();
@@ -521,6 +529,15 @@ public class JadlerMockerTest {
     public void numberOfRequestsMatchingInvalidArgument() {
         new JadlerMocker(mock(StubHttpServer.class)).numberOfRequestsMatching(null);
         fail("matchers cannot be null");
+    }
+
+    
+    @Test(expected=IllegalStateException.class)
+    @SuppressWarnings("unchecked")
+    public void numberOfRequestsMatching_noRequestRecording() {
+        final JadlerMocker mocker = new JadlerMocker(mock(StubHttpServer.class));
+        mocker.setRecordRequests(false);
+        mocker.numberOfRequestsMatching(Collections.<Matcher<? super Request>>singletonList(mock(Matcher.class)));
     }
     
     
@@ -580,13 +597,6 @@ public class JadlerMockerTest {
         mocker.reset();
         
         assertThat(mocker.numberOfRequestsMatching(singletonMatcher), is(0));
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void noRequestRecording() {
-        final JadlerMocker mocker = new JadlerMocker(mock(StubHttpServer.class));
-        mocker.setRecordRequests(false);
-        mocker.verifyThatRequest();
     }
     
     
