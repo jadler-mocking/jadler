@@ -527,7 +527,11 @@ import net.jadler.stubbing.ResponseStubbing;
  */
 public class Jadler {
     
-    private static ThreadLocal<JadlerMocker> jadlerMockerContainer = new ThreadLocal<JadlerMocker>();
+      //since jUnit might execute tests in a thread other than the thread executing the setup and teardown methods
+      //when specific conditions are met (a timeout value is specified for the given
+      //test, see http://junit.org/apidocs/org/junit/Test.html for details), the thread local container
+      //is inheritable so the content is copied automatically to the child thread
+    private static ThreadLocal<JadlerMocker> jadlerMockerContainer = new InheritableThreadLocal<JadlerMocker>();
     private static String JETTY_SERVER_CLASS = "net.jadler.stubbing.server.jetty.JettyStubHttpServer";
 
     private Jadler() {
