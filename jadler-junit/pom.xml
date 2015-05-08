@@ -28,11 +28,6 @@ This program is made available under the terms of the MIT License.
             <artifactId>jadler-core</artifactId>
         </dependency>
         <dependency>
-            <groupId>net.jadler</groupId>
-            <artifactId>jadler-jetty</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
             <groupId>commons-lang</groupId>
             <artifactId>commons-lang</artifactId>
         </dependency>
@@ -46,6 +41,11 @@ This program is made available under the terms of the MIT License.
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>net.jadler</groupId>
+            <artifactId>jadler-jetty</artifactId>
+            <scope>test</scope>
         </dependency>
             
     </dependencies>
