@@ -46,11 +46,6 @@ This program is made available under the terms of the MIT License.
             <groupId>net.jadler</groupId>
             <artifactId>jadler-core</artifactId>
         </dependency>
-        
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-        </dependency>
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-server</artifactId>

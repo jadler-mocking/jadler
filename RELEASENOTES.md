@@ -1,3 +1,6 @@
+## 1.2.0
+* Support for JDK HTTP server so we can mock without Jetty
+
 ## 1.1.2
 * a bug preventing usage of the [net.jadler.Jadler](https://github.com/jadler-mocking/jadler/blob/f2197df3efa1e49e8cb6def08fd8a9a97e826523/jadler-core/src/main/java/net/jadler/Jadler.java) facade in conjunction with a jUnit test with a defined timeout value [fixed](https://github.com/jadler-mocking/jadler/blob/f2197df3efa1e49e8cb6def08fd8a9a97e826523/jadler-core/src/main/java/net/jadler/Jadler.java#L534).
 * requests recording (for verification purpose) can now be turned off via a new configuration option [net.jadler.Jadler.OngoingConfiguration#skipsRequestsRecording](https://github.com/jadler-mocking/jadler/blob/352e85badd090cd3be00c8a28a69b69401e01951/jadler-core/src/main/java/net/jadler/Jadler.java#L735)

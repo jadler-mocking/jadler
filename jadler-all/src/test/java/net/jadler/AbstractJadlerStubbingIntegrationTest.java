@@ -4,6 +4,8 @@
  */
 package net.jadler;
 
+import net.jadler.stubbing.Responder;
+import net.jadler.stubbing.StubResponse;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.ByteArrayRequestEntity;
@@ -14,6 +16,7 @@ import org.apache.commons.io.IOUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -23,16 +26,15 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.concurrent.TimeUnit;
-import net.jadler.stubbing.Responder;
-import net.jadler.stubbing.StubResponse;
 
-import static net.jadler.Jadler.port;
-import static net.jadler.Jadler.initJadler;
-import static net.jadler.Jadler.onRequest;
 import static net.jadler.Jadler.closeJadler;
+import static net.jadler.Jadler.onRequest;
+import static net.jadler.Jadler.port;
 import static org.hamcrest.Matchers.anything;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.equalToIgnoringCase;
 import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasItem;
@@ -44,16 +46,15 @@ import static org.hamcrest.Matchers.isEmptyString;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
-import static org.hamcrest.Matchers.empty;
 import static org.junit.Assert.assertThat;
 
 
 /**
  * Suite of several integration tests for the stubbing part of the Jadler library.
  * Each test configures the stub server and tests either the <i>WHEN<i/> or <i>THEN</i> part of http stubbing using
- * an http client.
+ * an http client. This class is shared by subclasses that each configure different Jadler implementation.
  */
-public class JadlerStubbingIntegrationTest {
+public abstract class AbstractJadlerStubbingIntegrationTest {
     
     private static final int DEFAULT_STATUS = 409;
     private static final String DEFAULT_HEADER1_NAME = "default_header";
@@ -78,7 +79,7 @@ public class JadlerStubbingIntegrationTest {
     @Before
     public void setUp() {
         
-        initJadler().that()
+        doInitJadler().that()
                 .respondsWithDefaultStatus(DEFAULT_STATUS)
                 .respondsWithDefaultHeader(DEFAULT_HEADER1_NAME, DEFAULT_HEADER1_VALUE1)
                 .respondsWithDefaultHeader(DEFAULT_HEADER1_NAME, DEFAULT_HEADER1_VALUE2)
@@ -87,8 +88,10 @@ public class JadlerStubbingIntegrationTest {
         
         this.client = new HttpClient();
     }
-    
-    
+
+    protected abstract Jadler.AdditionalConfiguration doInitJadler();
+
+
     @After
     public void tearDown() {
         closeJadler();
@@ -732,10 +735,10 @@ public class JadlerStubbingIntegrationTest {
 
         final Header[] responseHeaders = method.getResponseHeaders(DEFAULT_HEADER1_NAME);
         assertThat(responseHeaders.length, is(2));
-        assertThat(responseHeaders[0].getName(), is(DEFAULT_HEADER1_NAME));
+        assertThat(responseHeaders[0].getName(), is(equalToIgnoringCase(DEFAULT_HEADER1_NAME)));
         assertThat(responseHeaders[0].getValue(), is(DEFAULT_HEADER1_VALUE1));
 
-        assertThat(responseHeaders[1].getName(), is(DEFAULT_HEADER1_NAME));
+        assertThat(responseHeaders[1].getName(), is(equalToIgnoringCase(DEFAULT_HEADER1_NAME)));
         assertThat(responseHeaders[1].getValue(), is(DEFAULT_HEADER1_VALUE2));
     }
     
@@ -768,13 +771,13 @@ public class JadlerStubbingIntegrationTest {
 
         final Header[] responseHeaders = method.getResponseHeaders(DEFAULT_HEADER1_NAME);
         assertThat(responseHeaders.length, is(3));
-        assertThat(responseHeaders[0].getName(), is(DEFAULT_HEADER1_NAME));
+        assertThat(responseHeaders[0].getName(), is(equalToIgnoringCase(DEFAULT_HEADER1_NAME)));
         assertThat(responseHeaders[0].getValue(), is(DEFAULT_HEADER1_VALUE1));
 
-        assertThat(responseHeaders[1].getName(), is(DEFAULT_HEADER1_NAME));
+        assertThat(responseHeaders[1].getName(), is(equalToIgnoringCase(DEFAULT_HEADER1_NAME)));
         assertThat(responseHeaders[1].getValue(), is(DEFAULT_HEADER1_VALUE2));
 
-        assertThat(responseHeaders[2].getName(), is(DEFAULT_HEADER1_NAME));
+        assertThat(responseHeaders[2].getName(), is(equalToIgnoringCase(DEFAULT_HEADER1_NAME)));
         assertThat(responseHeaders[2].getValue(), is("value3"));      
     }
     
