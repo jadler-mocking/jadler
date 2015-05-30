@@ -666,7 +666,7 @@ public class Jadler {
     /**
      * Use this method to retrieve the port the underlying http stub server is listening on
      * @return the port the underlying http stub server is listening on
-     * @throws IllegalStateException if Jadler was not initialized yet
+     * @throws IllegalStateException if Jadler has not been initialized yet
      */
     public static int port() {
         checkInitialized();

@@ -52,7 +52,7 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, RequestMana
     private final StubHttpServer server;
     private final StubbingFactory stubbingFactory;
     private final List<Stubbing> stubbings;
-    private  Deque<HttpStub> httpStubs;
+    private Deque<HttpStub> httpStubs;
     private final Set<Request> receivedRequests;
 
     private MultiMap defaultHeaders;
@@ -314,7 +314,7 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, RequestMana
      * the server (using {@link #close()}) in the <em>after</em> section, in some specific scenarios it could be useful
      * to reuse one instance of this class in all tests instead.</p>
      * 
-     * <p>When more than just a once instance of this class is used in a test suite (for mocking more http servers) it
+     * <p>When more than just one instance of this class is used in a test suite (for mocking more http servers) it
      * could take some time to start all underlying stub servers before and stop these after every test method. This is
      * a typical use case this method might come to help.</p>
      * 
