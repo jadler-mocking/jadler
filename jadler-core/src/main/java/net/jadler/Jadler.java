@@ -595,6 +595,63 @@ public class Jadler {
 
 
     /**
+     * <p>Resets this mocker instance so it can be reused. This method clears all previously created stubs as well as
+     * stored received requests.</p>
+     *
+     * <p>While the standard Jadler lifecycle consists of initializing Jadler and starting the
+     * underlying stub server (using {@link #initJadler()}) in the <em>before</em> section of a test and stopping
+     * the server (using {@link #closeJadler()}) in the <em>after</em> section, in some specific scenarios
+     * it could be useful to reuse initialized Jadler in all tests instead.</p>
+     *
+     * <p>Here's an example code using jUnit which demonstrates usage of this method in a test lifecycle:</p>
+     *
+     * <pre>
+     * public class JadlerResetIntegrationTest {
+     *
+     *     {@literal @}BeforeClass
+     *     public static void beforeTests() {
+     *         initJadler();
+     *     }
+     *
+     *     {@literal @}AfterClass
+     *     public static void afterTests() {
+     *         closeJadler();
+     *     }
+     *
+     *     {@literal @}After
+     *     public void reset() {
+     *         resetJadler();
+     *     }
+     *
+     *     {@literal @}Test
+     *     public void test1() {
+     *         mocker.onRequest().respond().withStatus(201);
+     *
+     *         //do an http request here, 201 should be returned from the stub server
+     *
+     *         verifyThatRequest().receivedOnce();
+     *     }
+     *
+     *     {@literal @}Test
+     *     public void test2() {
+     *         mocker.onRequest().respond().withStatus(400);
+     *
+     *         //do an http request here, 400 should be returned from the stub server
+     *
+     *         verifyThatRequest().receivedOnce();
+     *     }
+     * }
+     * </pre>
+     */
+    public static void resetJadler() {
+        final JadlerMocker mocker = jadlerMockerContainer.get();
+        if (mocker != null) {
+            mocker.reset();
+        }
+    }
+
+
+    /**
      * Use this method to retrieve the port the underlying http stub server is listening on
      * @return the port the underlying http stub server is listening on
      * @throws IllegalStateException if Jadler has not been initialized yet

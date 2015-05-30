@@ -4,6 +4,9 @@
  */
 package net.jadler;
 
+import net.jadler.mocking.Verifying;
+import net.jadler.stubbing.RequestStubbing;
+import net.jadler.stubbing.server.jetty.JettyStubHttpServer;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.junit.After;
@@ -13,28 +16,28 @@ import org.junit.Test;
 
 import java.io.IOException;
 
-import static net.jadler.Jadler.*;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
 /**
- * Tests that its possible to reset Jadler.
+ * Tests that its possible to reset JadlerMocker.
  */
-public class JadlerResetIntegrationTest {
+public class JadlerMockingResetIntegrationTest {
+    private static final JadlerMocker mocker = new JadlerMocker(new JettyStubHttpServer());
 
     @BeforeClass
     public static void start() {
-        initJadler();
+        mocker.start();
     }
 
     @AfterClass
     public static void close() {
-        closeJadler();
+        mocker.close();
     }
 
     @After
     public void reset() {
-        resetJadler();
+        mocker.reset();
     }
 
     @Test
@@ -55,8 +58,16 @@ public class JadlerResetIntegrationTest {
 
     private void assertStatus(int expected) throws IOException {
         final HttpClient client = new HttpClient();
-        final GetMethod method = new GetMethod("http://localhost:" + port() + "/");
+        final GetMethod method = new GetMethod("http://localhost:" + mocker.getStubHttpServerPort() + "/");
         assertThat(client.executeMethod(method), is(expected));
         method.releaseConnection();
+    }
+
+    private RequestStubbing onRequest() {
+        return mocker.onRequest();
+    }
+
+    private Verifying verifyThatRequest() {
+        return mocker.verifyThatRequest();
     }
 }
