@@ -1,3 +1,6 @@
+## 1.3.0
+* a reset method added to the Jadler facade
+
 ## 1.2.0
 * experimental implementation of a stub server using [com.sun.net.httpserver](https://docs.oracle.com/javase/6/docs/jre/api/net/httpserver/spec/com/sun/net/httpserver/HttpServer.html) added as a new Jadler module `jadler-jdk`
 * the Jetty (default) stub server implementation now sends the Date header in every response as requested in the [RFC 2616](http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.18)
