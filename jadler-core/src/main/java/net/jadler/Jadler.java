@@ -126,7 +126,7 @@ import net.jadler.stubbing.ResponseStubbing;
  * 
  *     final AccountManager am = new AccountManagerImpl("http", "localhost", port());
  * 
- *     ag.getAccount(ID);
+ *     am.getAccount(ID);
  * }
  * </pre>
  * 
@@ -494,16 +494,80 @@ import net.jadler.stubbing.ResponseStubbing;
  * the incoming requests recording:</p>
  * 
  * <pre>
+ * {@literal @}Before
  * public void setUp() {
  *     initJadler().that()
  *             .skipsRequestsRecording();
  * }
  * </pre>
  * 
+ * <p>Once the request recording has been disabled, calling {@link net.jadler.mocking.Mocker#verifyThatRequest()}
+ * will result in {@link IllegalStateException}.</p>
+ * 
  * <p>Please note you should ignore this option almost every time you use Jadler unless you are really
  * convinced about it. Because premature optimization is the root of all evil, you know.</p>
  * 
- * <h3>Simplified Jadler Lifecycle Management</h3>
+ * <h3>Jadler Lifecycle</h3>
+ * 
+ * <p>As already demonstrated, the standard Jadler lifecycle consists of the following steps: </p>
+ * 
+ * <ol>
+ *   <li>starting Jadler including the underlying http server (by calling one of the {@code initJadler*} methods of the
+ *   {@link Jadler} facade) in the <em>setUp</em> phase of a test</li>
+ * 
+ *   <li>stubbing using the {@link Jadler#onRequest()} method at the beginning of the test method</li>
+ * 
+ *   <li>calling the code to be tested</li>
+ * 
+ *   <li>doing some verification using {@link Jadler#verifyThatRequest()} if necessary</li>
+ * 
+ *   <li>closing Jadler including the underlying http server (by calling the {@link Jadler#closeJadler()}) method
+ *   in the <em>tearDown</em> phase of a test</li>
+ * </ol>
+ * 
+ * <p>These steps are then repeated for every test in a test suite. This lifecycle is fully covered by the static
+ * {@link Jadler} facade which encapsulates and manages an instance of the core {@link JadlerMocker} component.</p>
+ * 
+ * <h4>Creating mocker instances manually</h4>
+ * 
+ * <p>There are few specific scenarios when creating {@link JadlerMocker} instances manually (instead of using the 
+ * {@link Jadler} facade) can be handy. Some specific integration tests may require starting more than just one mocker
+ * on different ports (simulating requesting multiple different http servers). If this is the case,
+ * all the mocker instances have to be created manually (since the facade encapsulates just one mocker instance).</p>
+ * 
+ * <p>To achieve this each mocker must be created and disposed before and after every test: </p>
+ * 
+ * <pre>
+ * public class ManualTest {
+ * 
+ *     private JadlerMocker mocker;
+ *     private int port;
+ * 
+ *     {@literal @}Before
+ *     public void setUp() {
+ *         mocker = new JadlerMocker(new JettyStubHttpServer());
+ *         mocker.start();
+ *         port = getStubHttpServerPort();
+ *     }
+ * 
+ *     {@literal @}After
+ *     public void tearDown() {
+ *         mocker.close();
+ *     }
+ * 
+ *     {@literal @}Test
+ *     public void testSomething() {
+ *         mocker.onRequest().respond().withStatus(404);
+ *     
+ *           //call the code to be tested here
+ *
+ *         mocker.verifyThatRequest().receivedOnce();
+ *     }
+ * }
+ * </pre>
+ * 
+ * 
+ * <h4>Simplified Jadler Lifecycle Management</h4>
  * 
  * <p>In all previous examples the jUnit {@literal @}Before and {@literal @}After sections were used to manage
  * the Jadler lifecycle. If jUnit 4.11 (or newer) is on the classpath a simple Jadler 
@@ -521,9 +585,11 @@ import net.jadler.stubbing.ResponseStubbing;
  * </pre>
  * 
  * <p>This piece of code starts Jadler on a random port at the beginning of each test and closes it at the end.
- * A specific port can be defined as well: {@code new JadlerRule(12345);}.</p>
+ * A specific port can be defined as well: {@code new JadlerRule(12345);}. Please note this is exactly the same as
+ * calling {@link Jadler#initJadler()} and {@link Jadler#closeJadler()} in the {@code setUp} and {@code tearDown}
+ * methods.</p>
  * 
- * <p>To use this rule please note the {@code jadler-junit} artifact must be on the classpath.</p>
+ * <p>To use this rule the {@code jadler-junit} artifact must be on the classpath.</p>
  */
 public class Jadler {
     
@@ -540,10 +606,11 @@ public class Jadler {
     
     
     /**
-     * Initializes Jadler and starts a default stub server {@link net.jadler.stubbing.server.jetty.JettyStubHttpServer}
-     * serving the http protocol listening on any free port. The port number can be retrieved using {@link #port()}.
-     * <br /><br />
-     * This should be preferably called in the {@code setUp} method of the test suite
+     * <p>Initializes Jadler and starts a default stub server {@link net.jadler.stubbing.server.jetty.JettyStubHttpServer}
+     * serving the http protocol listening on any free port. The port number can be retrieved using {@link #port()}.</p>
+     * 
+     * <p>This should be preferably called in the {@code setUp} method of the test suite.</p>
+     * 
      * @return if additional tweaking needed on the initialized Jadler, call {@link AdditionalConfiguration#that()}
      * to add more configuration
      */
@@ -553,10 +620,11 @@ public class Jadler {
     
 
     /**
-     * Initializes Jadler and starts a default stub server {@link net.jadler.stubbing.server.jetty.JettyStubHttpServer}
-     * serving the http protocol listening on the given port.
-     * <br /><br />
-     * This should be preferably called in the {@code setUp} method of the test suite
+     * <p>Initializes Jadler and starts a default stub server {@link net.jadler.stubbing.server.jetty.JettyStubHttpServer}
+     * serving the http protocol listening on the given port.</p>
+     * 
+     * <p>This should be preferably called in the {@code setUp} method of the test suite.</p>
+     * 
      * @param port port the stub server will be listening on
      * @return if additional tweaking needed on the initialized Jadler, call {@link AdditionalConfiguration#that()}
      * to add more configuration
@@ -567,9 +635,10 @@ public class Jadler {
     
 
     /**
-     * Initializes Jadler and starts the given {@link StubHttpServer}.
-     * <br /><br />
-     * This should be preferably called in the {@code setUp} method of the test suite
+     * <p>Initializes Jadler and starts the given {@link StubHttpServer}.</p>
+     * 
+     * <p>This should be preferably called in the {@code setUp} method of the test suite</p>
+     * 
      * @param server stub http server instance
      * @return if additional tweaking needed on the initialized Jadler, call {@link AdditionalConfiguration#that()}
      * to add more configuration
@@ -580,9 +649,9 @@ public class Jadler {
     
     
     /**
-     * Stops the underlying {@link StubHttpServer} and closes Jadler.
-     * <br /><br />
-     * This should be preferably called in the {@code tearDown} method of a test suite.
+     * <p>Stops the underlying {@link StubHttpServer} and closes Jadler.</p>
+     * 
+     * <p>This should be preferably called in the {@code tearDown} method of a test suite.</p>
      */
     public static void closeJadler() {
         final StubHttpServerManager serverManager = jadlerMockerContainer.get();

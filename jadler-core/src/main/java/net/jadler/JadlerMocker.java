@@ -43,7 +43,7 @@ import static org.hamcrest.Matchers.allOf;
  * 
  * <p>Normally you shouldn't create instances of this on your own, use the {@link Jadler} facade instead.
  * However, if more http stub servers are needed in one execution thread (for example two http stub servers
- * listening on different ports) have no fear, go ahead and create more two or more instances directly.</p>
+ * listening on different ports) have no fear, go ahead and create two or more instances directly.</p>
  * 
  * <p>This class is stateful and thread-safe.</p>
  */
@@ -77,7 +77,6 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, RequestMana
     
     /**
      * Creates new JadlerMocker instance bound to the given http stub server.
-     * Instances of this class should never be created directly, see {@link Jadler} for explanation and tutorial.
      * 
      * @param server stub http server instance this mocker should use
      */
@@ -87,8 +86,9 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, RequestMana
     
     
     /**
-     * Package private constructor, for testing purposes only! Allows to define a StubbingFactory instance
+     * Package private constructor, for testing purposes only! Allows to define a {@link StubbingFactory} instance
      * as well.
+     * 
      * @param server stub http server instance this mocker should use
      * @param stubbingFactory a factory to create stubbing instances
      */
