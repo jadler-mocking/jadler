@@ -555,7 +555,7 @@ import net.jadler.stubbing.ResponseStubbing;
  *         mocker.close();
  *     }
  * 
- *     @Test
+ *     {@literal @}Test
  *     public void testSomething() {
  *         mocker.onRequest().respond().withStatus(404);
  *     
@@ -606,10 +606,11 @@ public class Jadler {
     
     
     /**
-     * Initializes Jadler and starts a default stub server {@link net.jadler.stubbing.server.jetty.JettyStubHttpServer}
-     * serving the http protocol listening on any free port. The port number can be retrieved using {@link #port()}.
-     * <br /><br />
-     * This should be preferably called in the {@code setUp} method of the test suite
+     * <p>Initializes Jadler and starts a default stub server {@link net.jadler.stubbing.server.jetty.JettyStubHttpServer}
+     * serving the http protocol listening on any free port. The port number can be retrieved using {@link #port()}.</p>
+     * 
+     * <p>This should be preferably called in the {@code setUp} method of the test suite.</p>
+     * 
      * @return if additional tweaking needed on the initialized Jadler, call {@link AdditionalConfiguration#that()}
      * to add more configuration
      */
@@ -619,10 +620,11 @@ public class Jadler {
     
 
     /**
-     * Initializes Jadler and starts a default stub server {@link net.jadler.stubbing.server.jetty.JettyStubHttpServer}
-     * serving the http protocol listening on the given port.
-     * <br /><br />
-     * This should be preferably called in the {@code setUp} method of the test suite
+     * <p>Initializes Jadler and starts a default stub server {@link net.jadler.stubbing.server.jetty.JettyStubHttpServer}
+     * serving the http protocol listening on the given port.</p>
+     * 
+     * <p>This should be preferably called in the {@code setUp} method of the test suite.</p>
+     * 
      * @param port port the stub server will be listening on
      * @return if additional tweaking needed on the initialized Jadler, call {@link AdditionalConfiguration#that()}
      * to add more configuration
@@ -633,9 +635,10 @@ public class Jadler {
     
 
     /**
-     * Initializes Jadler and starts the given {@link StubHttpServer}.
-     * <br /><br />
-     * This should be preferably called in the {@code setUp} method of the test suite
+     * <p>Initializes Jadler and starts the given {@link StubHttpServer}.</p>
+     * 
+     * <p>This should be preferably called in the {@code setUp} method of the test suite</p>
+     * 
      * @param server stub http server instance
      * @return if additional tweaking needed on the initialized Jadler, call {@link AdditionalConfiguration#that()}
      * to add more configuration
@@ -646,9 +649,9 @@ public class Jadler {
     
     
     /**
-     * Stops the underlying {@link StubHttpServer} and closes Jadler.
-     * <br /><br />
-     * This should be preferably called in the {@code tearDown} method of a test suite.
+     * <p>Stops the underlying {@link StubHttpServer} and closes Jadler.</p>
+     * 
+     * <p>This should be preferably called in the {@code tearDown} method of a test suite.</p>
      */
     public static void closeJadler() {
         final StubHttpServerManager serverManager = jadlerMockerContainer.get();

@@ -12,7 +12,7 @@ public interface StubHttpServerManager {
         
     /**
      * Starts the underlying stub http server
-     * @throws JadlerException if an error occurred while starting the stub http server.
+     * @throws net.jadler.exception.JadlerException if an error occurred while starting the stub http server.
      * @throws IllegalStateException if the stub server has been started already.
      */
     void start();
@@ -20,7 +20,7 @@ public interface StubHttpServerManager {
     
     /**
      * Stops the underlying stub http server.
-     * @throws JadlerException if an error occurred while stopping the stub http server.
+     * @throws net.jadler.exception.JadlerException if an error occurred while stopping the stub http server.
      * @throws IllegalStateException if the stub server hasn't been started yet or has been stopped already.
      */
     void close();
