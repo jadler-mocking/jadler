@@ -1,3 +1,8 @@
+## 1.1.2
+* a bug preventing usage of the [net.jadler.Jadler](https://github.com/jadler-mocking/jadler/blob/f2197df3efa1e49e8cb6def08fd8a9a97e826523/jadler-core/src/main/java/net/jadler/Jadler.java) facade in conjunction with a jUnit test with a defined timeout value [fixed](https://github.com/jadler-mocking/jadler/blob/f2197df3efa1e49e8cb6def08fd8a9a97e826523/jadler-core/src/main/java/net/jadler/Jadler.java#L534).
+* requests recording (for verification purpose) can now be turned off via a new configuration option [net.jadler.Jadler.OngoingConfiguration#skipsRequestsRecording](https://github.com/jadler-mocking/jadler/blob/352e85badd090cd3be00c8a28a69b69401e01951/jadler-core/src/main/java/net/jadler/Jadler.java#L735)
+* Jadler can be built in JDK8 using Maven (proper doclint settings added for the javadoc plugin)
+
 ## 1.1.1
 * [jadler-junit](https://github.com/jadler-mocking/jadler/blob/42a429ca31ae12c36ed8faf90014c91fa7a1e3c8/jadler-junit/pom.xml) artifact added, contains specific support for jUnit testing
 * [net.jadler.junit.rule.JadlerRule](https://github.com/jadler-mocking/jadler/blob/42a429ca31ae12c36ed8faf90014c91fa7a1e3c8/jadler-junit/src/main/java/net/jadler/junit/rule/JadlerRule.java) jUnit rule added for easy Jadler lifecycle management
