@@ -4,8 +4,6 @@
  */
 package net.jadler;
 
-import net.jadler.stubbing.Responder;
-import net.jadler.stubbing.StubResponse;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.ByteArrayRequestEntity;
@@ -25,15 +23,16 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.concurrent.TimeUnit;
-import net.jadler.stubbing.server.StubHttpServer;
+import net.jadler.stubbing.Responder;
+import net.jadler.stubbing.StubResponse;
 
-import static net.jadler.Jadler.initJadlerUsing;
-import static net.jadler.Jadler.closeJadler;
-import static net.jadler.Jadler.onRequest;
 import static net.jadler.Jadler.port;
+import static net.jadler.Jadler.initJadlerUsing;
+import static net.jadler.Jadler.onRequest;
+import static net.jadler.Jadler.closeJadler;
+import net.jadler.stubbing.server.StubHttpServer;
 import static org.hamcrest.Matchers.anything;
 import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
@@ -46,12 +45,13 @@ import static org.hamcrest.Matchers.isEmptyString;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.empty;
 import static org.junit.Assert.assertThat;
 
 
 /**
  * Suite of several integration tests for the stubbing part of the Jadler library.
- * Each test configures the stub server and tests either the <i>WHEN<i/> or <i>THEN</i> part of http stubbing using
+ * Each test configures the stub server and tests either the <i>WHEN</i> or <i>THEN</i> part of http stubbing using
  * an http client. This class is shared by subclasses that each configure different Jadler implementation.
  */
 public abstract class AbstractJadlerStubbingIntegrationTest {
@@ -86,12 +86,12 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
     @Before
     public void setUp() {
         
-        initJadlerUsing(createServer()).that()
-                .respondsWithDefaultStatus(DEFAULT_STATUS)
-                .respondsWithDefaultHeader(DEFAULT_HEADER1_NAME, DEFAULT_HEADER1_VALUE1)
-                .respondsWithDefaultHeader(DEFAULT_HEADER1_NAME, DEFAULT_HEADER1_VALUE2)
-                .respondsWithDefaultEncoding(UTF_8_CHARSET)
-                .respondsWithDefaultContentType(UTF_8_TYPE);
+        initJadlerUsing(createServer())
+                .withDefaultResponseStatus(DEFAULT_STATUS)
+                .withDefaultResponseHeader(DEFAULT_HEADER1_NAME, DEFAULT_HEADER1_VALUE1)
+                .withDefaultResponseHeader(DEFAULT_HEADER1_NAME, DEFAULT_HEADER1_VALUE2)
+                .withDefaultResponseEncoding(UTF_8_CHARSET)
+                .withDefaultResponseContentType(UTF_8_TYPE);
         
         this.client = new HttpClient();
     }
@@ -126,6 +126,8 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
         
         int status = client.executeMethod(method);
         assertThat(status, is(201));
+        
+        method.releaseConnection();
     }
     
     
@@ -146,6 +148,8 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
         
         int status = client.executeMethod(method);
         assertThat(status, is(201));
+        
+        method.releaseConnection();
     }
     
     
@@ -164,6 +168,8 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
         
         final int status = client.executeMethod(method);
         assertThat(status, is(201));
+        
+        method.releaseConnection();
     }
     
     
@@ -181,6 +187,8 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
         
         final int status = client.executeMethod(method);
         assertThat(status, is(201));
+        
+        method.releaseConnection();
     }
     
     
@@ -202,6 +210,8 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
 
         int status = client.executeMethod(method);
         assertThat(status, is(201));
+        
+        method.releaseConnection();
     }
     
     
@@ -223,6 +233,8 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
 
         int status = client.executeMethod(method);
         assertThat(status, is(201));
+        
+        method.releaseConnection();
     }
     
     
@@ -257,6 +269,8 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
         
         int status = client.executeMethod(method);
         assertThat(status, is(201));
+        
+        method.releaseConnection();
     }
     
     
@@ -277,6 +291,8 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
         
         int status = client.executeMethod(method);
         assertThat(status, is(201));
+        
+        method.releaseConnection();
     }
     
     
@@ -298,6 +314,8 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
 
         int status = client.executeMethod(method);
         assertThat(status, is(201));
+        
+        method.releaseConnection();
     }
     
     
@@ -336,6 +354,8 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
 
         int status = client.executeMethod(method);
         assertThat(status, is(201));
+        
+        method.releaseConnection();
     }
     
     
@@ -382,6 +402,8 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
 
         int status = client.executeMethod(method);
         assertThat(status, is(201));
+        
+        method.releaseConnection();
     }
     
     
@@ -401,6 +423,8 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
 
         int status = client.executeMethod(method);
         assertThat(status, is(201));
+        
+        method.releaseConnection();
     }
     
     
@@ -421,6 +445,8 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
         final HttpURLConnection c = (HttpURLConnection) url.openConnection();
 
         assertThat(c.getResponseCode(), is(201));
+        
+        c.disconnect();
     }
     
     
@@ -438,7 +464,9 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
         final GetMethod method = new GetMethod("http://localhost:" + port());
 
         int status = client.executeMethod(method);
-        assertThat(status, is(201));        
+        assertThat(status, is(201));
+        
+        method.releaseConnection();
     }
     
     
@@ -457,6 +485,8 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
 
         int status = client.executeMethod(method);
         assertThat(status, is(201));
+        
+        method.releaseConnection();
     }
     
     
@@ -475,7 +505,9 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
         final GetMethod method = new GetMethod("http://localhost:" + port() + "/");
 
         final int status = client.executeMethod(method);
-        assertThat(status, is(201));        
+        assertThat(status, is(201));
+        
+        method.releaseConnection();
     }
     
     
@@ -501,6 +533,8 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
         final int status = client.executeMethod(method);
         assertThat(status, is(201));
         assertThat(method.getResponseBodyAsString(), is(STRING_WITH_DIACRITICS));
+        
+        method.releaseConnection();
     }
     
     
@@ -520,6 +554,8 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
           //check that the body was really encoded in UTF-8
         final byte[] body = IOUtils.toByteArray(method.getResponseBodyAsStream());
         assertThat(body, is(UTF_8_REPRESENTATION));
+        
+        method.releaseConnection();
     }
     
     
@@ -541,6 +577,8 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
           //check that the body was really encoded in UTF-8
         final byte[] body = IOUtils.toByteArray(method.getResponseBodyAsStream());
         assertThat(body, is(ISO_8859_2_REPRESENTATION));
+        
+        method.releaseConnection();
     }    
     
 
@@ -566,6 +604,8 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
           //since the body was encoded in UTF-8 and content type charset was set to UTF-8,
           //the http client should be able to read it correctly
         assertThat(method.getResponseBodyAsString(), is(STRING_WITH_DIACRITICS));
+        
+        method.releaseConnection();
     }
     
     
@@ -594,6 +634,8 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
           //since the body was encoded in "ISO-8859-2" and content type charset was set to "ISO-8859-2",
           //the client should be able to read it correctly
         assertThat(method.getResponseBodyAsString(), is(STRING_WITH_DIACRITICS));
+        
+        method.releaseConnection();
     }
     
 
@@ -622,6 +664,8 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
           //however the applied encoding is ISO-8859-2
         final byte[] body = IOUtils.toByteArray(method.getResponseBodyAsStream());
         assertThat(body, is(ISO_8859_2_REPRESENTATION));
+        
+        method.releaseConnection();
     }
     
     
@@ -643,6 +687,8 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
 
         final byte[] resultBody = IOUtils.toByteArray(method.getResponseBodyAsStream());
         assertThat(resultBody, is(ISO_8859_2_REPRESENTATION));
+        
+        method.releaseConnection();
     }
     
     
@@ -661,6 +707,8 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
 
         final byte[] resultBody = IOUtils.toByteArray(method.getResponseBodyAsStream());
         assertThat(resultBody, is(BINARY_BODY));
+        
+        method.releaseConnection();
     }
     
     
@@ -677,10 +725,11 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
 
         final byte[] resultBody = IOUtils.toByteArray(method.getResponseBodyAsStream());
         assertThat(resultBody, is(BINARY_BODY));
+        
+        method.releaseConnection();
     }
-    
-    
-    /**
+
+    /*
      * Tests the withHeader method with single and multiple headers values
      */
     @Test
@@ -716,6 +765,8 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
         final GetMethod method = new GetMethod("http://localhost:" + port());
         final int status = client.executeMethod(method);
         assertThat(status, is(203));
+        
+        method.releaseConnection();
     }
     
     
@@ -738,6 +789,10 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
         final GetMethod method3 = new GetMethod("http://localhost:" + port());
         final int status3 = client.executeMethod(method3);
         assertThat(status3, is(201));
+        
+        method1.releaseConnection();
+        method2.releaseConnection();
+        method3.releaseConnection();
     }
     
     
@@ -753,6 +808,8 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
         assertThat(status, is(404));
         assertThat(method.getResponseHeader("Content-Type").getValue(), is("text/plain; charset=utf-8"));
         assertThat(method.getResponseBodyAsString(), is("No stub response found for the incoming request"));
+        
+        method.releaseConnection();
     }
     
     
@@ -771,6 +828,8 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
         assertThat(responseHeaders.length, is(2));
         assertThat(responseHeaders[0].getValue(), is(DEFAULT_HEADER1_VALUE1));
         assertThat(responseHeaders[1].getValue(), is(DEFAULT_HEADER1_VALUE2));
+        
+        method.releaseConnection();
     }
     
     
@@ -784,6 +843,8 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
         final GetMethod method = new GetMethod("http://localhost:" + port());
         int status = client.executeMethod(method);
         assertThat(status, is(201));
+        
+        method.releaseConnection();
     }
     
     
@@ -804,12 +865,14 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
         assertThat(responseHeaders.length, is(3));
         assertThat(responseHeaders[0].getValue(), is(DEFAULT_HEADER1_VALUE1));
         assertThat(responseHeaders[1].getValue(), is(DEFAULT_HEADER1_VALUE2));
-        assertThat(responseHeaders[2].getValue(), is("value3"));      
+        assertThat(responseHeaders[2].getValue(), is("value3"));
+        
+        method.releaseConnection();
     }
     
     
     /*
-     * Tests the stub response is returned after at least three seconds as set during the stubbing
+     * Tests the stub response is returned after at least one second as set during the stubbing
      */
     @Test
     public void delay() throws IOException {
@@ -822,5 +885,7 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
         final long end = System.currentTimeMillis();
         final long dur = end - start;
         assertThat(dur / 1000, is(greaterThanOrEqualTo(1L)));
+        
+        method.releaseConnection();
     }
 }

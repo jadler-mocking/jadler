@@ -320,35 +320,34 @@ import net.jadler.stubbing.ResponseStubbing;
  * <pre>
  * {@literal @}Before
  * public void setUp() {
- *     initJadler().that()
- *         .respondsWithDefaultStatus(200);
+ *     initJadler()
+ *         .withDefaultResponseStatus(200);
  * }
  * </pre>
  * 
- * <p>The {@link AdditionalConfiguration#that()} method here simply indicates Jadler will not only be initialized
- * but also configured. This particular test setup configures Jadler to return http stub responses with 200 http
+ * <p>This particular test setup configures Jadler to return http stub responses with 200 http
  * status by default. This default can always be overwritten by calling the {@link ResponseStubbing#withStatus(int)} 
  * method in the particular stubbing.</p>
  * 
- * <p>The following example demonstrates all defaults options: </p>
+ * <p>The following example demonstrates all response defaults options: </p>
  * 
  * <pre>
  *   {@literal @}Before
  *   public void setUp() {
- *       initJadler().that()
- *           .respondsWithDefaultStatus(200)
- *           .respondsWithDefaultContentType("text/plain")
- *           .respondsWithDefaultEncoding(Charset.forName("ISO-8859-1"))
- *           .respondsWithDefaultHeader("X-DEFAULT-HEADER", "default_value");
+ *       initJadler()
+ *           .withDefaultResponseStatus(202)
+ *           .withDefaultResponseContentType("text/plain")
+ *           .withDefaultResponseEncoding(Charset.forName("ISO-8859-1"))
+ *           .withDefaultResponseHeader("X-DEFAULT-HEADER", "default_value");
  *   }
  * </pre>
  * 
- * <p>If not redefined in the particular stubbing, every stub response will have 200 http status, {@code Content-Type}
+ * <p>If not redefined in the particular stubbing, every stub response will have 202 http status, {@code Content-Type}
  * header set to {@code text/plain}, response body encoded using {@code ISO-8859-1} and a header named
  * {@code X-DEFAULT-HEADER} set to {@code default_value}.</p>
  * 
- * <p>If no default status code is defined 200 will be used. And if no default response body encoding is defined,
- * {@code UTF-8} will be used by default.</p>
+ * <p>And finally if no default nor stubbing-specific status code is defined 200 will be used. And if no default 
+ * nor stubbing-specific response body encoding is defined, {@code UTF-8} will be used by default.</p>
  * 
  * 
  * <h3>Generating a stub response dynamically</h3>
@@ -495,8 +494,8 @@ import net.jadler.stubbing.ResponseStubbing;
  * <pre>
  * {@literal @}Before
  * public void setUp() {
- *     initJadler().that()
- *             .skipsRequestsRecording();
+ *     initJadler()
+ *             .withRequestsRecordingDisabled();
  * }
  * </pre>
  * 
@@ -613,7 +612,7 @@ public class Jadler {
      * @return if additional tweaking needed on the initialized Jadler, call {@link AdditionalConfiguration#that()}
      * to add more configuration
      */
-    public static AdditionalConfiguration initJadler() {
+    public static OngoingConfiguration initJadler() {
         return initInternal(new JadlerMocker(getJettyServer()));
     }
     
@@ -628,7 +627,7 @@ public class Jadler {
      * @return if additional tweaking needed on the initialized Jadler, call {@link AdditionalConfiguration#that()}
      * to add more configuration
      */
-    public static AdditionalConfiguration initJadlerListeningOn(final int port) {
+    public static OngoingConfiguration initJadlerListeningOn(final int port) {
         return initInternal(new JadlerMocker(getJettyServer(port)));
     }
     
@@ -642,7 +641,7 @@ public class Jadler {
      * @return if additional tweaking needed on the initialized Jadler, call {@link AdditionalConfiguration#that()}
      * to add more configuration
      */
-    public static AdditionalConfiguration initJadlerUsing(final StubHttpServer server) {
+    public static OngoingConfiguration initJadlerUsing(final StubHttpServer server) {
         return initInternal(new JadlerMocker(server));
     }
     
@@ -766,14 +765,14 @@ public class Jadler {
     }
     
     
-    private static AdditionalConfiguration initInternal(final JadlerMocker jadlerMocker) {
+    private static OngoingConfiguration initInternal(final JadlerMocker jadlerMocker) {
         if (jadlerMockerContainer.get() != null) {
             throw new IllegalStateException("Jadler seems to have been initialized already.");
         }
         
         jadlerMockerContainer.set(jadlerMocker);
         jadlerMocker.start();
-        return AdditionalConfiguration.INSTANCE;        
+        return OngoingConfiguration.INSTANCE;
     }
     
     
@@ -813,7 +812,7 @@ public class Jadler {
     /**
      * This class serves as a DSL support for additional Jadler configuration.
      */
-    public static class OngoingConfiguration {
+    public static class OngoingConfiguration implements JadlerConfiguration {
         private static final OngoingConfiguration INSTANCE = new OngoingConfiguration();
         
         
@@ -822,43 +821,91 @@ public class Jadler {
         }
         
         /**
+         * @return this ongoing configuration
+         * @deprecated added just for backward compatibility reasons, does nothing but returning this ongoing
+         * configuration instance. Use the configuration methods of this instance directly instead.
+         */
+        @Deprecated
+        public OngoingConfiguration that() {
+            return this;
+        }
+        
+        /**
+         * @deprecated use {@link #withDefaultResponseStatus(int)} instead
+         * 
          * Sets the default http response status. This value will be used for all stub responses with no
          * specific http status defined. (see {@link ResponseStubbing#withStatus(int)})
          * @param defaultStatus default http response status
          * @return this ongoing configuration
          */
+        @Deprecated
         public OngoingConfiguration respondsWithDefaultStatus(final int defaultStatus) {
+            return this.withDefaultResponseStatus(defaultStatus);
+        }
+        
+        
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public OngoingConfiguration withDefaultResponseStatus(final int defaultStatus) {
             jadlerMockerContainer.get().setDefaultStatus(defaultStatus);
             return this;
         }
         
         
         /**
+         * @deprecated use {@link #withDefaultResponseHeader(java.lang.String, java.lang.String)} instead
+         * 
          * Defines a response header that will be sent in every http stub response.
          * Can be called repeatedly to define more headers.
          * @param name name of the header
          * @param value header value
          * @return this ongoing configuration
          */
+        @Deprecated
         public OngoingConfiguration respondsWithDefaultHeader(final String name, final String value) {
+            return this.withDefaultResponseHeader(name, value);
+        }
+        
+        
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public OngoingConfiguration withDefaultResponseHeader(final String name, final String value) {
             jadlerMockerContainer.get().addDefaultHeader(name, value);
             return this;
         }
         
         
         /**
+         * @deprecated use {@link #withDefaultResponseEncoding(java.nio.charset.Charset)} instead
+         * 
          * Defines a default encoding of every stub http response. This value will be used for all stub responses
          * with no specific encoding defined. (see {@link ResponseStubbing#withEncoding(java.nio.charset.Charset)})
          * @param defaultEncoding default stub response encoding
          * @return this ongoing configuration
          */
+        @Deprecated
         public OngoingConfiguration respondsWithDefaultEncoding(final Charset defaultEncoding) {
+            return this.withDefaultResponseEncoding(defaultEncoding);
+        }
+        
+        
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public OngoingConfiguration withDefaultResponseEncoding(final Charset defaultEncoding) {
             jadlerMockerContainer.get().setDefaultEncoding(defaultEncoding);
             return this;
         }
         
         
         /**
+         * @deprecated use {@link #withRequestsRecordingDisabled()} instead
+         * 
          * <p>Disables incoming http requests recording.</p>
          * 
          * <p>Jadler mocking (verification) capabilities are implemented by storing all incoming requests (including their
@@ -870,36 +917,42 @@ public class Jadler {
          * @see JadlerMocker#setRecordRequests(boolean)
          * @return this ongoing configuration 
          */
+        @Deprecated
         public OngoingConfiguration skipsRequestsRecording() {
-            jadlerMockerContainer.get().setRecordRequests(false);
-            return this;
+            return this.withRequestsRecordingDisabled();
         }
         
         
         /**
+         * {@inheritDoc}
+         */
+        @Override
+        public OngoingConfiguration withRequestsRecordingDisabled() {
+            jadlerMockerContainer.get().setRecordRequests(false);
+            return this;
+        }
+
+        
+        /**
+         * @deprecated use {@link #withDefaultResponseContentType(java.lang.String)} instead
+         * 
          * Defines a default content type of every stub http response. This value will be used for all stub responses
          * with no specific content type defined. (see {@link ResponseStubbing#withContentType(java.lang.String)})
          * @param defaultContentType default {@code Content-Type} header of every http stub response
          * @return this ongoing configuration
          */
+        @Deprecated
         public OngoingConfiguration respondsWithDefaultContentType(final String defaultContentType) {
-            return this.respondsWithDefaultHeader("Content-Type", defaultContentType);
-        }
-    }
-    
-    
-    /**
-     * This class serves as a DSL support for initialization of an additional Jadler configuration.
-     */
-    public static class AdditionalConfiguration {
-        private static final AdditionalConfiguration INSTANCE = new AdditionalConfiguration();
-        
-        private AdditionalConfiguration() {
-            //private constructor, instances of this class should never be created directly
+            return this.withDefaultResponseContentType(defaultContentType);
         }
         
-        public OngoingConfiguration that() {
-            return OngoingConfiguration.INSTANCE;
+        
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public OngoingConfiguration withDefaultResponseContentType(final String defaultContentType) {
+            return this.withDefaultResponseHeader("Content-Type", defaultContentType);
         }
     }
 }
