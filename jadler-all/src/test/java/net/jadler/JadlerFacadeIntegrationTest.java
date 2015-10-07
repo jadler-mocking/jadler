@@ -4,18 +4,19 @@
  */
 package net.jadler;
 
-import java.io.IOException;
-import java.nio.charset.Charset;
-import org.junit.Test;
+import net.jadler.stubbing.server.jetty.JettyStubHttpServer;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.GetMethod;
-import net.jadler.stubbing.server.jetty.JettyStubHttpServer;
+import org.junit.Test;
 import org.springframework.util.SocketUtils;
 
+import java.io.IOException;
+import java.nio.charset.Charset;
+
 import static net.jadler.Jadler.*;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
-import static org.hamcrest.Matchers.is;
 
 
 /**
@@ -43,14 +44,24 @@ public class JadlerFacadeIntegrationTest {
     
     
     /*
-     * the closeJadler() method will be most often called in a tearDown method of a test suite so it doesn't
+     * The closeJadler() method will be most often called in a tearDown method of a test suite so it doesn't
      * fail if the initialization failed (simulated here by not calling the init at all).
      */
+    @Test
     public void closeWithoutInitialization() {
         closeJadler();
     }
-    
-    
+
+
+    /*
+     * The resetJadler() method will be most often called in a @After method of a test suite so it doesn't
+     * fail if the initialization failed (simulated here by not calling the init at all).
+     */
+    @Test
+    public void resetWithoutInitialization() {
+        resetJadler();
+    }
+
     
     /**
      * port() must be called after initialization
@@ -171,11 +182,37 @@ public class JadlerFacadeIntegrationTest {
         }
     }
 
-    
+
+    /*
+     * Resets Jadler and tests everything works fine.
+     */
+    @Test
+    public void testResetJadler() throws IOException {
+        initJadler();
+
+        try {
+            onRequest().respond().withStatus(EXPECTED_STATUS);
+            assertExpectedStatus();
+
+            resetJadler();
+
+            onRequest().respond().withStatus(201);
+            assertExpectedStatus(201);
+        }
+        finally {
+            closeJadler();
+        }
+    }
+
+
     private void assertExpectedStatus() throws IOException {
+        assertExpectedStatus(EXPECTED_STATUS);
+    }
+
+    private void assertExpectedStatus(final int expectedStatus) throws IOException {
         final HttpClient client = new HttpClient();
         final GetMethod method = new GetMethod("http://localhost:" + port() + "/");
-        assertThat(client.executeMethod(method), is(EXPECTED_STATUS));
+        assertThat(client.executeMethod(method), is(expectedStatus));
         method.releaseConnection();
     }
 }
