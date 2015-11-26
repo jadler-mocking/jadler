@@ -10,9 +10,10 @@ import net.jadler.KeyValues;
 import net.jadler.Request;
 import net.jadler.RequestManager;
 import net.jadler.stubbing.StubResponse;
-
 import java.io.IOException;
 import java.io.OutputStream;
+import org.apache.commons.lang.Validate;
+
 
 /**
  * Processes requests and sends them to the rest of Jadler library.
@@ -20,20 +21,22 @@ import java.io.OutputStream;
 class JdkHandler implements HttpHandler {
     private final RequestManager requestManager;
 
-    public JdkHandler(RequestManager requestManager) {
+    public JdkHandler(final RequestManager requestManager) {
+        Validate.notNull(requestManager, "requestManager cannot be null");
+        
         this.requestManager = requestManager;
     }
 
     @Override
-    public void handle(HttpExchange httpExchange) throws IOException {
+    public void handle(final HttpExchange httpExchange) throws IOException {
         final Request req = RequestUtils.convert(httpExchange);
         final StubResponse stubResponse = this.requestManager.provideStubResponseFor(req);
 
-        byte[] body = stubResponse.getBody();
+        final byte[] body = stubResponse.getBody();
 
         this.processDelay(stubResponse.getDelay());
 
-        KeyValues headers = stubResponse.getHeaders();
+        final KeyValues headers = stubResponse.getHeaders();
         for (final String key: headers.getKeys()) {
              for (final String value: headers.getValues(key)) {
                  httpExchange.getResponseHeaders().add(key, value);
@@ -47,10 +50,9 @@ class JdkHandler implements HttpHandler {
             outputStream.write(body);
             outputStream.close();
         }
-
     }
 
-    private void processDelay(long delay) {
+    private void processDelay(final long delay) {
         if (delay > 0) {
             try {
                 Thread.sleep(delay);

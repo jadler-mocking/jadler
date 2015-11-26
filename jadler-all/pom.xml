@@ -56,13 +56,13 @@ This program is made available under the terms of the MIT License.
             <groupId>net.jadler</groupId>
             <artifactId>jadler-junit</artifactId>
         </dependency>
+        
+        <!-- TEST -->
         <dependency>
             <groupId>net.jadler</groupId>
             <artifactId>jadler-jdk</artifactId>
             <scope>test</scope>
         </dependency>
-        
-        <!-- TEST -->
         <dependency> 
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>

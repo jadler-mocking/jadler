@@ -8,9 +8,10 @@ import net.jadler.stubbing.server.jdk.JdkStubHttpServer;
 import org.junit.BeforeClass;
 
 /**
- * Tests that its possible to reset JadlerMocker JDK implementation.
+ * Tests that it is possible to reset JadlerMocker JDK implementation.
  */
 public class JdkJadlerResetIntegrationTest extends AbstractJadlerResetIntegrationTest {
+    
     @BeforeClass
     public static void configureMocker() {
         mocker = new JadlerMocker(new JdkStubHttpServer());

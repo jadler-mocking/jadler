@@ -16,7 +16,6 @@ import org.apache.commons.io.IOUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,7 +25,9 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.concurrent.TimeUnit;
+import net.jadler.stubbing.server.StubHttpServer;
 
+import static net.jadler.Jadler.initJadlerUsing;
 import static net.jadler.Jadler.closeJadler;
 import static net.jadler.Jadler.onRequest;
 import static net.jadler.Jadler.port;
@@ -34,7 +35,6 @@ import static org.hamcrest.Matchers.anything;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.equalToIgnoringCase;
 import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasItem;
@@ -61,6 +61,13 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
     private static final String DEFAULT_HEADER1_VALUE1 = "value1";
     private static final String DEFAULT_HEADER1_VALUE2 = "value2";
     
+    private static final String HEADER_NAME1 = "header1";
+    private static final String HEADER_VALUE11 = "value11";
+    private static final String HEADER_VALUE12 = "value12";
+    
+    private static final String HEADER_NAME2 = "header2";
+    private static final String HEADER_VALUE2 = "value2";
+    
     private static final String STRING_WITH_DIACRITICS = "\u00e1\u0159\u017e";
     private static final byte[] UTF_8_REPRESENTATION = 
             {(byte)0xC3, (byte)0xA1, (byte)0xC5, (byte)0x99, (byte)0xC5, (byte)0xBE};
@@ -79,7 +86,7 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
     @Before
     public void setUp() {
         
-        doInitJadler().that()
+        initJadlerUsing(createServer()).that()
                 .respondsWithDefaultStatus(DEFAULT_STATUS)
                 .respondsWithDefaultHeader(DEFAULT_HEADER1_NAME, DEFAULT_HEADER1_VALUE1)
                 .respondsWithDefaultHeader(DEFAULT_HEADER1_NAME, DEFAULT_HEADER1_VALUE2)
@@ -89,7 +96,11 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
         this.client = new HttpClient();
     }
 
-    protected abstract Jadler.AdditionalConfiguration doInitJadler();
+
+    /**
+     * @return particular server implementation to execute this test with
+     */
+    protected abstract StubHttpServer createServer();
 
 
     @After
@@ -669,6 +680,29 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
     }
     
     
+    /**
+     * Tests the withHeader method with single and multiple headers values
+     */
+    @Test
+    public void withHeader() throws IOException {
+        onRequest().respond()
+                .withHeader(HEADER_NAME1, HEADER_VALUE11)
+                .withHeader(HEADER_NAME1, HEADER_VALUE12)
+                .withHeader(HEADER_NAME2, HEADER_VALUE2);
+        
+        final GetMethod method = new GetMethod("http://localhost:" + port());
+        client.executeMethod(method);
+        
+        final Header[] headers1 = method.getResponseHeaders(HEADER_NAME1);
+        
+        assertThat(headers1[0].getValue(), is(HEADER_VALUE11));
+        assertThat(headers1[1].getValue(), is(HEADER_VALUE12));
+        
+        final Header[] headers2 = method.getResponseHeaders(HEADER_NAME2);
+        assertThat(headers2[0].getValue(), is(HEADER_VALUE2));
+    }
+    
+    
     /*
      * Tests that for more matching stub rules the latter is applied.
      */
@@ -735,10 +769,7 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
 
         final Header[] responseHeaders = method.getResponseHeaders(DEFAULT_HEADER1_NAME);
         assertThat(responseHeaders.length, is(2));
-        assertThat(responseHeaders[0].getName(), is(equalToIgnoringCase(DEFAULT_HEADER1_NAME)));
         assertThat(responseHeaders[0].getValue(), is(DEFAULT_HEADER1_VALUE1));
-
-        assertThat(responseHeaders[1].getName(), is(equalToIgnoringCase(DEFAULT_HEADER1_NAME)));
         assertThat(responseHeaders[1].getValue(), is(DEFAULT_HEADER1_VALUE2));
     }
     
@@ -771,13 +802,8 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
 
         final Header[] responseHeaders = method.getResponseHeaders(DEFAULT_HEADER1_NAME);
         assertThat(responseHeaders.length, is(3));
-        assertThat(responseHeaders[0].getName(), is(equalToIgnoringCase(DEFAULT_HEADER1_NAME)));
         assertThat(responseHeaders[0].getValue(), is(DEFAULT_HEADER1_VALUE1));
-
-        assertThat(responseHeaders[1].getName(), is(equalToIgnoringCase(DEFAULT_HEADER1_NAME)));
         assertThat(responseHeaders[1].getValue(), is(DEFAULT_HEADER1_VALUE2));
-
-        assertThat(responseHeaders[2].getName(), is(equalToIgnoringCase(DEFAULT_HEADER1_NAME)));
         assertThat(responseHeaders[2].getValue(), is("value3"));      
     }
     

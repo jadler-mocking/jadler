@@ -21,6 +21,7 @@ import static org.junit.Assert.assertThat;
  * Tests that its possible to reset JadlerMocker.
  */
 public abstract class AbstractJadlerResetIntegrationTest {
+    
     protected static JadlerMocker mocker;
 
 

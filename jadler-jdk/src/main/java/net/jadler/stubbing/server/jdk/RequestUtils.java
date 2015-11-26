@@ -8,16 +8,17 @@ import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import net.jadler.Request;
 import org.apache.commons.io.IOUtils;
-
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.charset.UnsupportedCharsetException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-class RequestUtils {
-    private static final Pattern charsetPattern = Pattern.compile("(?i).*\\bcharset=\\s*\"?([^\\s;\"]*)");
 
-    public static Request convert(HttpExchange httpExchange) throws IOException {
+class RequestUtils {
+    private static final Pattern CHARSET_PATTERN = Pattern.compile("(?i).*\\bcharset=\\s*\"?([^\\s;\"]*)");
+
+    static Request convert(final HttpExchange httpExchange) throws IOException {
         final Request.Builder builder = Request.builder()
                 .method(httpExchange.getRequestMethod())
                 .requestURI(httpExchange.getRequestURI())
@@ -29,23 +30,28 @@ class RequestUtils {
         return builder.build();
     }
 
-    private static void addEncoding(Request.Builder builder, HttpExchange httpExchange) {
-        String contentType = httpExchange.getRequestHeaders().getFirst("Content-Type");
+    //package protected for testing purposes
+    static void addEncoding(final Request.Builder builder, final HttpExchange httpExchange) {
+        final String contentType = httpExchange.getRequestHeaders().getFirst("Content-Type");
         if (contentType != null) {
-            Matcher matcher = charsetPattern.matcher(contentType);
+            final Matcher matcher = CHARSET_PATTERN.matcher(contentType);
             if (matcher.matches()) {
-                builder.encoding(Charset.forName(matcher.group(1)));
+                try {
+                    builder.encoding(Charset.forName(matcher.group(1)));
+                }
+                catch (UnsupportedCharsetException e) {
+                    //just ignore, fallback encoding will be used instead
+                }
             }
         }
     }
 
-    private static void addHeaders(Request.Builder builder, HttpExchange httpExchange) {
-        Headers requestHeaders = httpExchange.getRequestHeaders();
-        for (String key : requestHeaders.keySet()) {
-            for (String value : requestHeaders.get(key)) {
+    private static void addHeaders(final Request.Builder builder, final HttpExchange httpExchange) {
+        final Headers requestHeaders = httpExchange.getRequestHeaders();
+        for (final String key : requestHeaders.keySet()) {
+            for (final String value : requestHeaders.get(key)) {
                 builder.header(key, value);
             }
         }
-
     }
 }

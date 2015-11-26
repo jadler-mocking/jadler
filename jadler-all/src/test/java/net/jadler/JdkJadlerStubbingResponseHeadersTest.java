@@ -5,16 +5,13 @@
 package net.jadler;
 
 import net.jadler.stubbing.server.StubHttpServer;
-import net.jadler.stubbing.server.jetty.JettyStubHttpServer;
+import net.jadler.stubbing.server.jdk.JdkStubHttpServer;
 
 
-/**
- * Jadler integration test for Jetty.
- */
-public class JettyJadlerStubbingIntegrationTest extends AbstractJadlerStubbingIntegrationTest {
+public class JdkJadlerStubbingResponseHeadersTest extends AbstractJadlerStubbingResponseHeadersTest {
 
     @Override
     protected StubHttpServer createServer() {
-        return new JettyStubHttpServer();
-    }
+        return new JdkStubHttpServer();
+    }    
 }

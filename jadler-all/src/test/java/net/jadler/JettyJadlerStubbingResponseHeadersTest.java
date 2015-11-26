@@ -8,13 +8,10 @@ import net.jadler.stubbing.server.StubHttpServer;
 import net.jadler.stubbing.server.jetty.JettyStubHttpServer;
 
 
-/**
- * Jadler integration test for Jetty.
- */
-public class JettyJadlerStubbingIntegrationTest extends AbstractJadlerStubbingIntegrationTest {
+public class JettyJadlerStubbingResponseHeadersTest extends AbstractJadlerStubbingResponseHeadersTest {
 
     @Override
     protected StubHttpServer createServer() {
         return new JettyStubHttpServer();
-    }
+    }    
 }
