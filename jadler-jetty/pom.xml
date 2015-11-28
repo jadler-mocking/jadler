@@ -63,10 +63,6 @@ This program is made available under the terms of the MIT License.
             <artifactId>commons-lang</artifactId>
         </dependency>
         <dependency>
-            <groupId>commons-collections</groupId>
-            <artifactId>commons-collections</artifactId>
-        </dependency>
-        <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
         </dependency>
@@ -78,12 +74,6 @@ This program is made available under the terms of the MIT License.
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-test</artifactId>
-        </dependency>
-        <dependency>
-            <!-- spring-test http servlet request mock doesn't work without spring-core even though
-                 it doesn't state it as its dependency. Dislike. -->
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-core</artifactId>
         </dependency>
         <dependency>
             <groupId>org.hamcrest</groupId>
