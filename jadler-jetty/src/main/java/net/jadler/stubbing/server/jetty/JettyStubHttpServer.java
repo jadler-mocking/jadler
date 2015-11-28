@@ -31,6 +31,7 @@ public class JettyStubHttpServer implements StubHttpServer {
     public JettyStubHttpServer(final int port) {
         this.server = new Server();
         this.server.setSendServerVersion(false);
+        this.server.setSendDateHeader(true);
         
         this.httpConnector = new SelectChannelConnector();
         this.httpConnector.setPort(port);

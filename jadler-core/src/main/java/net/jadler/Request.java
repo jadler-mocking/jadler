@@ -10,6 +10,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.Charset;
+import java.util.Arrays;
 
 
 /**
@@ -207,6 +208,46 @@ public class Request {
                 ", parameters=" + parameters +
                 ", headers=" + headers +
                 '}';
+    }
+    
+
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 97 * hash + (this.method != null ? this.method.hashCode() : 0);
+        hash = 97 * hash + (this.requestURI != null ? this.requestURI.hashCode() : 0);
+        hash = 97 * hash + Arrays.hashCode(this.body);
+        hash = 97 * hash + (this.headers != null ? this.headers.hashCode() : 0);
+        hash = 97 * hash + (this.encoding != null ? this.encoding.hashCode() : 0);
+        return hash;
+    }
+    
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final Request other = (Request) obj;
+        if ((this.method == null) ? (other.method != null) : !this.method.equals(other.method)) {
+            return false;
+        }
+        if (this.requestURI != other.requestURI && (this.requestURI == null || !this.requestURI.equals(other.requestURI))) {
+            return false;
+        }
+        if (!Arrays.equals(this.body, other.body)) {
+            return false;
+        }
+        if (this.headers != other.headers && (this.headers == null || !this.headers.equals(other.headers))) {
+            return false;
+        }
+        if (this.encoding != other.encoding && (this.encoding == null || !this.encoding.equals(other.encoding))) {
+            return false;
+        }
+        return true;
     }
     
     

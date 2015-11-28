@@ -4,6 +4,8 @@
  */
 package net.jadler;
 
+import net.jadler.stubbing.Responder;
+import net.jadler.stubbing.StubResponse;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.ByteArrayRequestEntity;
@@ -23,15 +25,15 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.concurrent.TimeUnit;
-import net.jadler.stubbing.Responder;
-import net.jadler.stubbing.StubResponse;
+import net.jadler.stubbing.server.StubHttpServer;
 
-import static net.jadler.Jadler.port;
-import static net.jadler.Jadler.initJadler;
-import static net.jadler.Jadler.onRequest;
+import static net.jadler.Jadler.initJadlerUsing;
 import static net.jadler.Jadler.closeJadler;
+import static net.jadler.Jadler.onRequest;
+import static net.jadler.Jadler.port;
 import static org.hamcrest.Matchers.anything;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
@@ -44,21 +46,27 @@ import static org.hamcrest.Matchers.isEmptyString;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
-import static org.hamcrest.Matchers.empty;
 import static org.junit.Assert.assertThat;
 
 
 /**
  * Suite of several integration tests for the stubbing part of the Jadler library.
  * Each test configures the stub server and tests either the <i>WHEN<i/> or <i>THEN</i> part of http stubbing using
- * an http client.
+ * an http client. This class is shared by subclasses that each configure different Jadler implementation.
  */
-public class JadlerStubbingIntegrationTest {
+public abstract class AbstractJadlerStubbingIntegrationTest {
     
     private static final int DEFAULT_STATUS = 409;
     private static final String DEFAULT_HEADER1_NAME = "default_header";
     private static final String DEFAULT_HEADER1_VALUE1 = "value1";
     private static final String DEFAULT_HEADER1_VALUE2 = "value2";
+    
+    private static final String HEADER_NAME1 = "header1";
+    private static final String HEADER_VALUE11 = "value11";
+    private static final String HEADER_VALUE12 = "value12";
+    
+    private static final String HEADER_NAME2 = "header2";
+    private static final String HEADER_VALUE2 = "value2";
     
     private static final String STRING_WITH_DIACRITICS = "\u00e1\u0159\u017e";
     private static final byte[] UTF_8_REPRESENTATION = 
@@ -78,7 +86,7 @@ public class JadlerStubbingIntegrationTest {
     @Before
     public void setUp() {
         
-        initJadler().that()
+        initJadlerUsing(createServer()).that()
                 .respondsWithDefaultStatus(DEFAULT_STATUS)
                 .respondsWithDefaultHeader(DEFAULT_HEADER1_NAME, DEFAULT_HEADER1_VALUE1)
                 .respondsWithDefaultHeader(DEFAULT_HEADER1_NAME, DEFAULT_HEADER1_VALUE2)
@@ -87,8 +95,14 @@ public class JadlerStubbingIntegrationTest {
         
         this.client = new HttpClient();
     }
-    
-    
+
+
+    /**
+     * @return particular server implementation to execute this test with
+     */
+    protected abstract StubHttpServer createServer();
+
+
     @After
     public void tearDown() {
         closeJadler();
@@ -666,6 +680,29 @@ public class JadlerStubbingIntegrationTest {
     }
     
     
+    /**
+     * Tests the withHeader method with single and multiple headers values
+     */
+    @Test
+    public void withHeader() throws IOException {
+        onRequest().respond()
+                .withHeader(HEADER_NAME1, HEADER_VALUE11)
+                .withHeader(HEADER_NAME1, HEADER_VALUE12)
+                .withHeader(HEADER_NAME2, HEADER_VALUE2);
+        
+        final GetMethod method = new GetMethod("http://localhost:" + port());
+        client.executeMethod(method);
+        
+        final Header[] headers1 = method.getResponseHeaders(HEADER_NAME1);
+        
+        assertThat(headers1[0].getValue(), is(HEADER_VALUE11));
+        assertThat(headers1[1].getValue(), is(HEADER_VALUE12));
+        
+        final Header[] headers2 = method.getResponseHeaders(HEADER_NAME2);
+        assertThat(headers2[0].getValue(), is(HEADER_VALUE2));
+    }
+    
+    
     /*
      * Tests that for more matching stub rules the latter is applied.
      */
@@ -732,10 +769,7 @@ public class JadlerStubbingIntegrationTest {
 
         final Header[] responseHeaders = method.getResponseHeaders(DEFAULT_HEADER1_NAME);
         assertThat(responseHeaders.length, is(2));
-        assertThat(responseHeaders[0].getName(), is(DEFAULT_HEADER1_NAME));
         assertThat(responseHeaders[0].getValue(), is(DEFAULT_HEADER1_VALUE1));
-
-        assertThat(responseHeaders[1].getName(), is(DEFAULT_HEADER1_NAME));
         assertThat(responseHeaders[1].getValue(), is(DEFAULT_HEADER1_VALUE2));
     }
     
@@ -768,13 +802,8 @@ public class JadlerStubbingIntegrationTest {
 
         final Header[] responseHeaders = method.getResponseHeaders(DEFAULT_HEADER1_NAME);
         assertThat(responseHeaders.length, is(3));
-        assertThat(responseHeaders[0].getName(), is(DEFAULT_HEADER1_NAME));
         assertThat(responseHeaders[0].getValue(), is(DEFAULT_HEADER1_VALUE1));
-
-        assertThat(responseHeaders[1].getName(), is(DEFAULT_HEADER1_NAME));
         assertThat(responseHeaders[1].getValue(), is(DEFAULT_HEADER1_VALUE2));
-
-        assertThat(responseHeaders[2].getName(), is(DEFAULT_HEADER1_NAME));
         assertThat(responseHeaders[2].getValue(), is("value3"));      
     }
     

@@ -1,3 +1,7 @@
+## 1.2.0
+* experimental implementation of a stub server using (com.sun.net.httpserver|https://docs.oracle.com/javase/6/docs/jre/api/net/httpserver/spec/com/sun/net/httpserver/HttpServer.html) added as a new Jadler module `jadler-jdk`
+* the Jetty (default) stub server implementation now sends the Date header in every response as requested in the (RFC|http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.18)
+
 ## 1.1.2
 * a bug preventing usage of the [net.jadler.Jadler](https://github.com/jadler-mocking/jadler/blob/f2197df3efa1e49e8cb6def08fd8a9a97e826523/jadler-core/src/main/java/net/jadler/Jadler.java) facade in conjunction with a jUnit test with a defined timeout value [fixed](https://github.com/jadler-mocking/jadler/blob/f2197df3efa1e49e8cb6def08fd8a9a97e826523/jadler-core/src/main/java/net/jadler/Jadler.java#L534).
 * requests recording (for verification purpose) can now be turned off via a new configuration option [net.jadler.Jadler.OngoingConfiguration#skipsRequestsRecording](https://github.com/jadler-mocking/jadler/blob/352e85badd090cd3be00c8a28a69b69401e01951/jadler-core/src/main/java/net/jadler/Jadler.java#L735)
