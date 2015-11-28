@@ -58,6 +58,11 @@ This program is made available under the terms of the MIT License.
         </dependency>
         
         <!-- TEST -->
+        <dependency>
+            <groupId>net.jadler</groupId>
+            <artifactId>jadler-jdk</artifactId>
+            <scope>test</scope>
+        </dependency>
         <dependency> 
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
