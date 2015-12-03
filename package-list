@@ -1,7 +1,9 @@
 net.jadler
 net.jadler.exception
+net.jadler.junit.rule
 net.jadler.matchers
 net.jadler.mocking
 net.jadler.stubbing
 net.jadler.stubbing.server
+net.jadler.stubbing.server.jdk
 net.jadler.stubbing.server.jetty
