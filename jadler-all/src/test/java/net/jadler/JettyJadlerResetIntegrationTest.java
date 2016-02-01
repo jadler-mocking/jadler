@@ -7,6 +7,9 @@ package net.jadler;
 import net.jadler.stubbing.server.jetty.JettyStubHttpServer;
 import org.junit.BeforeClass;
 
+import static net.jadler.Jadler.initJadlerUsing;
+
+
 /**
  * Tests that it is possible to reset JadlerMocker Jetty implementation.
  */
@@ -14,7 +17,6 @@ public class JettyJadlerResetIntegrationTest extends AbstractJadlerResetIntegrat
     
     @BeforeClass
     public static void configureMocker() {
-        mocker = new JadlerMocker(new JettyStubHttpServer());
-        mocker.start();
+        initJadlerUsing(new JettyStubHttpServer());
     }
 }

@@ -9,7 +9,6 @@ import net.jadler.exception.JadlerException;
 import net.jadler.mocking.VerificationException;
 import net.jadler.mocking.Verifying;
 import net.jadler.stubbing.RequestStubbing;
-import net.jadler.stubbing.Responder;
 import net.jadler.stubbing.server.StubHttpServerManager;
 import net.jadler.stubbing.server.StubHttpServer;
 import net.jadler.stubbing.ResponseStubbing;
@@ -597,8 +596,8 @@ public class Jadler {
       //when specific conditions are met (a timeout value is specified for the given
       //test, see http://junit.org/apidocs/org/junit/Test.html for details), the thread local container
       //is inheritable so the content is copied automatically to the child thread
-    private static ThreadLocal<JadlerMocker> jadlerMockerContainer = new InheritableThreadLocal<JadlerMocker>();
-    private static String JETTY_SERVER_CLASS = "net.jadler.stubbing.server.jetty.JettyStubHttpServer";
+    private static final ThreadLocal<JadlerMocker> jadlerMockerContainer = new InheritableThreadLocal<JadlerMocker>();
+    private static final String JETTY_SERVER_CLASS = "net.jadler.stubbing.server.jetty.JettyStubHttpServer";
 
     private Jadler() {
         //gtfo
@@ -664,9 +663,75 @@ public class Jadler {
 
 
     /**
+     * <p>Resets Jadler by clearing all previously created stubs as well as stored received requests.</p>
+     *
+     * <p>While the standard Jadler lifecycle consists of initializing Jadler and starting the
+     * underlying stub server (using {@link #initJadler()}) in the <em>setUp</em> section of a test and stopping
+     * the server (using {@link #closeJadler()}) in the <em>tearDown</em> section, in some specific scenarios
+     * it could be useful to reuse initialized Jadler in all tests instead.</p>
+     *
+     * <p>Here's an example code using jUnit which demonstrates usage of this method in a test lifecycle:</p>
+     *
+     * <pre>
+     * public class JadlerResetIntegrationTest {
+     *
+     *     {@literal @}BeforeClass
+     *     public static void beforeTests() {
+     *         initJadler();
+     *     }
+     *
+     *     {@literal @}AfterClass
+     *     public static void afterTests() {
+     *         closeJadler();
+     *     }
+     *
+     *     {@literal @}After
+     *     public void reset() {
+     *         resetJadler();
+     *     }
+     *
+     *     {@literal @}Test
+     *     public void test1() {
+     *         mocker.onRequest().respond().withStatus(201);
+     *
+     *         //do an http request here, 201 should be returned from the stub server
+     *
+     *         verifyThatRequest().receivedOnce();
+     *     }
+     *
+     *     {@literal @}Test
+     *     public void test2() {
+     *         mocker.onRequest().respond().withStatus(400);
+     *
+     *         //do an http request here, 400 should be returned from the stub server
+     *
+     *         verifyThatRequest().receivedOnce();
+     *     }
+     * }
+     * </pre>
+     * 
+     * <p>Please note the standard lifecycle should be always preferred since it ensures a full independence
+     * of all tests in a suite. However performance issues may appear theoretically while starting and stopping
+     * the server as a part of each test. If this is your case the alternative lifecycle might be handy.</p>
+     * 
+     * <p>Also note that calling this method in a test body <strong>always</strong> signalizes a poorly written test
+     * with a problem with the granularity. In this case consider writing more fine grained tests instead of using this
+     * method.</p>
+     * 
+     * @see JadlerMocker#reset()
+     */
+    public static void resetJadler() {
+        final JadlerMocker mocker = jadlerMockerContainer.get();
+        if (mocker != null) {
+            mocker.reset();
+        }
+    }
+
+
+    /**
      * Use this method to retrieve the port the underlying http stub server is listening on
      * @return the port the underlying http stub server is listening on
-     * @throws IllegalStateException if Jadler was not initialized yet
+     * @throws IllegalStateException if Jadler has not been initialized yet
      */
     public static int port() {
         checkInitialized();

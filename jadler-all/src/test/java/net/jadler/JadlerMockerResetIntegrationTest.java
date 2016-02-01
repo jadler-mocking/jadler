@@ -4,37 +4,42 @@
  */
 package net.jadler;
 
+import net.jadler.mocking.Verifying;
+import net.jadler.stubbing.RequestStubbing;
+import net.jadler.stubbing.server.jetty.JettyStubHttpServer;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
+
 import java.io.IOException;
 
-import static net.jadler.Jadler.onRequest;
-import static net.jadler.Jadler.verifyThatRequest;
-import static net.jadler.Jadler.closeJadler;
-import static net.jadler.Jadler.resetJadler;
-import static net.jadler.Jadler.port;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
-
 /**
- * Tests that its possible to reset Jadler.
+ * Tests that its possible to reset JadlerMocker.
  */
-public abstract class AbstractJadlerResetIntegrationTest {
-    
-    protected static JadlerMocker mocker;
+public class JadlerMockerResetIntegrationTest {
+    private static final JadlerMocker mocker = new JadlerMocker(new JettyStubHttpServer());
+
+    @BeforeClass
+    public static void start() {
+        mocker.start();
+    }
 
     @AfterClass
     public static void close() {
-        closeJadler();
+        mocker.close();
     }
 
     @After
     public void reset() {
-        resetJadler();
+        mocker.reset();
     }
 
     @Test
@@ -55,8 +60,16 @@ public abstract class AbstractJadlerResetIntegrationTest {
 
     private void assertStatus(int expected) throws IOException {
         final HttpClient client = new HttpClient();
-        final GetMethod method = new GetMethod("http://localhost:" + port() + "/");
+        final GetMethod method = new GetMethod("http://localhost:" + mocker.getStubHttpServerPort() + "/");
         assertThat(client.executeMethod(method), is(expected));
         method.releaseConnection();
+    }
+
+    private RequestStubbing onRequest() {
+        return mocker.onRequest();
+    }
+
+    private Verifying verifyThatRequest() {
+        return mocker.verifyThatRequest();
     }
 }
