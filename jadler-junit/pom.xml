@@ -5,22 +5,18 @@ This program is made available under the terms of the MIT License.
 -->
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    
+    <artifactId>jadler-junit</artifactId>
+    <name>${project.artifactId}</name>
+    <description>JUnit specific Jadler extension.</description>
+    <packaging>jar</packaging>
+    
     <parent>
         <artifactId>jadler-pom</artifactId>
         <groupId>net.jadler</groupId>
         <version>1.2.1-SNAPSHOT</version>
     </parent>
-    <modelVersion>4.0.0</modelVersion>
-
-    <artifactId>jadler-junit</artifactId>
-    <packaging>jar</packaging>
-    <name>${project.artifactId}</name>
-
-    <developers>
-        <developer>
-            <name>Christian Galsterer</name>
-        </developer>
-    </developers>
 
     <dependencies>
         <dependency>
@@ -55,7 +51,5 @@ This program is made available under the terms of the MIT License.
             <groupId>org.mockito</groupId>
             <artifactId>mockito-all</artifactId>
         </dependency>
-            
     </dependencies>
-
 </project>
