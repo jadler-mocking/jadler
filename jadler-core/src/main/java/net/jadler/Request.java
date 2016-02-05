@@ -203,7 +203,7 @@ public class Request {
     @Override
     public String toString() {
         return "Request{" +
-                "method='" + method + '\'' +
+                "method=" + method +
                 ", requestURI=" + requestURI +
                 ", parameters=" + parameters +
                 ", headers=" + headers +

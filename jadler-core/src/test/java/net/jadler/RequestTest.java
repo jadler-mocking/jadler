@@ -48,7 +48,6 @@ public class RequestTest {
        
     @Test
     public void emptyDefaults() throws IOException {
-        System.out.println(STRING_WITH_DIACRITICS);
         final Request request = Request.builder()
                 .method(METHOD)
                 .requestURI(URI)
@@ -422,5 +421,22 @@ public class RequestTest {
                 .build();
         
         assertThat(req.getEncoding(), is(UTF_8_CHARSET));        
+    }
+    
+    
+    @Test
+    public void testToString() {
+        final Request req = Request.builder()
+                .method(METHOD)
+                .requestURI(create(format(
+                    "http://localhost/?%s=%s&%s=%s",
+                    PARAM1_NAME, PARAM1_VALUE1,
+                    PARAM1_NAME, PARAM1_VALUE2)))
+                .header(HEADER1_NAME, HEADER1_VALUE1)
+                .header(HEADER1_NAME, HEADER1_VALUE2)
+                .build();
+        
+        assertThat(req.toString(), is("Request{method=GET, requestURI=http://localhost/?param1=value1_1&param1=value1_2, "
+                + "parameters=param1: value1_1, param1: value1_2, headers=header1: value1_1, header1: value1_2}"));
     }
 }

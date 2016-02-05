@@ -4,6 +4,7 @@
  */
 package net.jadler;
 
+import java.io.Writer;
 import java.net.URI;
 import net.jadler.stubbing.server.StubHttpServerManager;
 import java.nio.charset.Charset;
@@ -18,6 +19,10 @@ import net.jadler.mocking.Verifying;
 import net.jadler.stubbing.server.StubHttpServer;
 import org.apache.commons.collections.MultiMap;
 import org.apache.commons.collections.map.MultiValueMap;
+import org.apache.commons.io.output.StringBuilderWriter;
+import org.apache.log4j.Logger;
+import org.apache.log4j.PatternLayout;
+import org.apache.log4j.WriterAppender;
 import org.hamcrest.Matcher;
 import org.junit.Test;
 
@@ -47,6 +52,10 @@ public class JadlerMockerTest {
     private static final String HEADER_VALUE2 = "v2";
     private static final Charset DEFAULT_ENCODING = Charset.forName("UTF-16");
     private static final int PORT = 12345;
+    private static final String HTTP_STUB1_TO_STRING = "http stub 1 toString";
+    private static final String HTTP_STUB2_TO_STRING = "http stub 2 toString";
+    private static final String HTTP_STUB1_MISMATCH = "http stub 1 mismatch";
+    private static final String HTTP_STUB2_MISMATCH = "http stub 2 mismatch";
     
     
     @Test(expected=IllegalArgumentException.class)
@@ -404,6 +413,7 @@ public class JadlerMockerTest {
     
     @Test
     public void provideStubResponseFor2() {
+        final Writer w = this.createAppenderWriter();
         final Request req = prepareEmptyMockRequest();
         
           //neither rule1 nor rule2 matches, default not-found response must be returned
@@ -411,12 +421,16 @@ public class JadlerMockerTest {
         final Stubbing stubbing1 = mock(Stubbing.class);
         when(stubbing1.createRule()).thenReturn(rule1);
         when(rule1.matches(eq(req))).thenReturn(false);
+        when(rule1.toString()).thenReturn(HTTP_STUB1_TO_STRING);
+        when(rule1.describeMismatch(eq(req))).thenReturn(HTTP_STUB1_MISMATCH);
         
         
         final HttpStub rule2  = mock(HttpStub.class);
         final Stubbing stubbing2 = mock(Stubbing.class);
         when(stubbing2.createRule()).thenReturn(rule2);
         when(rule2.matches(eq(req))).thenReturn(false);
+        when(rule2.toString()).thenReturn(HTTP_STUB2_TO_STRING);
+        when(rule2.describeMismatch(eq(req))).thenReturn(HTTP_STUB2_MISMATCH);
         
         final StubbingFactory sf = mock(StubbingFactory.class);
         when(sf.createStubbing(any(Charset.class), anyInt(), any(MultiMap.class)))
@@ -438,6 +452,13 @@ public class JadlerMockerTest {
         
         final KeyValues expectedHeaders = new KeyValues().add("Content-Type", "text/plain; charset=utf-8");
         assertThat(res.getHeaders(), is(expectedHeaders));
+        
+        assertThat(w.toString(), is(String.format("[INFO] No suitable rule found. Reason:\n"
+                + "The rule '%s' cannot be applied. Mismatch:\n%s\n"
+                + "The rule '%s' cannot be applied. Mismatch:\n%s\n",
+                HTTP_STUB1_TO_STRING, HTTP_STUB1_MISMATCH, HTTP_STUB2_TO_STRING, HTTP_STUB2_MISMATCH)));
+        
+        this.clearLog4j();
     }
     
     
@@ -605,5 +626,20 @@ public class JadlerMockerTest {
                 .method("GET")
                 .requestURI(URI.create("http://localhost/"))
                 .build();
+    }
+    
+    private Writer createAppenderWriter() {
+        final Writer w = new StringBuilderWriter();
+        
+        final WriterAppender appender = new WriterAppender();
+        appender.setLayout(new PatternLayout("[%p] %m"));
+        appender.setWriter(w);
+        
+        Logger.getRootLogger().addAppender(appender);
+        return w;
+    }
+    
+    private void clearLog4j() {
+        Logger.getRootLogger().getLoggerRepository().resetConfiguration();
     }
 }
