@@ -202,12 +202,22 @@ public class Request {
 
     @Override
     public String toString() {
-        return "Request{" +
-                "method=" + method +
-                ", requestURI=" + requestURI +
-                ", parameters=" + parameters +
-                ", headers=" + headers +
-                '}';
+        return new StringBuilder()
+                .append("{")
+                .append("method=")
+                .append(method)
+                .append(", URI=")
+                .append(requestURI)
+                .append(", parameters=[")
+                .append(parameters)
+                .append("], headers=[")
+                .append(headers)
+                .append("], encoding=")
+                .append(encoding == null ? "<none>" : encoding)
+                .append(", body=")
+                .append(this.getBodyAsBytes().length > 1 ? "<nonempty>" :  "<empty>")
+                .append("}")
+                .toString();
     }
     
 

@@ -13,11 +13,8 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
 import java.io.IOException;
 
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 

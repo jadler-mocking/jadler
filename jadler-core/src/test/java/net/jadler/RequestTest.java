@@ -425,7 +425,7 @@ public class RequestTest {
     
     
     @Test
-    public void testToString() {
+    public void testToString_emptyBody_noEncoding() {
         final Request req = Request.builder()
                 .method(METHOD)
                 .requestURI(create(format(
@@ -436,7 +436,22 @@ public class RequestTest {
                 .header(HEADER1_NAME, HEADER1_VALUE2)
                 .build();
         
-        assertThat(req.toString(), is("Request{method=GET, requestURI=http://localhost/?param1=value1_1&param1=value1_2, "
-                + "parameters=param1: value1_1, param1: value1_2, headers=header1: value1_1, header1: value1_2}"));
+        assertThat(req.toString(), is("{method=GET, URI=http://localhost/?param1=value1_1&param1=value1_2, "
+                + "parameters=[param1: value1_1, param1: value1_2], headers=[header1: value1_1, header1: value1_2], "
+                + "encoding=<none>, body=<empty>}"));
+    }
+    
+    
+    @Test
+    public void testToString_nonemptyBody_withEncoding() {
+        final Request req = Request.builder()
+                .method(METHOD)
+                .requestURI(create("http://localhost"))
+                .encoding(UTF_8_CHARSET)
+                .body(BINARY_BODY)
+                .build();
+        
+        assertThat(req.toString(), is("{method=GET, URI=http://localhost, parameters=[], headers=[], "
+                + "encoding=UTF-8, body=<nonempty>}"));
     }
 }

@@ -24,9 +24,29 @@ public interface RequestManager {
     
     
     /**
+     * Verifies whether the number of received http requests fitting the given predicates is as expected. Basically
+     * at first this operation computes the exact number of http requests received so far fitting the given predicates
+     * and then verifies whether the number is as expected. If not a {@link net.jadler.mocking.VerificationException}
+     * is thrown and the exact reason is logged on the {@code INFO} level.
+     * 
+     * @param requestPredicates predicates about the http requests received so far (cannot be {@code null}, can be
+     * empty however)
+     * @param nrRequestsPredicate a predicate about the number of http requests received so far which fit the given
+     * request predicates (cannot be {@code null})
+     * @throws net.jadler.mocking.VerificationException if the verification fails
+     */
+    void evaluateVerification(Collection<Matcher<? super Request>> requestPredicates,
+            Matcher<Integer> nrRequestsPredicate);
+    
+    
+    /**
+     * @deprecated this (rather internal) method has been deprecated. Please use
+     * {@link #evaluateVerification(java.util.Collection, org.hamcrest.Matcher)} instead
+     * 
      * @param predicates predicates to be applied on all incoming http requests 
      * @return number of requests recorded by {@link #provideStubResponseFor(net.jadler.Request)} matching the
      * given matchers
      */
+    @Deprecated
     int numberOfRequestsMatching(Collection<Matcher<? super Request>> predicates);
 }

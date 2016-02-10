@@ -1,6 +1,7 @@
 ## 1.3.0
 * a reset method added to the Jadler facade
 * the Jadler facade and the jUnit JadlerRule now provide the same configuration options
+* an exact reason is logged on the INFO level when a verification fails
 
 ## 1.2.0
 * experimental implementation of a stub server using [com.sun.net.httpserver](https://docs.oracle.com/javase/6/docs/jre/api/net/httpserver/spec/com/sun/net/httpserver/HttpServer.html) added as a new Jadler module `jadler-jdk`

@@ -4,15 +4,25 @@
  */
 package net.jadler.mocking;
 
+import java.util.Arrays;
+import java.util.Collection;
+import net.jadler.Request;
 import net.jadler.RequestManager;
 import org.hamcrest.Matcher;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.Mock;
+import org.junit.Before;
+import org.hamcrest.core.IsEqual;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.anyCollection;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.eq;
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.doNothing;
 
 
 @RunWith(MockitoJUnitRunner.class)
@@ -21,6 +31,14 @@ public class VerifyingTest {
     @Mock
     public RequestManager requestManager;
     
+
+    @Before
+    @SuppressWarnings("unchecked")
+    public void setUp() {
+        doThrow(new VerificationException(""))
+                .when(this.requestManager).evaluateVerification(anyCollection(), any(Matcher.class));
+    }
+
     
     @Test(expected=IllegalArgumentException.class)
     public void constructorIllegalArg() {
@@ -43,25 +61,26 @@ public class VerifyingTest {
     
     @Test
     @SuppressWarnings("unchecked")
-    public void receivedTimesMatcher() {
+    public void receivedTimesMatcher_positive() {
+        
+        final Matcher<Request> m1 = mock(Matcher.class);
+        final Matcher<Request> m2 = mock(Matcher.class);
+        
+        final Verifying v = new Verifying(requestManager).that(m1).that(m2);
         
         final Matcher<Integer> pred = mock(Matcher.class);
-        when(pred.matches(eq(42))).thenReturn(true);
+        final Collection<Matcher<? super Request>> matchers = Arrays.<Matcher<? super Request>>asList(m1, m2);
         
-        when(requestManager.numberOfRequestsMatching(anyCollection())).thenReturn(42);
+        doNothing().when(this.requestManager).evaluateVerification(eq(matchers), eq(pred));
         
-        new Verifying(requestManager).receivedTimes(pred);
+        v.receivedTimes(pred);
     }
     
     
     @Test(expected=VerificationException.class)
-    public void receivedTimesMatcherNegative() {
-        
-        @SuppressWarnings("unchecked")
-        final Matcher<Integer> pred = mock(Matcher.class);
-        when(pred.matches(anyObject())).thenReturn(false);
-        
-        new Verifying(requestManager).receivedTimes(pred);
+    @SuppressWarnings("unchecked")
+    public void receivedTimesMatcher_negative() {        
+        new Verifying(requestManager).receivedTimes(mock(Matcher.class));
     }
     
     
@@ -74,17 +93,21 @@ public class VerifyingTest {
     @Test
     @SuppressWarnings("unchecked")
     public void receivedTimesInt() {
-        when(requestManager.numberOfRequestsMatching(anyCollection())).thenReturn(42);
         
-        new Verifying(requestManager).receivedTimes(42);
+        final Matcher<Request> m1 = mock(Matcher.class);
+        final Matcher<Request> m2 = mock(Matcher.class);
+        final Collection<Matcher<? super Request>> matchers = Arrays.<Matcher<? super Request>>asList(m1, m2);
+        
+        final Verifying v = new Verifying(requestManager).that(m1).that(m2);
+
+        doNothing().when(this.requestManager).evaluateVerification(eq(matchers), any(IsEqual.class));
+                
+        v.receivedTimes(42);
     }
     
     
     @Test(expected=VerificationException.class)
-    @SuppressWarnings("unchecked")
-    public void receivedTimesIntNegative() {
-        when(requestManager.numberOfRequestsMatching(anyCollection())).thenReturn(41);
-        
+    public void receivedTimesInt_negative() {
         new Verifying(requestManager).receivedTimes(42);
     }
     
@@ -92,17 +115,20 @@ public class VerifyingTest {
     @Test
     @SuppressWarnings("unchecked")
     public void receivedOnce() {
-        when(requestManager.numberOfRequestsMatching(anyCollection())).thenReturn(1);
+        final Matcher<Request> m1 = mock(Matcher.class);
+        final Matcher<Request> m2 = mock(Matcher.class);
+        final Collection<Matcher<? super Request>> matchers = Arrays.<Matcher<? super Request>>asList(m1, m2);
         
-        new Verifying(requestManager).receivedOnce();
+        final Verifying v = new Verifying(requestManager).that(m1).that(m2);
+
+        doNothing().when(this.requestManager).evaluateVerification(eq(matchers), any(IsEqual.class));
+                
+        v.receivedOnce();
     }
     
     
     @Test(expected=VerificationException.class)
-    @SuppressWarnings("unchecked")
-    public void receivedOnceNegative() {
-        when(requestManager.numberOfRequestsMatching(anyCollection())).thenReturn(2);
-        
+    public void receivedOnce_negative() {
         new Verifying(requestManager).receivedOnce();
     }
     
@@ -110,17 +136,20 @@ public class VerifyingTest {
     @Test
     @SuppressWarnings("unchecked")
     public void receivedNever() {
-        when(requestManager.numberOfRequestsMatching(anyCollection())).thenReturn(0);
+        final Matcher<Request> m1 = mock(Matcher.class);
+        final Matcher<Request> m2 = mock(Matcher.class);
+        final Collection<Matcher<? super Request>> matchers = Arrays.<Matcher<? super Request>>asList(m1, m2);
         
-        new Verifying(requestManager).receivedNever();
+        final Verifying v = new Verifying(requestManager).that(m1).that(m2);
+
+        doNothing().when(this.requestManager).evaluateVerification(eq(matchers), any(IsEqual.class));
+                
+        v.receivedNever();
     }
     
     
     @Test(expected=VerificationException.class)
-    @SuppressWarnings("unchecked")
-    public void receivedNeverNegative() {
-        when(requestManager.numberOfRequestsMatching(anyCollection())).thenReturn(1);
-        
+    public void receivedNever_negative() {
         new Verifying(requestManager).receivedNever();
     }
 }
