@@ -35,5 +35,5 @@ public interface StubHttpServerManager {
     /**
      * @return port of HTTP server
      */
-    public int getStubHttpServerPort();
+    int getStubHttpServerPort();
 }

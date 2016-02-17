@@ -23,7 +23,13 @@ import static org.junit.Assert.fail;
  */
 public class JadlerFacadeIntegrationTest {
     
-    private static final int EXPECTED_STATUS = 204;
+    private static final int EXPECTED_STATUS = 409;
+    private static final String EXPECTED_CONTENT_TYPE = "text/html; charset=UTF-8";
+    private static final Charset EXPECTED_ENCODING = Charset.forName("ISO-8859-2");
+    private static final String EXPECTED_HEADER_NAME = "default_header";
+    private static final String EXPECTED_HEADER_VALUE = "value";
+    private static final String STRING_WITH_DIACRITICS = "\u00e1\u0159\u017e";
+    private static final byte[] ISO_8859_2_REPRESENTATION = {(byte)0xE1, (byte)0xF8, (byte)0xBE};
     
     /*
      * initialization cannot be called twice without closing jadler between the calls
@@ -147,17 +153,26 @@ public class JadlerFacadeIntegrationTest {
      * Tests the additional defaults configuration option.
      */
     @Test
-    public void additionalConfiguration() throws IOException {
+    public void ongoingConfiguration() throws IOException {
         initJadler()
-                .that()
-                .respondsWithDefaultStatus(200)
-                .respondsWithDefaultContentType("text/plain")
-                .respondsWithDefaultEncoding(Charset.forName("ISO-8859-1"))
-                .respondsWithDefaultHeader("default_header", "value");
+                .withDefaultResponseStatus(EXPECTED_STATUS)
+                .withDefaultResponseContentType(EXPECTED_CONTENT_TYPE)
+                .withDefaultResponseEncoding(EXPECTED_ENCODING)
+                .withDefaultResponseHeader(EXPECTED_HEADER_NAME, EXPECTED_HEADER_VALUE);
         
         try {
-            onRequest().respond().withStatus(EXPECTED_STATUS);
-            assertExpectedStatus();
+            onRequest().respond().withBody(STRING_WITH_DIACRITICS);
+            
+            final HttpClient client = new HttpClient();
+            final GetMethod method = new GetMethod("http://localhost:" + port() + "/");
+            client.executeMethod(method);
+
+            assertThat(method.getStatusCode(), is(EXPECTED_STATUS));
+            assertThat(method.getResponseHeader("Content-Type").getValue(), is(EXPECTED_CONTENT_TYPE));
+            assertThat(method.getResponseHeader(EXPECTED_HEADER_NAME).getValue(), is(EXPECTED_HEADER_VALUE));
+            assertThat(method.getResponseBody(), is(ISO_8859_2_REPRESENTATION));
+            
+            method.releaseConnection();
         }
         finally {
             closeJadler();
@@ -166,11 +181,11 @@ public class JadlerFacadeIntegrationTest {
     
     
     /*
-     * Tests the additional defaults configuration option.
+     * Tests the request recording skipping set via the facade
      */
     @Test(expected=IllegalStateException.class)
-    public void additionalConfiguration_skipRequestRecording() throws IOException {
-        initJadler().that().skipsRequestsRecording();
+    public void ongoingConfiguration_withRequestsRecordingDisabled() {
+        initJadler().withRequestsRecordingDisabled();
         
         try {
             verifyThatRequest();
