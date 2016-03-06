@@ -7,33 +7,11 @@ This program is made available under the terms of the MIT License.
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>net.jadler</groupId>
     <artifactId>jadler-all</artifactId>
     <name>${project.artifactId}</name>
     <description>This module contains all jadler sub-modules. By including jadler-all to a project a complete Jadler
     library will be included automatically.</description>
-    <url>http://jadler.net</url>
     <packaging>jar</packaging>
-    
-    <developers>
-        <developer>
-            <name>Jan Dudek</name>
-            <email>jan.dudek.jr@gmail.com</email>
-        </developer>
-    </developers>
-    
-    <licenses>
-        <license>
-            <name>MIT license</name>
-            <url>http://www.opensource.org/licenses/mit-license.php</url>
-        </license>
-    </licenses>
-    
-    <scm>
-        <connection>scm:git:git@github.com:jadler-mocking/jadler.git</connection>
-        <developerConnection>scm:git:git@github.com:jadler-mocking/jadler.git</developerConnection>
-        <url>https://github.com/jadler-mocking/jadler</url>
-    </scm>
     
     <parent>
         <groupId>net.jadler</groupId>
@@ -41,7 +19,6 @@ This program is made available under the terms of the MIT License.
         <version>1.2.1-SNAPSHOT</version>
     </parent>
  
-
     <dependencies>
         <!-- JADLER dependencies -->
         <dependency>

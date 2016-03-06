@@ -469,7 +469,8 @@ import net.jadler.stubbing.ResponseStubbing;
  * 
  * <p>The request definition must be followed by calling one of the {@code received*} methods. The already
  * introduced {@link Verifying#receivedOnce()} method verifies there has been received exactly one request meeting
- * the given criteria so far. If the verification fails a {@link VerificationException} instance is thrown.</p>
+ * the given criteria so far. If the verification fails a {@link VerificationException} instance is thrown and
+ * the exact reason is logged on the {@code INFO} level.</p>
  * 
  * <p>There are three more verification methods. {@link Verifying#receivedNever()} verifies there has not been
  * received any request meeting the given criteria so far. {@link Verifying#receivedTimes(int)} allows to define

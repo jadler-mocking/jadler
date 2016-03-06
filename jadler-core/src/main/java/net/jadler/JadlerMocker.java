@@ -7,6 +7,7 @@ package net.jadler;
 import net.jadler.stubbing.Stubber;
 import net.jadler.stubbing.server.StubHttpServerManager;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import net.jadler.stubbing.RequestStubbing;
 import net.jadler.stubbing.StubbingFactory;
 import net.jadler.stubbing.Stubbing;
@@ -16,16 +17,17 @@ import net.jadler.exception.JadlerException;
 import net.jadler.stubbing.server.StubHttpServer;
 import java.util.Collection;
 import java.util.Deque;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 import net.jadler.mocking.Mocker;
+import net.jadler.mocking.VerificationException;
 import net.jadler.mocking.Verifying;
 import org.apache.commons.collections.MultiMap;
 import org.apache.commons.collections.map.MultiValueMap;
 import org.apache.commons.lang.Validate;
+import org.hamcrest.Description;
+import org.hamcrest.StringDescription;
 import org.hamcrest.Matcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +55,7 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, RequestMana
     private final StubbingFactory stubbingFactory;
     private final List<Stubbing> stubbings;
     private Deque<HttpStub> httpStubs;
-    private final Set<Request> receivedRequests;
+    private final List<Request> receivedRequests;
 
     private MultiMap defaultHeaders;
     private int defaultStatus;
@@ -106,7 +108,7 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, RequestMana
         
         this.httpStubs = new LinkedList<HttpStub>();
         
-        this.receivedRequests = new HashSet<Request>();
+        this.receivedRequests = new ArrayList<Request>();
     }
 
     /**
@@ -114,7 +116,7 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, RequestMana
      */
     @Override
     public void start() {
-        if (this.started){
+        if (this.started) {
             throw new IllegalStateException("The stub server has been started already.");
         }
         
@@ -278,6 +280,7 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, RequestMana
     /**
      * {@inheritDoc} 
      */
+    @Deprecated
     @Override
     public int numberOfRequestsMatching(final Collection<Matcher<? super Request>> predicates) {
         Validate.notNull(predicates, "predicates cannot be null");
@@ -296,6 +299,26 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, RequestMana
         }
         
         return cnt;
+    }
+
+    
+    @Override
+    public void evaluateVerification(final Collection<Matcher<? super Request>> requestPredicates,
+            final Matcher<Integer> nrRequestsPredicate) {
+        
+        Validate.notNull(requestPredicates, "requestPredicates cannot be null");
+        Validate.notNull(nrRequestsPredicate, "nrRequestsPredicate cannot be null");
+        
+        this.checkRequestRecording();
+        
+        synchronized(this) {
+            final int cnt = this.numberOfRequestsMatching(requestPredicates);
+        
+            if (!nrRequestsPredicate.matches(cnt)) {
+                this.logReceivedRequests(requestPredicates);
+                throw new VerificationException(this.mismatchDescription(cnt, requestPredicates, nrRequestsPredicate));
+            }
+        }
     }
 
     
@@ -402,6 +425,104 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, RequestMana
     }
     
     
+    private void logReceivedRequests(final Collection<Matcher<? super Request>> requestPredicates) {
+        final StringBuilder sb = new StringBuilder("Verification failed, here is a list of requests received so far:");
+        this.appendNoneIfEmpty(this.receivedRequests, sb);
+        
+        int pos = 1;
+        for (final Request req: this.receivedRequests) {
+            sb.append("\n");
+            final Collection<Matcher<? super Request>> matching = new ArrayList<Matcher<? super Request>>();
+            final Collection<Matcher<? super Request>> clashing = new ArrayList<Matcher<? super Request>>();
+            
+            for (final Matcher<? super Request> pred: requestPredicates) {
+                if (pred.matches(req)) {
+                    matching.add(pred);
+                }
+                else {
+                    clashing.add(pred);
+                }
+            }
+            
+            this.appendReason(sb, req, pos, matching, clashing);
+            
+            pos++;
+        }
+        
+
+        
+        logger.info(sb.toString());
+    }
+
+    
+    private void appendReason(final StringBuilder sb, final Request req, final int position,
+            final Collection<Matcher<? super Request>> matching,
+            final Collection<Matcher<? super Request>> clashing) {
+            
+        sb.append("Request #");
+        sb.append(position);
+        sb.append(": ");
+        sb.append(req);
+        sb.append("\n");
+        sb.append("  matching predicates:");
+        this.appendNoneIfEmpty(matching, sb);
+        sb.append('\n');
+
+        for (final Matcher<? super Request> pred: matching) {
+            sb.append("    ");
+            final Description desc = new StringDescription(sb);
+            pred.describeTo(desc);
+            sb.append('\n');
+        }
+
+        sb.append("  clashing predicates:");
+        this.appendNoneIfEmpty(clashing, sb);
+
+        for (final Matcher<? super Request> pred: clashing) {
+            sb.append("\n    ");
+
+            final Description desc = new StringDescription(sb);
+            pred.describeMismatch(req, desc);
+        }
+    }
+    
+    
+    private void appendNoneIfEmpty(final Collection<?> coll, final StringBuilder sb) {
+        if (coll.isEmpty()) {
+            sb.append(" <none>");
+        }
+    }
+    
+
+    private String mismatchDescription(final int cnt, final Collection<Matcher<? super Request>> predicates,
+            final Matcher<Integer> nrRequestsMatcher) {
+        final Description desc = new StringDescription();
+
+        desc.appendText("The number of http requests");
+        if (!predicates.isEmpty()) {
+            desc.appendText(" having");
+        }
+        desc.appendText(" ");
+
+        for (final Iterator<Matcher<? super Request>> it = predicates.iterator(); it.hasNext();) {
+            desc.appendDescriptionOf(it.next());
+
+            if (it.hasNext()) {
+                desc.appendText(" AND");
+            }
+
+            desc.appendText(" ");
+        }
+
+        desc.appendText("was expected to be ");
+        desc.appendDescriptionOf(nrRequestsMatcher);
+        desc.appendText(", but ");
+        nrRequestsMatcher.describeMismatch(cnt, desc);
+
+        return desc.toString();
+    }
+    
+    
     private synchronized void checkConfigurable() {
         if (!this.configurable) {
             throw new IllegalStateException("Once first http request has been served, "
@@ -409,6 +530,7 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, RequestMana
         }
     }
 
+    
     private synchronized void checkRequestRecording() {
         if (!this.recordRequests) {
             throw new IllegalStateException("Request recording is switched off, cannot do any request verification");
