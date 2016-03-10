@@ -41,7 +41,7 @@ import static org.hamcrest.Matchers.nullValue;
 
 /**
  * Suite of several integration tests for the stubbing part of the Jadler library.
- * Each test configures the stub server and tests either the <i>WHEN<i/> or <i>THEN</i> part of http stubbing using
+ * Each test configures the stub server and tests either the <i>WHEN</i> or <i>THEN</i> part of http stubbing using
  * an http client.
  */
 public class JadlerMockingIntegrationTest {
@@ -436,9 +436,20 @@ public class JadlerMockingIntegrationTest {
      * No such a request received
      */
     @Test(expected=VerificationException.class)
-    public void verificationFailed() throws IOException {
+    public void verificationFailed() {
         verifyThatRequest()
             .havingMethodEqualTo("POST")
         .receivedTimes(not(lessThan(1)));
+    }
+    
+    
+    /* tests https://github.com/jadler-mocking/jadler/issues/110 */
+    @Test
+    public void twoIdenticalRequests() throws IOException {
+        final GetMethod method = new GetMethod("http://localhost:" + port() + "/");
+        this.client.executeMethod(method);
+        this.client.executeMethod(method);
+        
+        verifyThatRequest().receivedTimes(2);
     }
 }

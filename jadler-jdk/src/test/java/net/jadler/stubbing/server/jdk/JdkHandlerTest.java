@@ -11,12 +11,14 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
 import java.nio.charset.Charset;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import net.jadler.Request;
 import net.jadler.RequestManager;
 import net.jadler.stubbing.StubResponse;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentMatcher;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -24,6 +26,7 @@ import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.argThat;
 import static org.junit.Assert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
@@ -110,7 +113,7 @@ public class JdkHandlerTest {
 
     @Test
     public void handle_responseBody() throws IOException {
-        when(mockManager.provideStubResponseFor(eq(EXPECTED_REQUEST))).thenReturn(StubResponse.builder()
+        when(mockManager.provideStubResponseFor(reqEq(EXPECTED_REQUEST))).thenReturn(StubResponse.builder()
                 .status(RESPONSE_STATUS)
                 .body(RESPONSE_BODY.getBytes())
                 .delay(RESPONSE_DELAY, RESPONSE_DELAY_UNIT)
@@ -133,9 +136,10 @@ public class JdkHandlerTest {
         verify(mockResponseStream).write(RESPONSE_BODY.getBytes());
     }
     
+    
     @Test
     public void handle_noResponseBody() throws IOException {
-        when(mockManager.provideStubResponseFor(eq(EXPECTED_REQUEST))).thenReturn(StubResponse.builder()
+        when(mockManager.provideStubResponseFor(reqEq(EXPECTED_REQUEST))).thenReturn(StubResponse.builder()
                 .status(RESPONSE_STATUS)
                 .build());
         
@@ -144,4 +148,42 @@ public class JdkHandlerTest {
         verify(httpExchange).sendResponseHeaders(RESPONSE_STATUS, -1);
         verifyZeroInteractions(mockResponseStream);
     }
+    
+    
+    private static Request reqEq(final Request req) {
+        return argThat(new RequestMatcher(req));
+    }
+    
+    
+    private static class RequestMatcher extends ArgumentMatcher<Request> {
+
+        private final Request expected;
+        
+        private RequestMatcher(final Request expected) {
+            this.expected = expected;
+        }
+        
+        @Override
+        public boolean matches(final Object argument) {
+            final Request arg = (Request) argument;
+
+            if (!this.expected.getMethod().equals(arg.getMethod())) {
+                return false;
+            }
+
+            if (!this.expected.getURI().equals(arg.getURI())) {
+                return false;
+            }
+            
+            if (!Arrays.equals(this.expected.getBodyAsBytes(), arg.getBodyAsBytes())) {
+                return false;
+            }
+            
+            if (!this.expected.getHeaders().equals(arg.getHeaders())) {
+                return false;
+            }
+
+            return this.expected.getParameters().equals(arg.getParameters());
+        }
+    }               
 }
