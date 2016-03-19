@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 - 2015 Jadler contributors
+ * Copyright (c) 2012 - 2016 Jadler contributors
  * This program is made available under the terms of the MIT License.
  */
 package net.jadler;
