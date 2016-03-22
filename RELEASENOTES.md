@@ -1,7 +1,9 @@
 ## 1.3.0
-* a reset method added to the Jadler facade
-* the Jadler facade and the jUnit JadlerRule now provide the same configuration options
-* an exact reason is logged on the INFO level when a verification fails
+* when a requests [verification](https://github.com/jadler-mocking/jadler/blob/662704e1d5521972d4b0cf0f596e1c3dae68314f/jadler-core/src/main/java/net/jadler/Jadler.java#L756) fails the exact reason (a list of matching/clashing predicates for each request received so far) is logged on the INFO level
+* the Jadler facade and the jUnit [rule](https://github.com/jadler-mocking/jadler/blob/662704e1d5521972d4b0cf0f596e1c3dae68314f/jadler-junit/src/main/java/net/jadler/junit/rule/JadlerRule.java) now provide the same defaults configuration options (response status, content type, encoding and headers defaults and the requests recording settings)
+* a [reset method](https://github.com/jadler-mocking/jadler/blob/662704e1d5521972d4b0cf0f596e1c3dae68314f/jadler-core/src/main/java/net/jadler/Jadler.java#L723) added to the `Jadler` facade
+* bugfix: in Jadler `1.2.0` two completely identical received requests are counted as one during a verification
+* the version of `commons-collections` raised to `3.2.2` due to a [security vulnerability](https://commons.apache.org/proper/commons-collections/security-reports.html)
 
 ## 1.2.0
 * experimental implementation of a stub server using [com.sun.net.httpserver](https://docs.oracle.com/javase/6/docs/jre/api/net/httpserver/spec/com/sun/net/httpserver/HttpServer.html) added as a new Jadler module `jadler-jdk`
