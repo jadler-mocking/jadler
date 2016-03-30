@@ -10,6 +10,7 @@ package net.jadler.exception;
 public class JadlerException extends RuntimeException {
  
     /**
+     * @param cause the cause of this exception
      * @see RuntimeException#RuntimeException(java.lang.Throwable) 
      */
     public JadlerException(final Throwable cause) {
@@ -17,6 +18,9 @@ public class JadlerException extends RuntimeException {
     }
 
     /**
+     * 
+     * @param message the detail message
+     * @param cause the cause of this exception
      * @see RuntimeException#RuntimeException(java.lang.String, java.lang.Throwable) 
      */
     public JadlerException(final String message, final Throwable cause) {
@@ -24,6 +28,7 @@ public class JadlerException extends RuntimeException {
     }
 
     /**
+     * @param message the detail message
      * @see RuntimeException#RuntimeException(java.lang.String) 
      */
     public JadlerException(final String message) {
