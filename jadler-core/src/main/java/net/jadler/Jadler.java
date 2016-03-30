@@ -610,8 +610,8 @@ public class Jadler {
      * 
      * <p>This should be preferably called in the {@code setUp} method of the test suite.</p>
      * 
-     * @return if additional tweaking needed on the initialized Jadler, call {@link AdditionalConfiguration#that()}
-     * to add more configuration
+     * @return {@link OngoingConfiguration} instance for additional configuration and tweaking
+     * (use its {@code with*} methods)
      */
     public static OngoingConfiguration initJadler() {
         return initInternal(new JadlerMocker(getJettyServer()));
@@ -625,8 +625,8 @@ public class Jadler {
      * <p>This should be preferably called in the {@code setUp} method of the test suite.</p>
      * 
      * @param port port the stub server will be listening on
-     * @return if additional tweaking needed on the initialized Jadler, call {@link AdditionalConfiguration#that()}
-     * to add more configuration
+     * @return {@link OngoingConfiguration} instance for additional configuration and tweaking
+     * (use its {@code with*} methods)
      */
     public static OngoingConfiguration initJadlerListeningOn(final int port) {
         return initInternal(new JadlerMocker(getJettyServer(port)));
@@ -639,8 +639,8 @@ public class Jadler {
      * <p>This should be preferably called in the {@code setUp} method of the test suite</p>
      * 
      * @param server stub http server instance
-     * @return if additional tweaking needed on the initialized Jadler, call {@link AdditionalConfiguration#that()}
-     * to add more configuration
+     * @return {@link OngoingConfiguration} instance for additional configuration and tweaking
+     * (use its {@code with*} methods)
      */
     public static OngoingConfiguration initJadlerUsing(final StubHttpServer server) {
         return initInternal(new JadlerMocker(server));
