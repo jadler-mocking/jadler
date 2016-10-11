@@ -5,6 +5,8 @@
 package net.jadler;
 
 import java.util.Collection;
+import java.util.concurrent.TimeUnit;
+
 import net.jadler.stubbing.StubResponse;
 import org.hamcrest.Matcher;
 
@@ -37,8 +39,11 @@ public interface RequestManager {
      */
     void evaluateVerification(Collection<Matcher<? super Request>> requestPredicates,
             Matcher<Integer> nrRequestsPredicate);
-    
-    
+
+    void evaluateVerificationAsync(Collection<Matcher<? super Request>> requestPredicates,
+                                   Matcher<Integer> nrRequestsPredicate,
+                                   Duration timeOut);
+
     /**
      * @deprecated this (rather internal) method has been deprecated. Please use
      * {@link #evaluateVerification(java.util.Collection, org.hamcrest.Matcher)} instead
