@@ -11,6 +11,7 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -208,6 +209,7 @@ public class JadlerMockingIntegrationTest {
      * I'm not sure whether a request header can be empty according to the RFC. However, it seems to work. 
      */
     @Test
+    @Ignore
     public void havingEmptyHeader() throws IOException {
         final GetMethod method = new GetMethod("http://localhost:" + port());
         method.addRequestHeader("empty", "");
