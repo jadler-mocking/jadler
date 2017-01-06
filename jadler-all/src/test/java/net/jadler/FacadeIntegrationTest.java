@@ -19,9 +19,9 @@ import static org.junit.Assert.fail;
 
 
 /**
- * Tests the {@link Jadler} facade.
+ * Integration tests of the {@link Jadler} facade.
  */
-public class JadlerFacadeIntegrationTest {
+public class FacadeIntegrationTest {
     
     private static final int EXPECTED_STATUS = 409;
     private static final String EXPECTED_CONTENT_TYPE = "text/html; charset=UTF-8";
@@ -35,7 +35,7 @@ public class JadlerFacadeIntegrationTest {
      * initialization cannot be called twice without closing jadler between the calls
      */
     @Test(expected=IllegalStateException.class)
-    public void doubleInitialization() {
+    public void initJadler_doubleInitialization() {
         try {
             initJadler();
             initJadler();
@@ -49,50 +49,54 @@ public class JadlerFacadeIntegrationTest {
     
     
     /*
-     * The closeJadler() method will be most often called in a tearDown method of a test suite so it doesn't
-     * fail if the initialization failed (simulated here by not calling the init at all).
+     * <p>The {@link Jadler#closeJadler()} method doesn't fail even if Jadler hasn't been initialized
+     * properly before.</p>
+     *
+     * <p>The reason is the {@link Jadler#closeJadler()} method will be called in a <em>tearDown</em> method
+     * of a test suite most often so it mustn't fail if the initialization failed before (simulated here
+     * by not calling the initialization at all).</p>
      */
     @Test
-    public void closeWithoutInitialization() {
+    public void closeJadler_beforeInitialization() {
         closeJadler();
     }
 
 
     /*
-     * The resetJadler() method will be most often called in a @After method of a test suite so it doesn't
-     * fail if the initialization failed (simulated here by not calling the init at all).
+     * {@link Jadler#resetJadler()} doesn't fail even if Jadler hasn't been initialized
+     * properly before.
      */
     @Test
-    public void resetWithoutInitialization() {
+    public void resetJadler_beforeInitialization() {
         resetJadler();
     }
 
     
-    /**
-     * port() must be called after initialization
+    /*
+     * {@link Jadler#port()} fails if Jadler hasn't been initialized before
      */
     @Test(expected=IllegalStateException.class)
-    public void portBeforeInitialization() {
+    public void port_beforeInitialization() {
         port();
         fail("cannot get the port value now, Jadler hasn't been initialized yet");
     }
     
     
     /*
-     * onRequest() must be called after initialization
+     * {@link Jadler#onRequest()} must be called after initialization
      */
     @Test(expected=IllegalStateException.class)
-    public void onRequestBeforeInitialization() {
+    public void onRequest_beforeInitialization() {
         onRequest();
         fail("cannot do stubbing, Jadler hasn't been initialized yet");
     }
 
     
     /*
-     * onRequest() must be called after initialization
+     * {@link Jadler#verifyThatRequest()} must be called after initialization
      */
     @Test(expected=IllegalStateException.class)
-    public void verifyThatRequestBeforeInitialization() {
+    public void verifyThatRequest_beforeInitialization() {
         verifyThatRequest();
         fail("cannot do verification, Jadler hasn't been initialized yet");
     }
@@ -102,7 +106,7 @@ public class JadlerFacadeIntegrationTest {
      * Just inits Jadler without any additional configuration and tests everything works fine.
      */
     @Test
-    public void noConfiguration() throws IOException {
+    public void standardConfigurationScenario() throws IOException {
         initJadler();
         
         try {
@@ -119,7 +123,7 @@ public class JadlerFacadeIntegrationTest {
      * Inits Jadler to start the default stub server on a specific port and tests everything works fine.
      */
     @Test
-    public void portConfiguration() throws IOException {
+    public void portConfigurationScenario() throws IOException {
         initJadlerListeningOn(SocketUtils.findAvailableTcpPort());
         
         try {
@@ -136,7 +140,7 @@ public class JadlerFacadeIntegrationTest {
      * Inits Jadler to use the given stub server and tests everything works fine.
      */
     @Test
-    public void serverConfiguration() throws IOException {
+    public void serverConfigurationScenario() throws IOException {
         initJadlerUsing(new JettyStubHttpServer());
         
         try {
@@ -150,10 +154,10 @@ public class JadlerFacadeIntegrationTest {
     
     
     /*
-     * Tests the additional defaults configuration option.
+     * Tests the additional defaults (the response status, content type, encoding and headers) configuration options.
      */
     @Test
-    public void ongoingConfiguration() throws IOException {
+    public void responseDefaultsConfigurationScenario() throws IOException {
         initJadler()
                 .withDefaultResponseStatus(EXPECTED_STATUS)
                 .withDefaultResponseContentType(EXPECTED_CONTENT_TYPE)
@@ -181,10 +185,10 @@ public class JadlerFacadeIntegrationTest {
     
     
     /*
-     * Tests the request recording skipping set via the facade
+     * Tests the request recording skipping works scenario.
      */
     @Test(expected=IllegalStateException.class)
-    public void ongoingConfiguration_withRequestsRecordingDisabled() {
+    public void requestsRecordingConfigurationScenario() {
         initJadler().withRequestsRecordingDisabled();
         
         try {
@@ -201,17 +205,19 @@ public class JadlerFacadeIntegrationTest {
      * Resets Jadler and tests everything works fine.
      */
     @Test
-    public void testResetJadler() throws IOException {
+    public void resetScenario() throws IOException {
         initJadler();
 
         try {
-            onRequest().respond().withStatus(EXPECTED_STATUS);
-            assertExpectedStatus();
+            onRequest().respond().withStatus(202);
+            assertExpectedStatus(202);
+            verifyThatRequest().receivedOnce();
 
             resetJadler();
 
             onRequest().respond().withStatus(201);
             assertExpectedStatus(201);
+            verifyThatRequest().receivedOnce();
         }
         finally {
             closeJadler();
@@ -223,6 +229,10 @@ public class JadlerFacadeIntegrationTest {
         assertExpectedStatus(EXPECTED_STATUS);
     }
 
+    
+    /*
+     * Sends a GET request and asserts the response status is as expected
+     */
     private void assertExpectedStatus(final int expectedStatus) throws IOException {
         final HttpClient client = new HttpClient();
         final GetMethod method = new GetMethod("http://localhost:" + port() + "/");

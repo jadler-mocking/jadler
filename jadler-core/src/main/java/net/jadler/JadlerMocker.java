@@ -100,7 +100,7 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, RequestMana
         
         this.stubbings = new LinkedList<Stubbing>();
         this.defaultHeaders = new MultiValueMap();
-        this.defaultStatus = 200; //OK
+        this.defaultStatus = 200;
         this.defaultEncoding =  Charset.forName("UTF-8");
         
         Validate.notNull(stubbingFactory, "stubbingFactory cannot be null");
