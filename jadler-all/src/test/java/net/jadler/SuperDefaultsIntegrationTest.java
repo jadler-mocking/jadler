@@ -8,6 +8,7 @@ import org.apache.commons.httpclient.HttpClient;
 import org.junit.After;
 import org.junit.Test;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.junit.Before;
@@ -21,16 +22,17 @@ import static org.junit.Assert.assertThat;
 
 
 /**
- * When a timeout value is defined in an jUnit test, the test is executed in a different thread than the thread
- * executing the setup and teardown methods. 
+ * Test suite for response super defaults (default response status and encoding values used when not defined at all).
  */
-public class JadlerTimeoutIntegrationTest {
+public class SuperDefaultsIntegrationTest {
+    
+    private static final String STRING_WITH_DIACRITICS = "\u00e1\u0159\u017e";
     
     private HttpClient client;
     
     @Before
     public void setUp() {
-        initJadler();
+        initJadler(); //no defaults for the response status nor encoding set here
         this.client = new HttpClient();
     }
     
@@ -41,14 +43,22 @@ public class JadlerTimeoutIntegrationTest {
     }
     
     
-    @Test(timeout=10000L)
-    public void timeout() throws IOException {
-        onRequest().respond().withStatus(201);
+    /*
+    * When no defaults (response status and encoding) are set during Jadler initialization nor the status and encoding
+    * values are provided during stubbing super-defaults (200, UTF-8) are used.
+    */
+    @Test
+    public void superDefaults() throws IOException {
+          //no values for the response status nor encoding set here
+        onRequest().respond().withBody(STRING_WITH_DIACRITICS);
 
         final PostMethod method = new PostMethod("http://localhost:" + port());
         method.setRequestEntity(new StringRequestEntity("postbody", null, null));
         
         int status = client.executeMethod(method);
-        assertThat(status, is(201));
+        assertThat(status, is(200));
+        
+          //the response body is decodable correctly using UTF-8
+        assertThat(method.getResponseBody(), is(STRING_WITH_DIACRITICS.getBytes(Charset.forName("UTF-8"))));
     }
 }

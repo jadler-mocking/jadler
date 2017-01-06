@@ -2,7 +2,7 @@
  * Copyright (c) 2012 - 2016 Jadler contributors
  * This program is made available under the terms of the MIT License.
  */
-package net.jadler;
+package net.jadler.deprecated;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -20,9 +20,9 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
 /**
- * Tests the deprecated way of configuring jadler defaults still works.
+ * Tests that the deprecated way of configuring jadler defaults still works.
  */
-public class JadlerDeprecatedDefaultsConfigurationTest {
+public class DeprecatedDefaultsConfigurationTest {
     
 
     private static final int EXPECTED_STATUS = 409;
@@ -35,7 +35,7 @@ public class JadlerDeprecatedDefaultsConfigurationTest {
     
  
     /*
-     * Tests the response defaults
+     * Tests that the deprecated way of setting response defaults using the {@code that()} clause still works
      */
     @Test
     @SuppressWarnings("deprecation")
@@ -68,7 +68,7 @@ public class JadlerDeprecatedDefaultsConfigurationTest {
     
    
     /*
-     * Tests the requests recording settings
+     * Tests that the deprecated way of disabling requests recording using the {@code that()} clause still works
      */
     @Test(expected = IllegalStateException.class)
     @SuppressWarnings("deprecation")

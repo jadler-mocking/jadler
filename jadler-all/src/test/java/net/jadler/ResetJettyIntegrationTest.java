@@ -11,12 +11,13 @@ import static net.jadler.Jadler.initJadlerUsing;
 
 
 /**
- * Tests that it is possible to reset JadlerMocker Jetty implementation.
+ * Tests that it is possible to reset the {@link JettyStubHttpServer} implementation.
  */
-public class JettyJadlerResetIntegrationTest extends AbstractJadlerResetIntegrationTest {
+public class ResetJettyIntegrationTest extends AbstractResetIntegrationTest {
     
     @BeforeClass
     public static void configureMocker() {
-        initJadlerUsing(new JettyStubHttpServer());
+        initJadlerUsing(new JettyStubHttpServer())
+                .withDefaultResponseStatus(DEFAULT_STATUS);
     }
 }

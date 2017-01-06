@@ -9,33 +9,47 @@ import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.junit.Test;
 import org.apache.commons.httpclient.HttpClient;
-import net.jadler.stubbing.server.StubHttpServer;
 import org.junit.After;
 import org.junit.Before;
+import net.jadler.parameters.TestParameters;
+import net.jadler.parameters.StubHttpServerFactory;
+import org.junit.runners.Parameterized;
+import org.junit.runner.RunWith;
 
 import static net.jadler.Jadler.onRequest;
 import static net.jadler.Jadler.port;
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
 import static net.jadler.Jadler.initJadlerUsing;
 import static net.jadler.Jadler.closeJadler;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
 import static org.hamcrest.Matchers.notNullValue;
 
 
-public abstract class AbstractJadlerStubbingResponseHeadersTest {
+/**
+ * Integration test for default response headers.
+ */
+@RunWith(Parameterized.class)
+public class StubbingResponseHeadersTest {
     
     private HttpClient client;
     
-    /**
-     * @return particular server implementation to execute this test with
-     */
-    protected abstract StubHttpServer createServer();
+    private final StubHttpServerFactory serverFactory;
+    
+    @Parameterized.Parameters
+    public static Iterable<StubHttpServerFactory[]> parameters() {
+        return new TestParameters().provide();
+    }
+
+    public StubbingResponseHeadersTest(final StubHttpServerFactory serverFactory) {
+        this.serverFactory = serverFactory;
+    }
+    
     
     @Before
     public void setUp() {
         this.client = new HttpClient();
         
-        initJadlerUsing(this.createServer());
+        initJadlerUsing(serverFactory.createServer());
     }
     
     
@@ -45,6 +59,9 @@ public abstract class AbstractJadlerStubbingResponseHeadersTest {
     }
     
     
+    /*
+     * Checks that exactly two default headers (Date and Content-Lenght) are sent in a stub response. 
+     */
     @Test
     public void allHeaders() throws IOException {
         onRequest().respond().withBody("13 chars long");
@@ -54,12 +71,7 @@ public abstract class AbstractJadlerStubbingResponseHeadersTest {
 
         final Header[] responseHeaders = method.getResponseHeaders();
         
-                for (final Header h: responseHeaders) {
-            System.out.println(h.getName() + ": " + h.getValue());
-        }
-        
         assertThat(responseHeaders.length, is(2));
-        
         assertThat(method.getResponseHeader("Date"), is(notNullValue()));
         assertThat(method.getResponseHeader("Content-Length").getValue(), is("13"));
     }

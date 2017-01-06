@@ -25,41 +25,53 @@ import java.nio.charset.Charset;
 import java.util.concurrent.TimeUnit;
 import net.jadler.stubbing.Responder;
 import net.jadler.stubbing.StubResponse;
+import org.junit.runners.Parameterized;
+import org.junit.runner.RunWith;
+import net.jadler.parameters.StubHttpServerFactory;
+import net.jadler.parameters.TestParameters;
+import org.junit.runners.Parameterized.Parameters;
 
 import static net.jadler.Jadler.port;
 import static net.jadler.Jadler.initJadlerUsing;
 import static net.jadler.Jadler.onRequest;
 import static net.jadler.Jadler.closeJadler;
-import net.jadler.stubbing.server.StubHttpServer;
-import static org.hamcrest.Matchers.anything;
-import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.isEmptyOrNullString;
+import static org.hamcrest.Matchers.isEmptyString;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.anything;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.isEmptyOrNullString;
-import static org.hamcrest.Matchers.isEmptyString;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
-import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.assertThat;
 
 
 /**
- * Suite of several integration tests for the stubbing part of the Jadler library.
- * Each test configures the stub server and tests either the <i>WHEN</i> or <i>THEN</i> part of http stubbing using
- * an http client. This class is shared by subclasses that each configure different Jadler implementation.
+ * <p>Suite of several integration/acceptance tests for the stubbing part ofJadler.</p>
+ * 
+ * <p>Each test configures the stub server and tests either the <i>WHEN</i> or <i>THEN</i> part of http stubbing using
+ * an http client.</p>
  */
-public abstract class AbstractJadlerStubbingIntegrationTest {
+@RunWith(Parameterized.class)
+public class StubbingIntegrationTest {
+    
+    private static final String STRING_WITH_DIACRITICS = "\u00e1\u0159\u017e";
     
     private static final int DEFAULT_STATUS = 409;
     private static final String DEFAULT_HEADER1_NAME = "default_header";
     private static final String DEFAULT_HEADER1_VALUE1 = "value1";
     private static final String DEFAULT_HEADER1_VALUE2 = "value2";
+    private static final String DEFAULT_CONTENT_TYPE = "text/html; charset=UTF-16";
+    private static final Charset DEFAULT_CHARSET = Charset.forName("UTF-16");
+    private static final byte[] DEFAULT_ENCODING_BODY_REPRESENTATION = STRING_WITH_DIACRITICS.getBytes(DEFAULT_CHARSET);
     
     private static final String HEADER_NAME1 = "header1";
     private static final String HEADER_VALUE11 = "value11";
@@ -68,39 +80,43 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
     private static final String HEADER_NAME2 = "header2";
     private static final String HEADER_VALUE2 = "value2";
     
-    private static final String STRING_WITH_DIACRITICS = "\u00e1\u0159\u017e";
-    private static final byte[] UTF_8_REPRESENTATION = 
-            {(byte)0xC3, (byte)0xA1, (byte)0xC5, (byte)0x99, (byte)0xC5, (byte)0xBE};
-    private static final byte[] ISO_8859_2_REPRESENTATION = {(byte)0xE1, (byte)0xF8, (byte)0xBE};
-    
     private static final byte[] BINARY_BODY = {1, 2, 3};
     
     private static final String UTF_8_TYPE = "text/html; charset=UTF-8";
     private static final Charset UTF_8_CHARSET = Charset.forName("UTF-8");
+    private static final byte[] UTF_8_BODY_REPRESENTATION = STRING_WITH_DIACRITICS.getBytes(UTF_8_CHARSET);
+        
     private static final String ISO_8859_2_TYPE = "text/html; charset=ISO-8859-2";
     private static final Charset ISO_8859_2_CHARSET = Charset.forName("ISO-8859-2");
+    private static final byte[] ISO_8859_2_BODY_REPRESENTATION = STRING_WITH_DIACRITICS.getBytes(ISO_8859_2_CHARSET);
     
+    private final StubHttpServerFactory serverFactory;
     
     private HttpClient client;
+    
+    
+    @Parameters
+    public static Iterable<StubHttpServerFactory[]> parameters() {
+        return new TestParameters().provide();
+    }
+
+    public StubbingIntegrationTest(final StubHttpServerFactory serverFactory) {
+        this.serverFactory = serverFactory;
+    }
+    
     
     @Before
     public void setUp() {
         
-        initJadlerUsing(createServer())
+        initJadlerUsing(serverFactory.createServer())
                 .withDefaultResponseStatus(DEFAULT_STATUS)
                 .withDefaultResponseHeader(DEFAULT_HEADER1_NAME, DEFAULT_HEADER1_VALUE1)
                 .withDefaultResponseHeader(DEFAULT_HEADER1_NAME, DEFAULT_HEADER1_VALUE2)
-                .withDefaultResponseEncoding(UTF_8_CHARSET)
-                .withDefaultResponseContentType(UTF_8_TYPE);
+                .withDefaultResponseEncoding(DEFAULT_CHARSET)
+                .withDefaultResponseContentType(DEFAULT_CONTENT_TYPE);
         
         this.client = new HttpClient();
     }
-
-
-    /**
-     * @return particular server implementation to execute this test with
-     */
-    protected abstract StubHttpServer createServer();
 
 
     @After
@@ -110,21 +126,22 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
     
     
     /*
-     * Tests the <tt>havingBody</tt> methods.
+     * Nonempty body stubbing scenario
      */
     @Test
     public void havingBody() throws Exception {
+        final String body = "postbody";
+        
         onRequest()
-            .havingBodyEqualTo("postbody")
-            .havingBody(notNullValue())
+            .havingBodyEqualTo(body)
             .havingBody(not(isEmptyOrNullString()))
         .respond()
             .withStatus(201);
 
         final PostMethod method = new PostMethod("http://localhost:" + port());
-        method.setRequestEntity(new StringRequestEntity("postbody", null, null));
+        method.setRequestEntity(new StringRequestEntity(body, null, null));
+        final int status = client.executeMethod(method);
         
-        int status = client.executeMethod(method);
         assertThat(status, is(201));
         
         method.releaseConnection();
@@ -132,7 +149,7 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
     
     
     /*
-     * An empty string (not null) is matched for an empty http request.
+     * Empty body stubbing scenario
      */
     @Test
     public void havingEmptyBody() throws Exception {
@@ -145,8 +162,7 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
                     
         final PostMethod method = new PostMethod("http://localhost:" + port());
         method.setRequestEntity(new StringRequestEntity("", null, null));
-        
-        int status = client.executeMethod(method);
+        final int status = client.executeMethod(method);
         assertThat(status, is(201));
         
         method.releaseConnection();
@@ -154,7 +170,7 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
     
     
     /*
-     * Tests the <tt>havingRawBody</tt> method
+     * Raw (binary) body stubbing scenario
      */
     @Test
     public void havingRawBody() throws IOException {
@@ -165,7 +181,6 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
         
         final PostMethod method = new PostMethod("http://localhost:" + port());
         method.setRequestEntity(new ByteArrayRequestEntity(BINARY_BODY));
-        
         final int status = client.executeMethod(method);
         assertThat(status, is(201));
         
@@ -174,7 +189,7 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
     
     
     /*
-     * An empty array (not null) is matched for an empty http request.
+     * Empty raw body (represented as an empty array, not {@code null}) stubbing scenario
      */
     @Test
     public void havingRawEmptyBody() throws IOException {
@@ -184,7 +199,6 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
             .withStatus(201);
         
         final PostMethod method = new PostMethod("http://localhost:" + port());
-        
         final int status = client.executeMethod(method);
         assertThat(status, is(201));
         
@@ -193,14 +207,14 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
     
     
     /*
-     * Matches a request with a text body encoded using UTF-8.
+     * UTF-8 encoded body stubbing scenario
      */
     @Test
     public void havingUTF8Body() throws Exception {
         
         onRequest()
             .havingBodyEqualTo(STRING_WITH_DIACRITICS)
-            .havingRawBodyEqualTo(UTF_8_REPRESENTATION)
+            .havingRawBodyEqualTo(UTF_8_BODY_REPRESENTATION)
         .respond()
             .withStatus(201);
         
@@ -216,14 +230,14 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
     
     
     /*
-     * Matches a request with a text body encoded using ISO-8859-2.
+     * ISO-8859-2 encoded body stubbing scenario
      */
     @Test
     public void havingISOBody() throws Exception {
         
         onRequest()
             .havingBodyEqualTo(STRING_WITH_DIACRITICS)
-            .havingRawBodyEqualTo(ISO_8859_2_REPRESENTATION)
+            .havingRawBodyEqualTo(ISO_8859_2_BODY_REPRESENTATION)
         .respond()
             .withStatus(201);
         
@@ -239,26 +253,29 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
     
     
     /*
-     * Tests a combination of the <tt>havingHeader</tt> methods.
+     * Request headers stubbing scenario
      */
     @Test
     public void havingHeader() throws Exception {
         
         onRequest()
+                //hdr1 has exactly one value, h1v1
             .havingHeader("hdr1")
+            .havingHeaderEqualTo("hdr1", "h1v1")
             .havingHeader("hdr1", not(empty()))
             .havingHeader("hDR1", hasSize(1))
             .havingHeader("hdr1", everyItem(not(isEmptyOrNullString())))
             .havingHeader("hdr1", contains("h1v1"))
-            .havingHeaderEqualTo("hdr1", "h1v1")
+                //hdr2 has two values, h2v1 and h2v2
             .havingHeader("HDr2")
+            .havingHeaderEqualTo("hdr2", "h2v1")
+            .havingHeaderEqualTo("HDR2", "h2v2")
             .havingHeader("hdr2", hasSize(2))
             .havingHeader("hdr2", contains("h2v1", "h2v2"))
             .havingHeader("hdr2", hasItem("h2v1"))
-            .havingHeader("hdr3", nullValue())
-            .havingHeaderEqualTo("hdr2", "h2v1")
-            .havingHeaderEqualTo("HDR2", "h2v2")
             .havingHeaders("hDR1", "hdr2")
+                //there is no hdr3 header
+            .havingHeader("hdr3", nullValue())
         .respond()
             .withStatus(201);
         
@@ -275,6 +292,8 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
     
     
     /*
+     * An empty header (an existing header without a value) stubbing scenario.
+     * 
      * I'm not sure whether a request header can be empty according to the RFC. However, it seems to work. 
      */
     @Test
@@ -297,16 +316,14 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
     
     
     /*
-     * Tests the <tt>havingMethod</tt> methods.
+     * Method stubbing scenario.
      */
     @Test
     public void havingMethod() throws Exception {
         onRequest()
             .havingMethodEqualTo("POST")
-                //the comparison must be case insensitive
             .havingMethodEqualTo("poSt")
             .havingMethod(not(isEmptyOrNullString()))
-            .havingMethod(anything())
         .respond()
             .withStatus(201);
         
@@ -320,37 +337,47 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
     
     
     /*
-     * Tests the <tt>havingParameter</tt> methods for a GET http request. Only query string values
-     * are considered http parameters for a GET http request.
+     * Request parameters stubbing scenario.
+     *
+     * Only query string values are considered http parameters since it's a GET http request.
      */
     @Test
     public void havingParameterGET() throws Exception {
         
         onRequest()
+                //p1 has exactly one value, p1v1
             .havingParameter("p1")
+            .havingParameterEqualTo("p1", "p1v1")
             .havingParameter("p1", hasSize(1))
             .havingParameter("p1", everyItem(not(isEmptyOrNullString())))
             .havingParameter("p1", contains("p1v1"))
-            .havingParameterEqualTo("p1", "p1v1")
+                //p2 has two values, p2v1 and p2v2
             .havingParameter("p2")
-            .havingParameter("p2", hasSize(2))
-            .havingParameter("p2", hasItems("p2v1", "p2v2"))
             .havingParameterEqualTo("p2", "p2v1")
             .havingParameterEqualTo("p2", "p2v2")
-            .havingParameters("p1", "p2")
+            .havingParameter("p2", hasSize(2))
+            .havingParameter("p2", hasItems("p2v1", "p2v2"))
+                //p3 is an existing param with no value, '=' character is used in the query string
             .havingParameter("p3")
             .havingParameter("p3", contains(""))
             .havingParameterEqualTo("p3", "")
+                //p4 is an existing param with no value, '=' character is not used in the query string
             .havingParameter("p4")
             .havingParameter("p4", contains(""))
             .havingParameterEqualTo("p4", "")
+                //p5 is not an existing param
             .havingParameter("p5", nullValue())
-            .havingParameter("url%20encoded", contains("url%20encoded"))
+                //'p 6' has a percent-encoded name and value
+                //both is available in the percent-encoded form for stubbing
+            .havingParameter("p%206")
+            .havingParameterEqualTo("p%206", "percent%20encoded")
+            .havingParameter("p%206", contains("percent%20encoded"))
+            .havingParameters("p1", "p2", "p%206")
         .respond()
             .withStatus(201);
         
         final GetMethod method = new GetMethod("http://localhost:" + port() + 
-                "?p1=p1v1&p2=p2v1&p2=p2v2&p3=&p4&url%20encoded=url%20encoded");
+                "?p1=p1v1&p2=p2v1&p2=p2v2&p3=&p4&p%206=percent%20encoded");
 
         int status = client.executeMethod(method);
         assertThat(status, is(201));
@@ -360,44 +387,57 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
     
     
     /*
-     * Tests the <tt>havingParameter</tt> methods for a POST http request with the
-     * <tt>application/x-www-form-urlencoded</tt> content type. Both query string and request body values
-     * are considered http parameters for such an http request.
+     * Request parameters stubbing scenario.
      * 
-     * This test also tests a combination of <tt>havingParameter</tt> and <tt>havingBody</tt> methods
-     * since both of these require an access to the request body (which causes troubles in the servlet specification
-     * addressed by the {@link MultipleReadsHttpServletRequest} wrapper).
+     * Since it's a POST request with the application/x-www-form-urlencoded content type, both query string and
+     * request body values are considered http parameters sources for such an http request.
      */
     @Test
     public void havingParameterPOST() throws Exception {
-        final String body = "p1=p1v1&p2=p2v1&p2=p2v2&p3=&p4&url%20encoded=url%20encoded";
+        final String body = "p1=p1v1&p2=p2v1&p2=p2v2&p3=&p4&p%206=percent%20encoded";
         
         onRequest()
+                //p1 has exactly one value, p1v1
             .havingParameter("p1")
+            .havingParameterEqualTo("p1", "p1v1")
             .havingParameter("p1", hasSize(1))
             .havingParameter("p1", everyItem(not(isEmptyOrNullString())))
             .havingParameter("p1", contains("p1v1"))
-            .havingParameterEqualTo("p1", "p1v1")
+                //p2 has three values, two from the body (p2v1 and p2v2) and one (p2v3) from the query string
             .havingParameter("p2")
-            .havingParameter("p2", hasSize(3))
-            .havingParameter("p2", hasItems("p2v1", "p2v2", "p2v3"))
             .havingParameterEqualTo("p2", "p2v1")
             .havingParameterEqualTo("p2", "p2v2")
             .havingParameterEqualTo("p2", "p2v3")
-            .havingParameters("p1", "p2")
+            .havingParameter("p2", hasSize(3))
+            .havingParameter("p2", hasItems("p2v1", "p2v2", "p2v3"))
+                //p3 is an existing param with no value, '=' character is used in the body string
             .havingParameter("p3")
-            .havingParameter("p3", contains(""))
             .havingParameterEqualTo("p3", "")
+            .havingParameter("p3", contains(""))
+                //p4 is an existing param with no value, '=' character is not used in the body string
             .havingParameter("p4")
-            .havingParameter("p4", contains(""))
             .havingParameterEqualTo("p4", "")
+            .havingParameter("p4", contains(""))
+                //there is no p5 param in the request
             .havingParameter("p5", nullValue())
-            .havingParameter("url%20encoded", contains("url%20encoded"))
+                //'p 6' has a percent-encoded name and value
+                //both is available in the percent-encoded form for stubbing
+            .havingParameter("p%206")
+            .havingParameterEqualTo("p%206", "percent%20encoded")
+            .havingParameter("p%206", contains("percent%20encoded"))
+                //p7 is an existing parameter coming from the query string
+            .havingParameter("p7")
+            .havingParameterEqualTo("p7", "p7v1")
+            .havingParameter("p7", hasSize(1))
+                //p1, p2, 'p 6' and p7 are present among other params
+            .havingParameters("p1", "p2", "p%206", "p7")
+                //there was a bug when stubbing using both a body and params received from the body
+                //so let's do a stubbing using even a body here
             .havingBodyEqualTo(body)
         .respond()
             .withStatus(201);
         
-        final PostMethod method = new PostMethod("http://localhost:" + port() + "?p2=p2v3");
+        final PostMethod method = new PostMethod("http://localhost:" + port() + "?p2=p2v3&p7=p7v1");
         method.setRequestEntity(new StringRequestEntity(body, "application/x-www-form-urlencoded", "UTF-8"));
 
         int status = client.executeMethod(method);
@@ -408,18 +448,19 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
     
     
     /*
-     * Tests the <tt>havingQueryString</tt> methods. 
+     * Query string stubbing scenario.
      */
     @Test
     public void havingQueryString() throws Exception {
+        final String queryString = "p1=v1&p2=v2&name=%C5%99eho%C5%99";
+        
         onRequest()
-            .havingQueryStringEqualTo("p1=v1&p2=v2&name=%C5%99eho%C5%99")
-            .havingQueryString(not(isEmptyOrNullString()))
-            .havingQueryString(anything())
+            .havingQueryStringEqualTo(queryString)
+            .havingQueryString(not(startsWith("?"))) //no '?' character at the beginning
         .respond()
             .withStatus(201);
         
-        final GetMethod method = new GetMethod("http://localhost:" + port() + "?p1=v1&p2=v2&name=%C5%99eho%C5%99");
+        final GetMethod method = new GetMethod("http://localhost:" + port() + '?' + queryString);
 
         int status = client.executeMethod(method);
         assertThat(status, is(201));
@@ -429,10 +470,10 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
     
     
     /*
-     * Tests the <tt>havingQueryString</tt> methods. 
+     * Empty query string stubbing scenario.
      */
     @Test
-    public void havingEmptyQueryString() throws Exception {
+    public void havingQueryString_empty() throws Exception {
         onRequest()
             .havingQueryStringEqualTo("")
             .havingQueryString(isEmptyString())
@@ -451,10 +492,10 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
     
     
     /*
-     * Null value is matched for a http request without a query string
+     * Missing query string stubbing scenario.
      */
     @Test
-    public void havingNoQueryString() throws Exception {
+    public void havingQueryString_none() throws Exception {
         onRequest()
             .havingQueryString(nullValue())
             .havingQueryString(not(equalTo("")))
@@ -471,17 +512,19 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
     
     
     /*
-     * Tests the <tt>havingPath</tt> methods.
+     * Path stubbing scenario
      */
     @Test
     public void havingPath() throws Exception {
+        final String path = "/a/b/c/d/%C5%99";
+        
         onRequest()
-            .havingPathEqualTo("/a/b/c/d/%C5%99")
+            .havingPathEqualTo(path) //query string is excluded
             .havingPath(notNullValue())
         .respond()
             .withStatus(201);
         
-        final GetMethod method = new GetMethod("http://localhost:" + port() + "/a/b/c/d/%C5%99");
+        final GetMethod method = new GetMethod("http://localhost:" + port() + path + "?param=value");
 
         int status = client.executeMethod(method);
         assertThat(status, is(201));
@@ -491,19 +534,17 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
     
     
     /*
-     * Tests the <tt>havingPath</tt> methods for a root path.
+     * Root path stubbing scenario.
      */
     @Test
-    public void havingRootPath() throws IOException {
+    public void havingPath_root() throws IOException {
         onRequest()
             .havingPath(equalTo("/"))
             .havingPath(not(isEmptyOrNullString()))
         .respond()
             .withStatus(201);
         
-          //if there was no slash at the end, the GetMethod constructor would add it automatically
         final GetMethod method = new GetMethod("http://localhost:" + port() + "/");
-
         final int status = client.executeMethod(method);
         assertThat(status, is(201));
         
@@ -511,6 +552,12 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
     }
     
     
+    /*
+     * A dynamic stubbing scenario.
+     *
+     * The response is created using a {@code Responder} instance, it just resends the request body in the response
+     * using the same encoding and 201 status.
+     */
     @Test
     public void respondUsingResponder() throws IOException {
         onRequest()
@@ -537,141 +584,87 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
         method.releaseConnection();
     }
     
-    
     /*
-     * Tests the <tt>withBody(String)</tt> method in connection with the default body encoding (UTF-8).
-     * Retrieves the response body as an array of bytes and checks that it's exactly the same as
-     * the UTF-8 representation of the string.
+     * Explicitely defined response status scenario. Must override the default status set in the Jadler initialization.
      */
     @Test
-    public void withDefaultEncoding() throws IOException {
-        onRequest().respond().withBody(STRING_WITH_DIACRITICS);
+    public void withStatus() throws Exception {
+        onRequest().respond().withStatus(201);
         
         final GetMethod method = new GetMethod("http://localhost:" + port());
-
-        client.executeMethod(method);
-        
-          //check that the body was really encoded in UTF-8
-        final byte[] body = IOUtils.toByteArray(method.getResponseBodyAsStream());
-        assertThat(body, is(UTF_8_REPRESENTATION));
+        int status = client.executeMethod(method);
+        assertThat(status, is(201));
         
         method.releaseConnection();
     }
     
     
     /*
-     * Tests the <tt>withBody(String)</tt> method in connection with the <tt>withEncoding</tt> method.
-     * Retrieves the response body as an array of bytes and checks that it's exactly the same as
-     * the ISO-8859-2 representation of the string.
+     * Response body scenario with an explicitly set (ISO-8859-2) encoding and an explicitly set default
+     * content-type header (text/html; charset=ISO-8859-2)
      */
     @Test
     public void withEncoding() throws IOException {
-        onRequest().respond()
-                .withEncoding(ISO_8859_2_CHARSET)
-                .withBody(STRING_WITH_DIACRITICS);
-        
-        final GetMethod method = new GetMethod("http://localhost:" + port());
-
-        client.executeMethod(method);
-        
-          //check that the body was really encoded in UTF-8
-        final byte[] body = IOUtils.toByteArray(method.getResponseBodyAsStream());
-        assertThat(body, is(ISO_8859_2_REPRESENTATION));
-        
-        method.releaseConnection();
-    }    
-    
-
-    /*
-     * Tests the <tt>withBody(String)</tt> method in connection with the default content type
-     * (which is set to text/html; charset=UTF-8). Checks the content type was set to the stub response
-     * and the body is readable to the http client.
-     */
-    @Test
-    public void withDefaultContentType() throws IOException {
-        onRequest().respond().withBody(STRING_WITH_DIACRITICS);
-        
-        final GetMethod method = new GetMethod("http://localhost:" + port());
-
-        client.executeMethod(method);
-        
-          //the content type header set to the default value
-        assertThat(method.getResponseHeader("Content-Type").getValue(), is(UTF_8_TYPE));
-
-          //the http client was able to retrieve the charset portion of the content type header
-        assertThat(method.getResponseCharSet(), is(UTF_8_CHARSET.name()));
-        
-          //since the body was encoded in UTF-8 and content type charset was set to UTF-8,
-          //the http client should be able to read it correctly
-        assertThat(method.getResponseBodyAsString(), is(STRING_WITH_DIACRITICS));
-        
-        method.releaseConnection();
-    }
-    
-    
-    /*
-     * Tests the <tt>withBody(String)</tt> method in connection with the <tt>withEncoding</tt> and
-     * <tt>withContentType</tt> methods. Both body encoding and the content type header are set
-     * to ISO-8859-2. Checks the content type was set to the stub response and the body is readable to the http client.
-     */
-    @Test
-    public void withContentType() throws IOException {
         onRequest().respond()
                 .withEncoding(ISO_8859_2_CHARSET)
                 .withContentType(ISO_8859_2_TYPE)
                 .withBody(STRING_WITH_DIACRITICS);
         
         final GetMethod method = new GetMethod("http://localhost:" + port());
-
         client.executeMethod(method);
         
           //the content type header set to the specified value
         assertThat(method.getResponseHeader("Content-Type").getValue(), is(ISO_8859_2_TYPE));
 
-          //the http client was able to retrieve the charset portion of the content type header
+          //the http client was able to retrieve the charset part of the content type header
         assertThat(method.getResponseCharSet(), is(ISO_8859_2_CHARSET.name()));
           
           //since the body was encoded in "ISO-8859-2" and content type charset was set to "ISO-8859-2",
           //the client should be able to read it correctly
         assertThat(method.getResponseBodyAsString(), is(STRING_WITH_DIACRITICS));
+
+        
+          //the body bytes correspond to a ISO-8859-2 representation of the string
+        assertThat(method.getResponseBody(), is(ISO_8859_2_BODY_REPRESENTATION));
         
         method.releaseConnection();
     }
     
 
     /*
-     * Tests a mismatch between body encoding and the encoding stated in the content type header.
-     * Body is encoded using ISO-8859-2, however the content type header states it's encoded
-     * using UTF-8.
+     * Response body scenario with an explicitly set (ISO-8859-2) encoding and an explicitly set default
+     * content-type header (text/html; charset=UTF-8).
+     * 
+     * This scenario simulates a faulty server claiming the body is encoded in UTF-8 (via the content-type header),
+     * but in fact it is encoded using ISO-8895-2. Because crappy servers like this exist. 
      */
     @Test
-    public void withContentTypeEncodingMismatch() throws IOException {
+    public void withEncoding_contentTypeMismatch() throws IOException {
         onRequest().respond()
-                .withEncoding(ISO_8859_2_CHARSET)
-                .withContentType(UTF_8_TYPE)
+                .withEncoding(ISO_8859_2_CHARSET) //body encoding set to ISO_8859_2
+                .withContentType(UTF_8_TYPE)  //but the content-type header says it's UTF-8 incorrectly
                 .withBody(STRING_WITH_DIACRITICS);
         
         final GetMethod method = new GetMethod("http://localhost:" + port());
-
         client.executeMethod(method);
         
           //the content type header set to the specified value
         assertThat(method.getResponseHeader("Content-Type").getValue(), is(UTF_8_TYPE));
 
-          //the http client was able to retrieve the charset portion of the content type header
+          //the http client was able to retrieve the charset part of the content type header
         assertThat(method.getResponseCharSet(), is(UTF_8_CHARSET.name()));
         
           //however the applied encoding is ISO-8859-2
         final byte[] body = IOUtils.toByteArray(method.getResponseBodyAsStream());
-        assertThat(body, is(ISO_8859_2_REPRESENTATION));
+        assertThat(body, is(ISO_8859_2_BODY_REPRESENTATION));
         
         method.releaseConnection();
     }
     
     
     /*
-     * Tests the <tt>withBody(Reader)</tt> method. The reader content is encoded using the ISO-8859-2 encoding
-     * and then retrieved.
+     * Response body scenario using a reader instance with an explicitly set (ISO-8859-2) encoding and an explicitly
+     * set default content-type header (text/html; charset=UTF-8).
      */
     @Test
     public void withBodyReader() throws IOException {
@@ -686,15 +679,16 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
         client.executeMethod(method);
 
         final byte[] resultBody = IOUtils.toByteArray(method.getResponseBodyAsStream());
-        assertThat(resultBody, is(ISO_8859_2_REPRESENTATION));
+        assertThat(resultBody, is(ISO_8859_2_BODY_REPRESENTATION));
         
         method.releaseConnection();
     }
     
     
     /*
-     * Tests the <tt>withBody(InputStream)</tt> method. The stream content is used straight as the response body
-     * and then retrieved.
+     * Response body scenario using an input stream instance.
+     *
+     * Tests the body retrieved in the response is exactly the same as the input stream content.
      */
     @Test
     public void withBodyInputStream() throws IOException {
@@ -713,8 +707,9 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
     
     
     /*
-     * Tests the <tt>withBody(byte[])</tt> method. The byte array is used straight as the response body
-     * and then retrieved.
+     * Response body scenario using an array of bytes.
+     *
+     * Tests the body retrieved in the response is exactly the same as the array content.
      */
     @Test
     public void withBodyArrayOfBytes() throws IOException { 
@@ -730,7 +725,7 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
     }
 
     /*
-     * Tests the withHeader method with single and multiple headers values
+     * Response headers scenario.
      */
     @Test
     public void withHeader() throws IOException {
@@ -753,7 +748,7 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
     
     
     /*
-     * Tests that for more matching stub rules the latter is applied.
+     * More possible stubbings to use scenario. The latter one must be used.
      */
     @Test
     public void rulesOrdering() throws IOException {
@@ -771,7 +766,7 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
     
     
     /*
-     * Tests more stub responses defined during stubbing.
+     * More subsequent responses scenario. First response with 200 status, all subsequent responses with 201.
      */
     @Test
     public void multipleStubResponses() throws IOException {
@@ -797,7 +792,8 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
     
     
     /*
-     * Tests that 500 status and an empty body is returned when no stub rule matches.
+     * No suitable stub rule scenario. 404 with a predefined text/plain body must be returned in case no
+     * suitable response has been defined.
      */
     @Test
     public void noRuleApplicable() throws IOException {
@@ -814,11 +810,14 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
     
     
     /*
-     * Tests default status and response headers 
+     * Defaults scenario. In case no status is explicitely defined during the stubbing, the default status is used.
+     * The same for the default encoding and default content-type header values. And a default header is added to
+     * every stub response. All of these values are set in the setUp phase during jadler initialization.
      */
     @Test
     public void defaults() throws Exception {
-        onRequest().respond();
+          //encoding and content-type values set in the setUp phase
+        onRequest().respond().withBody(STRING_WITH_DIACRITICS);
         
         final GetMethod method = new GetMethod("http://localhost:" + port());
         int status = client.executeMethod(method);
@@ -829,29 +828,27 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
         assertThat(responseHeaders[0].getValue(), is(DEFAULT_HEADER1_VALUE1));
         assertThat(responseHeaders[1].getValue(), is(DEFAULT_HEADER1_VALUE2));
         
-        method.releaseConnection();
-    }
-    
-    
-    /*
-     * Tests overriding the default status during stubbing
-     */
-    @Test
-    public void overriddenDefaultStatus() throws Exception {
-        onRequest().respond().withStatus(201);
+          //the content type header set to the default value
+        assertThat(method.getResponseHeader("Content-Type").getValue(), is(DEFAULT_CONTENT_TYPE));
         
-        final GetMethod method = new GetMethod("http://localhost:" + port());
-        int status = client.executeMethod(method);
-        assertThat(status, is(201));
+          //the http client was able to retrieve the charset part of the content type header
+        assertThat(method.getResponseCharSet(), is(DEFAULT_CHARSET.name()));
+        
+          //http client must be able to read the body correctly
+        assertThat(method.getResponseBodyAsString(), is(STRING_WITH_DIACRITICS));
+        
+          //the body bytes correspond to the ISO-8859-2 representation of the string
+        final byte[] body = IOUtils.toByteArray(method.getResponseBodyAsStream());
+        assertThat(body, is(DEFAULT_ENCODING_BODY_REPRESENTATION));        
         
         method.releaseConnection();
     }
     
     
     /*
-     * Tests overriding default headers. The header DEFAULT_HEADER1_NAME is already defined with two default values.
-     * This particular stubbing adds a third value. This test checks that all three values
-     * are sent in the stub response.
+     * Default headers overriding scenario. The header DEFAULT_HEADER1_NAME is already defined with two default values.
+     * This particular stubbing adds a third value. This test checks that all three values are sent in
+     * the stub response.
      */
     @Test
     public void overriddenDefaultHeader() throws Exception {
@@ -872,7 +869,8 @@ public abstract class AbstractJadlerStubbingIntegrationTest {
     
     
     /*
-     * Tests the stub response is returned after at least one second as set during the stubbing
+     * Response delay scenario. Tests the stub response is returned after at least one second
+     * as set during the stubbing.
      */
     @Test
     public void delay() throws IOException {
