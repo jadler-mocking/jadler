@@ -46,4 +46,16 @@ This program is made available under the terms of the MIT License.
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.pitest</groupId>
+                <artifactId>pitest-maven</artifactId>
+                <configuration>
+                    <mutationThreshold>70</mutationThreshold>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>
