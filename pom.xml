@@ -246,11 +246,6 @@ This program is made available under the terms of the MIT License.
                             <goals>
                                 <goal>mutationCoverage</goal>
                             </goals>
-                            <configuration>
-                                <targetClasses>
-                                    <param>net.jadler*</param>
-                                </targetClasses>
-                            </configuration>
                         </execution>
                     </executions>
                 </plugin>
