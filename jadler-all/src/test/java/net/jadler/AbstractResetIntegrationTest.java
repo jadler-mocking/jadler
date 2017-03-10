@@ -4,20 +4,22 @@
  */
 package net.jadler;
 
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.methods.GetMethod;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Test;
 import java.io.IOException;
+import org.apache.http.client.fluent.Executor;
+import org.apache.http.client.fluent.Request;
 
 import static net.jadler.Jadler.onRequest;
 import static net.jadler.Jadler.verifyThatRequest;
 import static net.jadler.Jadler.closeJadler;
 import static net.jadler.Jadler.resetJadler;
-import static net.jadler.Jadler.port;
+import static net.jadler.utils.TestUtils.STATUS_RETRIEVER;
+import static net.jadler.utils.TestUtils.jadlerUri;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
+
 
 
 /**
@@ -41,6 +43,7 @@ public abstract class AbstractResetIntegrationTest {
     @AfterClass
     public static void close() {
         closeJadler();
+        Executor.closeIdleConnections();
     }
 
 
@@ -63,7 +66,8 @@ public abstract class AbstractResetIntegrationTest {
     public void test200() throws IOException {
         onRequest().respond().withStatus(200);
         
-        assertStatus(200);
+        final int status = Executor.newInstance().execute(Request.Get(jadlerUri())).handleResponse(STATUS_RETRIEVER);
+        assertThat(status, is(200));
         verifyThatRequest().receivedOnce();
     }
 
@@ -76,7 +80,8 @@ public abstract class AbstractResetIntegrationTest {
     public void test201() throws IOException {
         onRequest().respond().withStatus(201);
         
-        assertStatus(201);
+        final int status = Executor.newInstance().execute(Request.Get(jadlerUri())).handleResponse(STATUS_RETRIEVER);
+        assertThat(status, is(201));
         verifyThatRequest().receivedOnce();
     }
 
@@ -90,16 +95,8 @@ public abstract class AbstractResetIntegrationTest {
     public void testDefault() throws IOException {
         onRequest().respond(); //no status set, the default one must be used
         
-        assertStatus(DEFAULT_STATUS);
+        final int status = Executor.newInstance().execute(Request.Get(jadlerUri())).handleResponse(STATUS_RETRIEVER);
+        assertThat(status, is(DEFAULT_STATUS));
         verifyThatRequest().receivedOnce();
-    }
-    
-    
-    /* sends a GET request and asserts the response status code is as expected */
-    private void assertStatus(int expected) throws IOException {
-        final HttpClient client = new HttpClient();
-        final GetMethod method = new GetMethod("http://localhost:" + port() + "/");
-        assertThat(client.executeMethod(method), is(expected));
-        method.releaseConnection();
     }
 }

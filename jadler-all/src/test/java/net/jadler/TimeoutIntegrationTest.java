@@ -4,22 +4,23 @@
  */
 package net.jadler;
 
-import org.apache.commons.httpclient.HttpClient;
 import org.junit.After;
 import org.junit.Test;
 import java.io.IOException;
-import org.apache.commons.httpclient.methods.PostMethod;
-import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import net.jadler.parameters.StubHttpServerFactory;
 import net.jadler.parameters.TestParameters;
+import org.apache.http.client.fluent.Executor;
+import org.apache.http.client.fluent.Request;
+import org.junit.AfterClass;
 
 import static net.jadler.Jadler.closeJadler;
 import static net.jadler.Jadler.initJadlerUsing;
 import static net.jadler.Jadler.onRequest;
-import static net.jadler.Jadler.port;
+import static net.jadler.utils.TestUtils.STATUS_RETRIEVER;
+import static net.jadler.utils.TestUtils.jadlerUri;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
@@ -31,8 +32,6 @@ import static org.junit.Assert.assertThat;
  */
 @RunWith(Parameterized.class)
 public class TimeoutIntegrationTest {
-    
-    private HttpClient client;
     
     private final StubHttpServerFactory serverFactory;
 
@@ -49,7 +48,6 @@ public class TimeoutIntegrationTest {
     @Before
     public void setUp() {
         initJadlerUsing(this.serverFactory.createServer());
-        this.client = new HttpClient();
     }
     
     
@@ -59,14 +57,18 @@ public class TimeoutIntegrationTest {
     }
     
     
+    @AfterClass
+    public static void cleanup() {
+        Executor.closeIdleConnections();
+    }
+    
+    
     @Test(timeout=10000L)
     public void timeout() throws IOException {
         onRequest().respond().withStatus(201);
 
-        final PostMethod method = new PostMethod("http://localhost:" + port());
-        method.setRequestEntity(new StringRequestEntity("postbody", null, null));
+        final int status = Executor.newInstance().execute(Request.Get(jadlerUri())).handleResponse(STATUS_RETRIEVER);
         
-        int status = client.executeMethod(method);
         assertThat(status, is(201));
     }
 }

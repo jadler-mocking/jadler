@@ -5,14 +5,19 @@
 package net.jadler;
 
 import net.jadler.stubbing.server.jetty.JettyStubHttpServer;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.methods.GetMethod;
 import org.junit.Test;
 import org.springframework.util.SocketUtils;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import org.apache.http.client.fluent.Executor;
+import org.apache.http.client.fluent.Request;
+import org.apache.http.HttpResponse;
+import org.junit.AfterClass;
 
 import static net.jadler.Jadler.*;
+import static net.jadler.utils.TestUtils.STATUS_RETRIEVER;
+import static net.jadler.utils.TestUtils.jadlerUri;
+import static net.jadler.utils.TestUtils.rawBodyOf;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
@@ -30,6 +35,13 @@ public class FacadeIntegrationTest {
     private static final String EXPECTED_HEADER_VALUE = "value";
     private static final String STRING_WITH_DIACRITICS = "\u00e1\u0159\u017e";
     private static final byte[] ISO_8859_2_REPRESENTATION = {(byte)0xE1, (byte)0xF8, (byte)0xBE};
+    
+    
+    @AfterClass
+    public static void cleanup() {
+        Executor.closeIdleConnections();
+    }
+    
     
     /*
      * initialization cannot be called twice without closing jadler between the calls
@@ -111,7 +123,9 @@ public class FacadeIntegrationTest {
         
         try {
             onRequest().respond().withStatus(EXPECTED_STATUS);
-            assertExpectedStatus();
+            
+            final int status = Executor.newInstance().execute(Request.Get(jadlerUri())).handleResponse(STATUS_RETRIEVER);
+            assertThat(status, is(EXPECTED_STATUS));
         }
         finally {
             closeJadler();
@@ -128,7 +142,9 @@ public class FacadeIntegrationTest {
         
         try {
             onRequest().respond().withStatus(EXPECTED_STATUS);
-            assertExpectedStatus();
+            
+            final int status = Executor.newInstance().execute(Request.Get(jadlerUri())).handleResponse(STATUS_RETRIEVER);
+            assertThat(status, is(EXPECTED_STATUS));
         }
         finally {
             closeJadler();
@@ -145,7 +161,9 @@ public class FacadeIntegrationTest {
         
         try {
             onRequest().respond().withStatus(EXPECTED_STATUS);
-            assertExpectedStatus();
+            
+            final int status = Executor.newInstance().execute(Request.Get(jadlerUri())).handleResponse(STATUS_RETRIEVER);
+            assertThat(status, is(EXPECTED_STATUS));
         }
         finally {
             closeJadler();
@@ -167,16 +185,12 @@ public class FacadeIntegrationTest {
         try {
             onRequest().respond().withBody(STRING_WITH_DIACRITICS);
             
-            final HttpClient client = new HttpClient();
-            final GetMethod method = new GetMethod("http://localhost:" + port() + "/");
-            client.executeMethod(method);
+            final HttpResponse response = Executor.newInstance().execute(Request.Get(jadlerUri())).returnResponse();
 
-            assertThat(method.getStatusCode(), is(EXPECTED_STATUS));
-            assertThat(method.getResponseHeader("Content-Type").getValue(), is(EXPECTED_CONTENT_TYPE));
-            assertThat(method.getResponseHeader(EXPECTED_HEADER_NAME).getValue(), is(EXPECTED_HEADER_VALUE));
-            assertThat(method.getResponseBody(), is(ISO_8859_2_REPRESENTATION));
-            
-            method.releaseConnection();
+            assertThat(response.getStatusLine().getStatusCode(), is(EXPECTED_STATUS));
+            assertThat(response.getFirstHeader("Content-Type").getValue(), is(EXPECTED_CONTENT_TYPE));
+            assertThat(response.getFirstHeader(EXPECTED_HEADER_NAME).getValue(), is(EXPECTED_HEADER_VALUE));
+            assertThat(rawBodyOf(response), is(ISO_8859_2_REPRESENTATION));
         }
         finally {
             closeJadler();
@@ -210,33 +224,21 @@ public class FacadeIntegrationTest {
 
         try {
             onRequest().respond().withStatus(202);
-            assertExpectedStatus(202);
+            final int status1 =
+                    Executor.newInstance().execute(Request.Get(jadlerUri())).handleResponse(STATUS_RETRIEVER);
+            assertThat(status1, is(202));
             verifyThatRequest().receivedOnce();
 
             resetJadler();
 
             onRequest().respond().withStatus(201);
-            assertExpectedStatus(201);
+            final int status2 =
+                    Executor.newInstance().execute(Request.Get(jadlerUri())).handleResponse(STATUS_RETRIEVER);
+            assertThat(status2, is(201));
             verifyThatRequest().receivedOnce();
         }
         finally {
             closeJadler();
         }
-    }
-
-
-    private void assertExpectedStatus() throws IOException {
-        assertExpectedStatus(EXPECTED_STATUS);
-    }
-
-    
-    /*
-     * Sends a GET request and asserts the response status is as expected
-     */
-    private void assertExpectedStatus(final int expectedStatus) throws IOException {
-        final HttpClient client = new HttpClient();
-        final GetMethod method = new GetMethod("http://localhost:" + port() + "/");
-        assertThat(client.executeMethod(method), is(expectedStatus));
-        method.releaseConnection();
     }
 }

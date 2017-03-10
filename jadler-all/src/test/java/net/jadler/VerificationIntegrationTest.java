@@ -5,12 +5,6 @@
 package net.jadler;
 
 import net.jadler.mocking.VerificationException;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.methods.ByteArrayRequestEntity;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.methods.PostMethod;
-import org.apache.commons.httpclient.methods.StringRequestEntity;
-import org.junit.Before;
 import org.junit.Test;
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -23,9 +17,14 @@ import org.junit.runners.Parameterized;
 import net.jadler.parameters.StubHttpServerFactory;
 import net.jadler.parameters.TestParameters;
 import org.junit.runners.Parameterized.Parameters;
+import org.apache.http.client.fluent.Executor;
+import org.apache.http.client.fluent.Request;
+import org.apache.http.entity.ContentType;
+import org.junit.AfterClass;
 
 import static net.jadler.Jadler.port;
 import static net.jadler.Jadler.verifyThatRequest;
+import static net.jadler.utils.TestUtils.jadlerUri;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.everyItem;
@@ -58,7 +57,6 @@ public class VerificationIntegrationTest {
     private static final Charset UTF_8_CHARSET = Charset.forName("UTF-8");
     private static final Charset ISO_8859_2_CHARSET = Charset.forName("ISO-8859-2");
     
-    private HttpClient client;
     
     @Parameters
     public static Iterable<StubHttpServerFactory[]> parameters() {
@@ -74,9 +72,9 @@ public class VerificationIntegrationTest {
     public final JadlerRule jadlerRule;
     
     
-    @Before
-    public void setUp() {
-        this.client = new HttpClient();
+    @AfterClass
+    public static void cleanup() {
+        Executor.closeIdleConnections();
     }
     
     
@@ -84,11 +82,8 @@ public class VerificationIntegrationTest {
      * Request nonempty body verification
      */
     @Test
-    public void havingBody() throws Exception {
-        final PostMethod method = new PostMethod("http://localhost:" + port());
-        method.setRequestEntity(new StringRequestEntity("postbody", null, null));
-        
-        this.client.executeMethod(method);
+    public void havingBody() throws IOException {
+        Executor.newInstance().execute(Request.Post(jadlerUri()).bodyString("postbody", null)).discardContent();
         
         verifyThatRequest()
             .havingBodyEqualTo("postbody")
@@ -101,11 +96,8 @@ public class VerificationIntegrationTest {
      * Request empty body verification
      */
     @Test
-    public void havingEmptyBody() throws Exception {               
-        final PostMethod method = new PostMethod("http://localhost:" + port());
-        method.setRequestEntity(new StringRequestEntity("", null, null));
-        
-        this.client.executeMethod(method);
+    public void havingEmptyBody() throws IOException {               
+        Executor.newInstance().execute(Request.Post(jadlerUri())).discardContent();
         
         verifyThatRequest()
             .havingBodyEqualTo("")
@@ -120,10 +112,7 @@ public class VerificationIntegrationTest {
      */
     @Test
     public void havingRawBody() throws IOException {
-        final PostMethod method = new PostMethod("http://localhost:" + port());
-        method.setRequestEntity(new ByteArrayRequestEntity(BINARY_BODY));
-        
-        client.executeMethod(method);
+        Executor.newInstance().execute(Request.Post(jadlerUri()).bodyByteArray(BINARY_BODY)).discardContent();
         
         verifyThatRequest()
             .havingRawBodyEqualTo(BINARY_BODY)
@@ -135,9 +124,8 @@ public class VerificationIntegrationTest {
      * Request raw empty body verification
      */
     @Test
-    public void havingRawEmptyBody() throws IOException {        
-        final PostMethod method = new PostMethod("http://localhost:" + port());
-        client.executeMethod(method);
+    public void havingRawEmptyBody() throws IOException {
+        Executor.newInstance().execute(Request.Post(jadlerUri())).discardContent();
         
         verifyThatRequest()
             .havingRawBodyEqualTo(new byte[0])
@@ -149,12 +137,11 @@ public class VerificationIntegrationTest {
      * Request body encoded in UTF-8 scenario
      */
     @Test
-    public void havingUTF8Body() throws Exception {        
-        final PostMethod method = new PostMethod("http://localhost:" + port());
-        //the request body contains a string with diacritics encoded using UTF-8
-        method.setRequestEntity(
-                new StringRequestEntity(STRING_WITH_DIACRITICS, "text/plain; charset=UTF-8", UTF_8_CHARSET.name()));
-        client.executeMethod(method);
+    public void havingUTF8Body() throws IOException {        
+          //the request body contains a string with diacritics encoded using UTF-8
+        Executor.newInstance().execute(Request.Post(jadlerUri())
+                .bodyString(STRING_WITH_DIACRITICS, ContentType.create("text/plain", "UTF-8")))
+                .discardContent();
         
         verifyThatRequest()
             .havingBodyEqualTo(STRING_WITH_DIACRITICS)
@@ -167,14 +154,12 @@ public class VerificationIntegrationTest {
      * Request body encoded in ISO-8859-2 scenario
      */
     @Test
-    public void havingISOBody() throws Exception {
-        final PostMethod method = new PostMethod("http://localhost:" + port());
-        //the request body contains a string with diacritics encoded using ISO-8859-2
-        method.setRequestEntity(
-                new StringRequestEntity(STRING_WITH_DIACRITICS, "text/plain; charset=ISO-8859-2",
-                        ISO_8859_2_CHARSET.name()));
-        client.executeMethod(method);
-        
+    public void havingISOBody() throws IOException {
+          //the request body contains a string with diacritics encoded using ISO-8859-2
+        Executor.newInstance().execute(Request.Post(jadlerUri())
+                .bodyString(STRING_WITH_DIACRITICS, ContentType.create("text/plain", "ISO-8859-2")))
+                .discardContent();
+                
         verifyThatRequest()
             .havingBodyEqualTo(STRING_WITH_DIACRITICS)
             .havingRawBodyEqualTo(ISO_8859_2_REPRESENTATION)
@@ -186,12 +171,13 @@ public class VerificationIntegrationTest {
      * Request headers verification
      */
     @Test
-    public void havingHeader() throws Exception {
-        final GetMethod method = new GetMethod("http://localhost:" + port());
-        method.addRequestHeader("hdr1", "h1v1"); //hdr1 has one value
-        method.addRequestHeader("hdr2", "h2v1");
-        method.addRequestHeader("hdr2", "h2v2"); //two values for hdr2
-        client.executeMethod(method);
+    public void havingHeader() throws IOException {
+        
+        Executor.newInstance().execute(Request.Get(jadlerUri())
+                .addHeader("hdr1", "h1v1") //hdr1 has one value
+                .addHeader("hdr2", "h2v1")
+                .addHeader("hdr2", "h2v2")) //two values for hdr2
+                .discardContent();
         
         verifyThatRequest()
                 //hdr1 has exactly one value, h1v1
@@ -222,10 +208,7 @@ public class VerificationIntegrationTest {
      */
     @Test
     public void havingEmptyHeader() throws IOException {
-        final GetMethod method = new GetMethod("http://localhost:" + port());
-        method.addRequestHeader("empty", "");
-        
-        client.executeMethod(method);
+        Executor.newInstance().execute(Request.Get(jadlerUri()).addHeader("empty", "")).discardContent();
         
         verifyThatRequest()
             .havingHeaderEqualTo("empty", "")
@@ -239,9 +222,8 @@ public class VerificationIntegrationTest {
      * Request method verification
      */
     @Test
-    public void havingMethod() throws Exception {
-        final PostMethod method = new PostMethod("http://localhost:" + port());
-        client.executeMethod(method);
+    public void havingMethod() throws IOException {
+        Executor.newInstance().execute(Request.Post(jadlerUri())).discardContent();
         
         verifyThatRequest()
             .havingMethodEqualTo("POST")
@@ -256,11 +238,9 @@ public class VerificationIntegrationTest {
      * Only query string values are considered http parameters since it's a GET http request.
      */
     @Test
-    public void havingParameter_GET() throws Exception {        
-        final GetMethod method = new GetMethod("http://localhost:" + port() + 
-                "?p1=p1v1&p2=p2v1&p2=p2v2&p3=&p4&p%206=percent%20encoded");
-
-        client.executeMethod(method);
+    public void havingParameter_GET() throws IOException {
+        Executor.newInstance().execute(
+                Request.Get(jadlerUri() + "?p1=p1v1&p2=p2v1&p2=p2v2&p3=&p4&p%206=percent%20encoded")).discardContent();
         
         verifyThatRequest()
                 //p1 has exactly one value, p1v1
@@ -305,13 +285,13 @@ public class VerificationIntegrationTest {
      * are considered http parameters sources for such an http request.
      */
     @Test
-    public void havingParameterPOST() throws Exception {
-        //url encoded body of the request containing several parameters
+    public void havingParameterPOST() throws IOException {
+          //url encoded body of the request containing several parameters
         final String body = "p1=p1v1&p2=p2v1&p2=p2v2&p3=&p4&p%206=percent%20encoded";
-        //the query string contains additional parameters
-        final PostMethod method = new PostMethod("http://localhost:" + port() + "?p2=p2v3&p7=p7v1");
-        method.setRequestEntity(new StringRequestEntity(body, "application/x-www-form-urlencoded", "UTF-8"));
-        client.executeMethod(method);
+          //the query string contains additional parameters
+        Executor.newInstance().execute(Request.Post(jadlerUri() + "?p2=p2v3&p7=p7v1")
+                .bodyString(body, ContentType.create("application/x-www-form-urlencoded", "UTF-8")))
+                .discardContent();
         
         verifyThatRequest()
                 //p1 has exactly one value, p1v1
@@ -360,11 +340,10 @@ public class VerificationIntegrationTest {
      * Query string verification
      */
     @Test
-    public void havingQueryString() throws Exception {
+    public void havingQueryString() throws IOException {
         final String queryString = "p1=v1&p2=v2&name=%C5%99eho%C5%99";
         
-        final GetMethod method = new GetMethod("http://localhost:" + port() + '?' + queryString);
-        client.executeMethod(method);
+        Executor.newInstance().execute(Request.Get(jadlerUri() + '?' + queryString)).discardContent();
         
         verifyThatRequest()
             .havingQueryStringEqualTo(queryString)
@@ -377,7 +356,7 @@ public class VerificationIntegrationTest {
      * Empty query string verification
      */
     @Test
-    public void havingQueryString_empty() throws Exception {        
+    public void havingQueryString_empty() throws IOException {        
           //it seems HttpClient cannot send a request with an empty query string ('?' as the last character)
           //let's test this in a more hardcore fashion
         final URL url = new URL("http://localhost:" + port() + "/?");
@@ -395,10 +374,8 @@ public class VerificationIntegrationTest {
      * Missing query string verification
      */
     @Test
-    public void havingQueryString_none() throws Exception {        
-        final GetMethod method = new GetMethod("http://localhost:" + port());
-
-        client.executeMethod(method);
+    public void havingQueryString_none() throws IOException {
+        Executor.newInstance().execute(Request.Get(jadlerUri())).discardContent();
         
         verifyThatRequest()
             .havingQueryString(nullValue())
@@ -411,11 +388,11 @@ public class VerificationIntegrationTest {
      * Path verification
      */
     @Test
-    public void havingPath() throws Exception {
+    public void havingPath() throws IOException {
         final String path = "/a/b/c/d/%C5%99";
-        final GetMethod method = new GetMethod("http://localhost:" + port() + path + "?param=value");
-        client.executeMethod(method);
         
+        Executor.newInstance().execute(Request.Get(jadlerUri() + path + "?param=value")).discardContent();
+
         verifyThatRequest()
             .havingPathEqualTo(path) //the query string value is excluded
             .havingPath(notNullValue())
@@ -428,9 +405,8 @@ public class VerificationIntegrationTest {
      */
     @Test
     public void havingPath_root() throws IOException {
-        final GetMethod method = new GetMethod("http://localhost:" + port() + "/");
-        client.executeMethod(method);
-        
+        Executor.newInstance().execute(Request.Get(jadlerUri() + '/')).discardContent();
+
         verifyThatRequest()
             .havingPath(equalTo("/"))
             .havingPath(not(isEmptyOrNullString()))
@@ -443,8 +419,7 @@ public class VerificationIntegrationTest {
      */
     @Test
     public void noPredicates() throws IOException {
-        final GetMethod method = new GetMethod("http://localhost:" + port() + "/");
-        client.executeMethod(method);
+        Executor.newInstance().execute(Request.Get(jadlerUri())).discardContent();
         
         verifyThatRequest().receivedOnce();
     }
@@ -480,9 +455,11 @@ public class VerificationIntegrationTest {
      */
     @Test
     public void twoIdenticalRequests() throws IOException {
-        final GetMethod method = new GetMethod("http://localhost:" + port() + "/");
-        this.client.executeMethod(method);
-        this.client.executeMethod(method);
+        final Executor exec = Executor.newInstance();
+        final Request req = Request.Get(jadlerUri());
+        
+        exec.execute(req).discardContent();
+        exec.execute(req).discardContent();
         
         verifyThatRequest().receivedTimes(2);
     }

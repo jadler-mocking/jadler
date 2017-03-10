@@ -6,6 +6,7 @@ package net.jadler;
 
 import net.jadler.stubbing.server.jdk.JdkStubHttpServer;
 import org.junit.BeforeClass;
+
 import static net.jadler.Jadler.initJadlerUsing;
 
 /**

@@ -9,13 +9,18 @@ import java.nio.charset.Charset;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.Before;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.Header;
+import org.junit.AfterClass;
+import org.apache.http.Header;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.fluent.Executor;
+import org.apache.http.client.fluent.Request;
+import org.apache.http.message.BasicHeader;
 
 import static net.jadler.Jadler.verifyThatRequest;
 import static net.jadler.Jadler.port;
 import static net.jadler.Jadler.onRequest;
+import org.hamcrest.BaseMatcher;
+import org.hamcrest.Description;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.arrayContainingInAnyOrder;
@@ -51,14 +56,17 @@ public class JadlerRuleIntegrationTest {
             .withDefaultResponseHeader(HEADER_NAME1, HEADER_VALUE1_2)
             .withDefaultResponseHeader(HEADER_NAME2, HEADER_VALUE2);
     
-    private HttpClient client;
     
     @Before
     public void setUp() {
           //send a default response on any request
         onRequest().respond().withBody(STRING_WITH_DIACRITICS);
-        
-        this.client = new HttpClient();
+    }
+    
+    
+    @AfterClass
+    public static void cleanup() {
+        Executor.closeIdleConnections();
     }
     
 
@@ -74,34 +82,73 @@ public class JadlerRuleIntegrationTest {
     
     @Test
     public void withDefaultResponseContentType() throws IOException {
-        assertThat(this.createAndExecute().getResponseHeader("Content-Type").getValue(), is(DEFAULT_CONTENT_TYPE));
+        final HttpResponse response = Executor.newInstance().execute(Request.Get(jadlerUri())).returnResponse();
+        
+        assertThat(response.getFirstHeader("Content-Type").getValue(), is(DEFAULT_CONTENT_TYPE));
     }
     
     @Test
     public void withDefaultResponseStatus() throws IOException {
-        assertThat(this.createAndExecute().getStatusCode(), is(DEFAULT_STATUS));
+        final int status = Executor.newInstance().execute(Request.Get(jadlerUri()))
+                .returnResponse().getStatusLine().getStatusCode();
+        
+        assertThat(status, is(DEFAULT_STATUS));
     }
     
     @Test
     public void withDefaultResponseEncoding() throws IOException {
-        final byte[] body = this.createAndExecute().getResponseBody();
+        final byte[] body = Executor.newInstance().execute(Request.Get(jadlerUri())).returnContent().asBytes();
         assertThat(body, is(ISO_8859_2_REPRESENTATION));
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void withDefaultResponseHeader() throws IOException {
-        final GetMethod req = this.createAndExecute();
+        final HttpResponse response = Executor.newInstance().execute(Request.Get(jadlerUri())).returnResponse();
         
-        assertThat(req.getResponseHeaders(HEADER_NAME1), is(arrayContainingInAnyOrder(
-                new Header(HEADER_NAME1, HEADER_VALUE1_1), new Header(HEADER_NAME1, HEADER_VALUE1_2))));
+        assertThat(response.getHeaders(HEADER_NAME1), is(arrayContainingInAnyOrder(
+            header(HEADER_NAME1, HEADER_VALUE1_1), header(HEADER_NAME1, HEADER_VALUE1_2))));
         
-        assertThat(req.getResponseHeaders(HEADER_NAME2), is(arrayContaining(new Header(HEADER_NAME2, HEADER_VALUE2))));
+        assertThat(response.getHeaders(HEADER_NAME2), is(arrayContaining(header(HEADER_NAME2, HEADER_VALUE2))));
+    }
+
+    private String jadlerUri() {
+        return "http://localhost:" + port();
     }
     
-    private GetMethod createAndExecute() throws IOException {
-        final GetMethod req = new GetMethod("http://localhost:" + port());
-        this.client.executeMethod(req);
+    private static HeaderMatcher header(final String name, final String value) {
+        return new HeaderMatcher(name, value);
+    }
+    
+    
+    private static class HeaderMatcher extends BaseMatcher<Header> {
+
+        final String expectedName;
+        final String expectedValue;
+
         
-        return req;
+        public HeaderMatcher(final String expectedName, final String expectedValue) {
+            this.expectedName = expectedName;
+            this.expectedValue = expectedValue;
+        }
+
+
+        @Override
+        public boolean matches(final Object item) {
+            if (item == null) {
+                return false;
+            }
+            
+            final Header actual = (Header) item;
+            
+            return this.expectedName.equals(actual.getName()) && this.expectedValue.equals(expectedValue);
+        }
+
+        @Override
+        public void describeTo(Description description) {
+            description.appendText('<' + this.expectedName + ": " + this.expectedValue + '>');
+        }
+        
     }
 }
+ 
