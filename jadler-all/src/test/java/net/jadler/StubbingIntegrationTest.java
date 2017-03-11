@@ -4,13 +4,6 @@
  */
 package net.jadler;
 
-import org.apache.commons.httpclient.Header;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.methods.ByteArrayRequestEntity;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.methods.PostMethod;
-import org.apache.commons.httpclient.methods.StringRequestEntity;
-import org.apache.commons.io.IOUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -30,6 +23,12 @@ import org.junit.runner.RunWith;
 import net.jadler.parameters.StubHttpServerFactory;
 import net.jadler.parameters.TestParameters;
 import org.junit.runners.Parameterized.Parameters;
+import org.apache.http.Header;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.fluent.Executor;
+import org.apache.http.client.fluent.Request;
+import org.apache.http.entity.ContentType;
+import org.junit.AfterClass;
 
 import static net.jadler.Jadler.port;
 import static net.jadler.Jadler.initJadlerUsing;
@@ -52,6 +51,10 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.assertThat;
+import static net.jadler.utils.TestUtils.jadlerUri;
+import static net.jadler.utils.TestUtils.stringBodyOf;
+import static net.jadler.utils.TestUtils.rawBodyOf;
+import static net.jadler.utils.TestUtils.STATUS_RETRIEVER;
 
 
 /**
@@ -92,8 +95,6 @@ public class StubbingIntegrationTest {
     
     private final StubHttpServerFactory serverFactory;
     
-    private HttpClient client;
-    
     
     @Parameters
     public static Iterable<StubHttpServerFactory[]> parameters() {
@@ -114,14 +115,18 @@ public class StubbingIntegrationTest {
                 .withDefaultResponseHeader(DEFAULT_HEADER1_NAME, DEFAULT_HEADER1_VALUE2)
                 .withDefaultResponseEncoding(DEFAULT_CHARSET)
                 .withDefaultResponseContentType(DEFAULT_CONTENT_TYPE);
-        
-        this.client = new HttpClient();
     }
 
 
     @After
     public void tearDown() {
         closeJadler();
+    }
+    
+    
+    @AfterClass
+    public static void cleanup() {
+        Executor.closeIdleConnections();
     }
     
     
@@ -137,14 +142,12 @@ public class StubbingIntegrationTest {
             .havingBody(not(isEmptyOrNullString()))
         .respond()
             .withStatus(201);
+        
+        final int status = Executor.newInstance()
+                .execute(Request.Post(jadlerUri()).bodyString(body, null))
+                .handleResponse(STATUS_RETRIEVER);
 
-        final PostMethod method = new PostMethod("http://localhost:" + port());
-        method.setRequestEntity(new StringRequestEntity(body, null, null));
-        final int status = client.executeMethod(method);
-        
         assertThat(status, is(201));
-        
-        method.releaseConnection();
     }
     
     
@@ -159,13 +162,12 @@ public class StubbingIntegrationTest {
             .havingBody(isEmptyString())
         .respond()
             .withStatus(201);
-                    
-        final PostMethod method = new PostMethod("http://localhost:" + port());
-        method.setRequestEntity(new StringRequestEntity("", null, null));
-        final int status = client.executeMethod(method);
-        assertThat(status, is(201));
         
-        method.releaseConnection();
+        final int status = Executor.newInstance()
+                .execute(Request.Post(jadlerUri()))
+                .handleResponse(STATUS_RETRIEVER);
+
+        assertThat(status, is(201));
     }
     
     
@@ -178,13 +180,12 @@ public class StubbingIntegrationTest {
             .havingRawBodyEqualTo(BINARY_BODY)
         .respond()
             .withStatus(201);
+
+        final int status = Executor.newInstance()
+                .execute(Request.Post(jadlerUri()).bodyByteArray(BINARY_BODY))
+                .handleResponse(STATUS_RETRIEVER);
         
-        final PostMethod method = new PostMethod("http://localhost:" + port());
-        method.setRequestEntity(new ByteArrayRequestEntity(BINARY_BODY));
-        final int status = client.executeMethod(method);
         assertThat(status, is(201));
-        
-        method.releaseConnection();
     }
     
     
@@ -198,11 +199,11 @@ public class StubbingIntegrationTest {
         .respond()
             .withStatus(201);
         
-        final PostMethod method = new PostMethod("http://localhost:" + port());
-        final int status = client.executeMethod(method);
-        assertThat(status, is(201));
+        final int status = Executor.newInstance()
+                .execute(Request.Post(jadlerUri()))
+                .handleResponse(STATUS_RETRIEVER);
         
-        method.releaseConnection();
+        assertThat(status, is(201));
     }
     
     
@@ -218,14 +219,12 @@ public class StubbingIntegrationTest {
         .respond()
             .withStatus(201);
         
-        final PostMethod method = new PostMethod("http://localhost:" + port());
-        method.setRequestEntity(
-                new StringRequestEntity(STRING_WITH_DIACRITICS, "text/plain", UTF_8_CHARSET.name()));
+        final int status = Executor.newInstance()
+                .execute(Request.Post(jadlerUri())
+                        .bodyString(STRING_WITH_DIACRITICS, ContentType.create("text/plain", UTF_8_CHARSET)))
+                .handleResponse(STATUS_RETRIEVER);
 
-        int status = client.executeMethod(method);
         assertThat(status, is(201));
-        
-        method.releaseConnection();
     }
     
     
@@ -241,14 +240,12 @@ public class StubbingIntegrationTest {
         .respond()
             .withStatus(201);
         
-        final PostMethod method = new PostMethod("http://localhost:" + port());
-        method.setRequestEntity(
-                new StringRequestEntity(STRING_WITH_DIACRITICS, "text/plain", ISO_8859_2_CHARSET.name()));
-
-        int status = client.executeMethod(method);
-        assertThat(status, is(201));
+        final int status = Executor.newInstance()
+                .execute(Request.Post(jadlerUri())
+                        .bodyString(STRING_WITH_DIACRITICS, ContentType.create("text/plain", ISO_8859_2_CHARSET)))
+                .handleResponse(STATUS_RETRIEVER);
         
-        method.releaseConnection();
+        assertThat(status, is(201));
     }
     
     
@@ -279,15 +276,12 @@ public class StubbingIntegrationTest {
         .respond()
             .withStatus(201);
         
-        final GetMethod method = new GetMethod("http://localhost:" + port());
-        method.addRequestHeader("hdr1", "h1v1");
-        method.addRequestHeader("hdr2", "h2v1");
-        method.addRequestHeader("hdr2", "h2v2");
-        
-        int status = client.executeMethod(method);
+        final int status = Executor.newInstance()
+                .execute(Request.Get(jadlerUri())
+                        .addHeader("hdr1", "h1v1").addHeader("hdr2", "h2v1").addHeader("hdr2", "h2v2"))
+                .handleResponse(STATUS_RETRIEVER);
+
         assertThat(status, is(201));
-        
-        method.releaseConnection();
     }
     
     
@@ -305,13 +299,11 @@ public class StubbingIntegrationTest {
             .respond()
                 .withStatus(201);
         
-        final GetMethod method = new GetMethod("http://localhost:" + port());
-        method.addRequestHeader("empty", "");
+        final int status = Executor.newInstance()
+                .execute(Request.Get(jadlerUri()).addHeader("empty", ""))
+                .handleResponse(STATUS_RETRIEVER);
         
-        int status = client.executeMethod(method);
         assertThat(status, is(201));
-        
-        method.releaseConnection();
     }
     
     
@@ -327,12 +319,11 @@ public class StubbingIntegrationTest {
         .respond()
             .withStatus(201);
         
-        final PostMethod method = new PostMethod("http://localhost:" + port());
-
-        int status = client.executeMethod(method);
-        assertThat(status, is(201));
+        final int status = Executor.newInstance()
+                .execute(Request.Post(jadlerUri()))
+                .handleResponse(STATUS_RETRIEVER);
         
-        method.releaseConnection();
+        assertThat(status, is(201));
     }
     
     
@@ -375,14 +366,12 @@ public class StubbingIntegrationTest {
             .havingParameters("p1", "p2", "p%206")
         .respond()
             .withStatus(201);
-        
-        final GetMethod method = new GetMethod("http://localhost:" + port() + 
-                "?p1=p1v1&p2=p2v1&p2=p2v2&p3=&p4&p%206=percent%20encoded");
 
-        int status = client.executeMethod(method);
-        assertThat(status, is(201));
+        final int status = Executor.newInstance()
+                .execute(Request.Get(jadlerUri() + "?p1=p1v1&p2=p2v1&p2=p2v2&p3=&p4&p%206=percent%20encoded"))
+                .handleResponse(STATUS_RETRIEVER);
         
-        method.releaseConnection();
+        assertThat(status, is(201));
     }
     
     
@@ -437,13 +426,12 @@ public class StubbingIntegrationTest {
         .respond()
             .withStatus(201);
         
-        final PostMethod method = new PostMethod("http://localhost:" + port() + "?p2=p2v3&p7=p7v1");
-        method.setRequestEntity(new StringRequestEntity(body, "application/x-www-form-urlencoded", "UTF-8"));
-
-        int status = client.executeMethod(method);
-        assertThat(status, is(201));
+        final int status = Executor.newInstance()
+                .execute(Request.Post(jadlerUri() + "?p2=p2v3&p7=p7v1")
+                        .bodyString(body, ContentType.create("application/x-www-form-urlencoded", UTF_8_CHARSET)))
+                .handleResponse(STATUS_RETRIEVER);
         
-        method.releaseConnection();
+        assertThat(status, is(201));
     }
     
     
@@ -459,13 +447,11 @@ public class StubbingIntegrationTest {
             .havingQueryString(not(startsWith("?"))) //no '?' character at the beginning
         .respond()
             .withStatus(201);
-        
-        final GetMethod method = new GetMethod("http://localhost:" + port() + '?' + queryString);
 
-        int status = client.executeMethod(method);
+        int status = Executor.newInstance()
+                .execute(Request.Get(jadlerUri() + '?' + queryString)).handleResponse(STATUS_RETRIEVER);
+                
         assertThat(status, is(201));
-        
-        method.releaseConnection();
     }
     
     
@@ -501,13 +487,11 @@ public class StubbingIntegrationTest {
             .havingQueryString(not(equalTo("")))
         .respond()
             .withStatus(201);
-        
-        final GetMethod method = new GetMethod("http://localhost:" + port());
 
-        int status = client.executeMethod(method);
-        assertThat(status, is(201));
+        int status = Executor.newInstance()
+                .execute(Request.Get(jadlerUri())).handleResponse(STATUS_RETRIEVER);
         
-        method.releaseConnection();
+        assertThat(status, is(201));
     }
     
     
@@ -524,12 +508,10 @@ public class StubbingIntegrationTest {
         .respond()
             .withStatus(201);
         
-        final GetMethod method = new GetMethod("http://localhost:" + port() + path + "?param=value");
-
-        int status = client.executeMethod(method);
-        assertThat(status, is(201));
+        final int status = Executor.newInstance()
+                .execute(Request.Get(jadlerUri() + path + "?param=value")).handleResponse(STATUS_RETRIEVER);
         
-        method.releaseConnection();
+        assertThat(status, is(201));
     }
     
     
@@ -544,11 +526,10 @@ public class StubbingIntegrationTest {
         .respond()
             .withStatus(201);
         
-        final GetMethod method = new GetMethod("http://localhost:" + port() + "/");
-        final int status = client.executeMethod(method);
-        assertThat(status, is(201));
+        final int status = Executor.newInstance()
+                .execute(Request.Get(jadlerUri() + "/")).handleResponse(STATUS_RETRIEVER);
         
-        method.releaseConnection();
+        assertThat(status, is(201));
     }
     
     
@@ -565,7 +546,7 @@ public class StubbingIntegrationTest {
         .respondUsing(new Responder() {
 
             @Override
-            public StubResponse nextResponse(final Request request) {
+            public StubResponse nextResponse(final net.jadler.Request request) {
                 
                 return StubResponse.builder()
                         .status(201)
@@ -575,14 +556,15 @@ public class StubbingIntegrationTest {
             }
         });
         
-        final PostMethod method = new PostMethod("http://localhost:" + port());
-        method.setRequestEntity(new StringRequestEntity(STRING_WITH_DIACRITICS, UTF_8_TYPE, null));
-        final int status = client.executeMethod(method);
-        assertThat(status, is(201));
-        assertThat(method.getResponseBodyAsString(), is(STRING_WITH_DIACRITICS));
+        final HttpResponse response = Executor.newInstance().execute(
+                Request.Post(jadlerUri())
+                .bodyString(STRING_WITH_DIACRITICS, ContentType.create("text/plain", ISO_8859_2_CHARSET)))
+                .returnResponse();
         
-        method.releaseConnection();
+        assertThat(response.getStatusLine().getStatusCode(), is(201));
+        assertThat(stringBodyOf(response), is(STRING_WITH_DIACRITICS));
     }
+    
     
     /*
      * Explicitely defined response status scenario. Must override the default status set in the Jadler initialization.
@@ -591,11 +573,10 @@ public class StubbingIntegrationTest {
     public void withStatus() throws Exception {
         onRequest().respond().withStatus(201);
         
-        final GetMethod method = new GetMethod("http://localhost:" + port());
-        int status = client.executeMethod(method);
-        assertThat(status, is(201));
+        final int status = Executor.newInstance()
+                .execute(Request.Get(jadlerUri())).handleResponse(STATUS_RETRIEVER);
         
-        method.releaseConnection();
+        assertThat(status, is(201));
     }
     
     
@@ -610,24 +591,15 @@ public class StubbingIntegrationTest {
                 .withContentType(ISO_8859_2_TYPE)
                 .withBody(STRING_WITH_DIACRITICS);
         
-        final GetMethod method = new GetMethod("http://localhost:" + port());
-        client.executeMethod(method);
+        final HttpResponse response = Executor.newInstance().execute(Request.Get(jadlerUri())).returnResponse();
         
           //the content type header set to the specified value
-        assertThat(method.getResponseHeader("Content-Type").getValue(), is(ISO_8859_2_TYPE));
-
-          //the http client was able to retrieve the charset part of the content type header
-        assertThat(method.getResponseCharSet(), is(ISO_8859_2_CHARSET.name()));
-          
-          //since the body was encoded in "ISO-8859-2" and content type charset was set to "ISO-8859-2",
-          //the client should be able to read it correctly
-        assertThat(method.getResponseBodyAsString(), is(STRING_WITH_DIACRITICS));
-
+        assertThat(response.getFirstHeader("Content-Type").getValue(), is(ISO_8859_2_TYPE));
+          // try to read the body using the charset defined in the Content-Type header
+        assertThat(stringBodyOf(response), is(STRING_WITH_DIACRITICS));
         
           //the body bytes correspond to a ISO-8859-2 representation of the string
-        assertThat(method.getResponseBody(), is(ISO_8859_2_BODY_REPRESENTATION));
-        
-        method.releaseConnection();
+        assertThat(rawBodyOf(response), is(ISO_8859_2_BODY_REPRESENTATION));
     }
     
 
@@ -645,26 +617,19 @@ public class StubbingIntegrationTest {
                 .withContentType(UTF_8_TYPE)  //but the content-type header says it's UTF-8 incorrectly
                 .withBody(STRING_WITH_DIACRITICS);
         
-        final GetMethod method = new GetMethod("http://localhost:" + port());
-        client.executeMethod(method);
+        final HttpResponse response = Executor.newInstance().execute(Request.Get(jadlerUri())).returnResponse();
         
           //the content type header set to the specified value
-        assertThat(method.getResponseHeader("Content-Type").getValue(), is(UTF_8_TYPE));
-
-          //the http client was able to retrieve the charset part of the content type header
-        assertThat(method.getResponseCharSet(), is(UTF_8_CHARSET.name()));
+        assertThat(response.getFirstHeader("Content-Type").getValue(), is(UTF_8_TYPE));
         
           //however the applied encoding is ISO-8859-2
-        final byte[] body = IOUtils.toByteArray(method.getResponseBodyAsStream());
-        assertThat(body, is(ISO_8859_2_BODY_REPRESENTATION));
-        
-        method.releaseConnection();
+        assertThat(rawBodyOf(response), is(ISO_8859_2_BODY_REPRESENTATION));
     }
     
     
     /*
      * Response body scenario using a reader instance with an explicitly set (ISO-8859-2) encoding and an explicitly
-     * set default content-type header (text/html; charset=UTF-8).
+     * set default content-type header (text/html; charset=ISO-8859-2).
      */
     @Test
     public void withBodyReader() throws IOException {
@@ -675,13 +640,9 @@ public class StubbingIntegrationTest {
                 .withEncoding(ISO_8859_2_CHARSET)
                 .withContentType(ISO_8859_2_TYPE);
         
-        final GetMethod method = new GetMethod("http://localhost:" + port());
-        client.executeMethod(method);
+        final HttpResponse response = Executor.newInstance().execute(Request.Get(jadlerUri())).returnResponse();
 
-        final byte[] resultBody = IOUtils.toByteArray(method.getResponseBodyAsStream());
-        assertThat(resultBody, is(ISO_8859_2_BODY_REPRESENTATION));
-        
-        method.releaseConnection();
+        assertThat(rawBodyOf(response), is(ISO_8859_2_BODY_REPRESENTATION));
     }
     
     
@@ -696,13 +657,9 @@ public class StubbingIntegrationTest {
         
         onRequest().respond().withBody(is);
         
-        final GetMethod method = new GetMethod("http://localhost:" + port());
-        client.executeMethod(method);
+        final HttpResponse response = Executor.newInstance().execute(Request.Get(jadlerUri())).returnResponse();
 
-        final byte[] resultBody = IOUtils.toByteArray(method.getResponseBodyAsStream());
-        assertThat(resultBody, is(BINARY_BODY));
-        
-        method.releaseConnection();
+        assertThat(rawBodyOf(response), is(BINARY_BODY));
     }
     
     
@@ -715,15 +672,12 @@ public class StubbingIntegrationTest {
     public void withBodyArrayOfBytes() throws IOException { 
         onRequest().respond().withBody(BINARY_BODY);
         
-        final GetMethod method = new GetMethod("http://localhost:" + port());
-        client.executeMethod(method);
+        final HttpResponse response = Executor.newInstance().execute(Request.Get(jadlerUri())).returnResponse();
 
-        final byte[] resultBody = IOUtils.toByteArray(method.getResponseBodyAsStream());
-        assertThat(resultBody, is(BINARY_BODY));
-        
-        method.releaseConnection();
+        assertThat(rawBodyOf(response), is(BINARY_BODY));
     }
 
+    
     /*
      * Response headers scenario.
      */
@@ -734,15 +688,16 @@ public class StubbingIntegrationTest {
                 .withHeader(HEADER_NAME1, HEADER_VALUE12)
                 .withHeader(HEADER_NAME2, HEADER_VALUE2);
         
-        final GetMethod method = new GetMethod("http://localhost:" + port());
-        client.executeMethod(method);
+        final HttpResponse response = Executor.newInstance().execute(Request.Get(jadlerUri())).returnResponse();
         
-        final Header[] headers1 = method.getResponseHeaders(HEADER_NAME1);
+        final Header[] headers1 = response.getHeaders(HEADER_NAME1);
         
+        assertThat(headers1.length, is(2));
         assertThat(headers1[0].getValue(), is(HEADER_VALUE11));
         assertThat(headers1[1].getValue(), is(HEADER_VALUE12));
         
-        final Header[] headers2 = method.getResponseHeaders(HEADER_NAME2);
+        final Header[] headers2 = response.getHeaders(HEADER_NAME2);
+        assertThat(headers2.length, is(1));
         assertThat(headers2[0].getValue(), is(HEADER_VALUE2));
     }
     
@@ -757,11 +712,9 @@ public class StubbingIntegrationTest {
         onRequest().that(is(anything())).respond().withStatus(202);
         onRequest().that(is(anything())).respond().withStatus(203);
         
-        final GetMethod method = new GetMethod("http://localhost:" + port());
-        final int status = client.executeMethod(method);
+        final int status = Executor.newInstance().execute(Request.Get(jadlerUri())).handleResponse(STATUS_RETRIEVER);
+
         assertThat(status, is(203));
-        
-        method.releaseConnection();
     }
     
     
@@ -772,22 +725,15 @@ public class StubbingIntegrationTest {
     public void multipleStubResponses() throws IOException {
         onRequest().respond().withStatus(200).thenRespond().withStatus(201);
         
-        final GetMethod method1 = new GetMethod("http://localhost:" + port());
-        final int status1 = client.executeMethod(method1);
+        final int status1 = Executor.newInstance().execute(Request.Get(jadlerUri())).handleResponse(STATUS_RETRIEVER);
         assertThat(status1, is(200));
         
-        final GetMethod method2 = new GetMethod("http://localhost:" + port());
-        final int status2 = client.executeMethod(method2);
+        final int status2 = Executor.newInstance().execute(Request.Get(jadlerUri())).handleResponse(STATUS_RETRIEVER);
         assertThat(status2, is(201));
         
           //the 201 status must be repeated for every subsequent request
-        final GetMethod method3 = new GetMethod("http://localhost:" + port());
-        final int status3 = client.executeMethod(method3);
+        final int status3 = Executor.newInstance().execute(Request.Get(jadlerUri())).handleResponse(STATUS_RETRIEVER);
         assertThat(status3, is(201));
-        
-        method1.releaseConnection();
-        method2.releaseConnection();
-        method3.releaseConnection();
     }
     
     
@@ -798,14 +744,12 @@ public class StubbingIntegrationTest {
     @Test
     public void noRuleApplicable() throws IOException {
         onRequest().that(is(not(anything()))).respond();
-        final GetMethod method = new GetMethod("http://localhost:" + port());
-        final int status = client.executeMethod(method);
         
-        assertThat(status, is(404));
-        assertThat(method.getResponseHeader("Content-Type").getValue(), is("text/plain; charset=utf-8"));
-        assertThat(method.getResponseBodyAsString(), is("No stub response found for the incoming request"));
+        final HttpResponse response = Executor.newInstance().execute(Request.Get(jadlerUri())).returnResponse();
         
-        method.releaseConnection();
+        assertThat(response.getStatusLine().getStatusCode(), is(404));
+        assertThat(response.getFirstHeader("Content-Type").getValue(), is("text/plain; charset=utf-8"));
+        assertThat(stringBodyOf(response), is("No stub response found for the incoming request"));
     }
     
     
@@ -819,29 +763,23 @@ public class StubbingIntegrationTest {
           //encoding and content-type values set in the setUp phase
         onRequest().respond().withBody(STRING_WITH_DIACRITICS);
         
-        final GetMethod method = new GetMethod("http://localhost:" + port());
-        int status = client.executeMethod(method);
-        assertThat(status, is(DEFAULT_STATUS));
+        final HttpResponse response = Executor.newInstance().execute(Request.Get(jadlerUri())).returnResponse();
 
-        final Header[] responseHeaders = method.getResponseHeaders(DEFAULT_HEADER1_NAME);
+        assertThat(response.getStatusLine().getStatusCode(), is(DEFAULT_STATUS));
+
+        final Header[] responseHeaders = response.getHeaders(DEFAULT_HEADER1_NAME);
         assertThat(responseHeaders.length, is(2));
         assertThat(responseHeaders[0].getValue(), is(DEFAULT_HEADER1_VALUE1));
         assertThat(responseHeaders[1].getValue(), is(DEFAULT_HEADER1_VALUE2));
         
           //the content type header set to the default value
-        assertThat(method.getResponseHeader("Content-Type").getValue(), is(DEFAULT_CONTENT_TYPE));
+        assertThat(response.getFirstHeader("Content-Type").getValue(), is(DEFAULT_CONTENT_TYPE));
         
-          //the http client was able to retrieve the charset part of the content type header
-        assertThat(method.getResponseCharSet(), is(DEFAULT_CHARSET.name()));
-        
-          //http client must be able to read the body correctly
-        assertThat(method.getResponseBodyAsString(), is(STRING_WITH_DIACRITICS));
+          // try to read the body using the charset defined in the Content-Type header
+        assertThat(stringBodyOf(response), is(STRING_WITH_DIACRITICS));
         
           //the body bytes correspond to the ISO-8859-2 representation of the string
-        final byte[] body = IOUtils.toByteArray(method.getResponseBodyAsStream());
-        assertThat(body, is(DEFAULT_ENCODING_BODY_REPRESENTATION));        
-        
-        method.releaseConnection();
+        assertThat(rawBodyOf(response), is(DEFAULT_ENCODING_BODY_REPRESENTATION));        
     }
     
     
@@ -854,17 +792,14 @@ public class StubbingIntegrationTest {
     public void overriddenDefaultHeader() throws Exception {
         onRequest().respond().withHeader(DEFAULT_HEADER1_NAME, "value3");
         
-        final GetMethod method = new GetMethod("http://localhost:" + port());
-        int status = client.executeMethod(method);
-        assertThat(status, is(DEFAULT_STATUS));
+        final HttpResponse response = Executor.newInstance().execute(Request.Get(jadlerUri())).returnResponse();
+        assertThat(response.getStatusLine().getStatusCode(), is(DEFAULT_STATUS));
 
-        final Header[] responseHeaders = method.getResponseHeaders(DEFAULT_HEADER1_NAME);
+        final Header[] responseHeaders = response.getHeaders(DEFAULT_HEADER1_NAME);
         assertThat(responseHeaders.length, is(3));
         assertThat(responseHeaders[0].getValue(), is(DEFAULT_HEADER1_VALUE1));
         assertThat(responseHeaders[1].getValue(), is(DEFAULT_HEADER1_VALUE2));
         assertThat(responseHeaders[2].getValue(), is("value3"));
-        
-        method.releaseConnection();
     }
     
     
@@ -876,14 +811,12 @@ public class StubbingIntegrationTest {
     public void delay() throws IOException {
         onRequest().respond().withDelay(1, TimeUnit.SECONDS);
         
-        final GetMethod method = new GetMethod("http://localhost:" + port());
+        final Executor executor = Executor.newInstance();
         
         final long start = System.currentTimeMillis();
-        client.executeMethod(method);
+        executor.execute(Request.Get(jadlerUri())).discardContent();
         final long end = System.currentTimeMillis();
         final long dur = end - start;
         assertThat(dur / 1000, is(greaterThanOrEqualTo(1L)));
-        
-        method.releaseConnection();
     }
 }

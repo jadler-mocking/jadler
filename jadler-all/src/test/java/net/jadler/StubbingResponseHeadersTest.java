@@ -5,24 +5,26 @@
 package net.jadler;
 
 import java.io.IOException;
-import org.apache.commons.httpclient.Header;
-import org.apache.commons.httpclient.methods.GetMethod;
 import org.junit.Test;
-import org.apache.commons.httpclient.HttpClient;
 import org.junit.After;
 import org.junit.Before;
 import net.jadler.parameters.TestParameters;
 import net.jadler.parameters.StubHttpServerFactory;
 import org.junit.runners.Parameterized;
 import org.junit.runner.RunWith;
+import org.apache.http.client.fluent.Executor;
+import org.apache.http.client.fluent.Request;
+import org.apache.http.HttpResponse;
+import org.junit.AfterClass;
 
 import static net.jadler.Jadler.onRequest;
-import static net.jadler.Jadler.port;
 import static net.jadler.Jadler.initJadlerUsing;
 import static net.jadler.Jadler.closeJadler;
+import static net.jadler.utils.TestUtils.jadlerUri;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.hamcrest.Matchers.notNullValue;
+
 
 
 /**
@@ -30,8 +32,6 @@ import static org.hamcrest.Matchers.notNullValue;
  */
 @RunWith(Parameterized.class)
 public class StubbingResponseHeadersTest {
-    
-    private HttpClient client;
     
     private final StubHttpServerFactory serverFactory;
     
@@ -47,8 +47,6 @@ public class StubbingResponseHeadersTest {
     
     @Before
     public void setUp() {
-        this.client = new HttpClient();
-        
         initJadlerUsing(serverFactory.createServer());
     }
     
@@ -59,6 +57,12 @@ public class StubbingResponseHeadersTest {
     }
     
     
+    @AfterClass
+    public static void cleanup() {
+        Executor.closeIdleConnections();
+    }
+    
+    
     /*
      * Checks that exactly two default headers (Date and Content-Lenght) are sent in a stub response. 
      */
@@ -66,14 +70,10 @@ public class StubbingResponseHeadersTest {
     public void allHeaders() throws IOException {
         onRequest().respond().withBody("13 chars long");
         
-        final GetMethod method = new GetMethod("http://localhost:" + port());
-        client.executeMethod(method);
+        final HttpResponse resp = Executor.newInstance().execute(Request.Get(jadlerUri())).returnResponse();
 
-        final Header[] responseHeaders = method.getResponseHeaders();
-        
-        assertThat(responseHeaders.length, is(2));
-        assertThat(method.getResponseHeader("Date"), is(notNullValue()));
-        assertThat(method.getResponseHeader("Content-Length").getValue(), is("13"));
+        assertThat(resp.getAllHeaders().length, is(2));
+        assertThat(resp.getFirstHeader("Date"), is(notNullValue()));
+        assertThat(resp.getFirstHeader("Content-Length").getValue(), is("13"));
     }
-    
 }

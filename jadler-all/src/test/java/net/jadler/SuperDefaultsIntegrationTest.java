@@ -4,19 +4,21 @@
  */
 package net.jadler;
 
-import org.apache.commons.httpclient.HttpClient;
 import org.junit.After;
 import org.junit.Test;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import org.apache.commons.httpclient.methods.PostMethod;
-import org.apache.commons.httpclient.methods.StringRequestEntity;
+import org.apache.http.client.fluent.Executor;
+import org.apache.http.client.fluent.Request;
 import org.junit.Before;
+import org.apache.http.HttpResponse;
+import org.junit.AfterClass;
 
 import static net.jadler.Jadler.closeJadler;
 import static net.jadler.Jadler.initJadler;
 import static net.jadler.Jadler.onRequest;
-import static net.jadler.Jadler.port;
+import static net.jadler.utils.TestUtils.jadlerUri;
+import static net.jadler.utils.TestUtils.rawBodyOf;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
@@ -28,18 +30,21 @@ public class SuperDefaultsIntegrationTest {
     
     private static final String STRING_WITH_DIACRITICS = "\u00e1\u0159\u017e";
     
-    private HttpClient client;
-    
     @Before
     public void setUp() {
         initJadler(); //no defaults for the response status nor encoding set here
-        this.client = new HttpClient();
     }
     
     
     @After
     public void tearDown() {
         closeJadler();
+    }
+    
+    
+    @AfterClass
+    public static void cleanup() {
+        Executor.closeIdleConnections();
     }
     
     
@@ -51,14 +56,13 @@ public class SuperDefaultsIntegrationTest {
     public void superDefaults() throws IOException {
           //no values for the response status nor encoding set here
         onRequest().respond().withBody(STRING_WITH_DIACRITICS);
-
-        final PostMethod method = new PostMethod("http://localhost:" + port());
-        method.setRequestEntity(new StringRequestEntity("postbody", null, null));
         
-        int status = client.executeMethod(method);
-        assertThat(status, is(200));
+        final HttpResponse response = Executor.newInstance()
+                .execute(Request.Post(jadlerUri()).bodyString("postbody", null)).returnResponse();
+        
+        assertThat(response.getStatusLine().getStatusCode(), is(200));
         
           //the response body is decodable correctly using UTF-8
-        assertThat(method.getResponseBody(), is(STRING_WITH_DIACRITICS.getBytes(Charset.forName("UTF-8"))));
+        assertThat(rawBodyOf(response), is(STRING_WITH_DIACRITICS.getBytes(Charset.forName("UTF-8"))));
     }
 }
