@@ -7,8 +7,6 @@ package net.jadler;
 import net.jadler.stubbing.Stubber;
 import net.jadler.stubbing.server.StubHttpServerManager;
 import java.nio.charset.Charset;
-import java.util.*;
-
 import net.jadler.stubbing.RequestStubbing;
 import net.jadler.stubbing.StubbingFactory;
 import net.jadler.stubbing.Stubbing;
@@ -17,6 +15,14 @@ import net.jadler.stubbing.HttpStub;
 import net.jadler.exception.JadlerException;
 import net.jadler.stubbing.server.StubHttpServer;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -89,7 +95,7 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, RequestMana
             this.requestqueue = new LinkedBlockingQueue<Request>();
         }
     }
-    
+
     
     /**
      * Creates new JadlerMocker instance bound to the given http stub server.
