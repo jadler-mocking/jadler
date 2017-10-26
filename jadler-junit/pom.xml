@@ -39,9 +39,13 @@ This program is made available under the terms of the MIT License.
             <artifactId>spring-core</artifactId>
         </dependency>
         <dependency>
-            <groupId>commons-httpclient</groupId>
-            <artifactId>commons-httpclient</artifactId>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
         </dependency>
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>fluent-hc</artifactId>
+            </dependency>
         <dependency>
             <groupId>net.jadler</groupId>
             <artifactId>jadler-jetty</artifactId>
@@ -52,4 +56,17 @@ This program is made available under the terms of the MIT License.
             <artifactId>mockito-all</artifactId>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.pitest</groupId>
+                <artifactId>pitest-maven</artifactId>
+                <configuration>
+                    <mutationThreshold>70</mutationThreshold>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
 </project>

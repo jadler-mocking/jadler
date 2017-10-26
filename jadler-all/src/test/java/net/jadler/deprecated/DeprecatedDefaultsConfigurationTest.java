@@ -2,27 +2,30 @@
  * Copyright (c) 2012 - 2016 Jadler contributors
  * This program is made available under the terms of the MIT License.
  */
-package net.jadler;
+package net.jadler.deprecated;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
 import org.junit.Test;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.http.client.fluent.Executor;
+import org.apache.http.client.fluent.Request;
+import org.apache.http.HttpResponse;
+import org.junit.AfterClass;
 
 import static net.jadler.Jadler.closeJadler;
 import static net.jadler.Jadler.initJadler;
 import static net.jadler.Jadler.onRequest;
-import static net.jadler.Jadler.port;
 import static net.jadler.Jadler.verifyThatRequest;
+import static net.jadler.utils.TestUtils.jadlerUri;
+import static net.jadler.utils.TestUtils.rawBodyOf;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
 /**
- * Tests the deprecated way of configuring jadler defaults still works.
+ * Tests that the deprecated way of configuring jadler defaults still works.
  */
-public class JadlerDeprecatedDefaultsConfigurationTest {
+public class DeprecatedDefaultsConfigurationTest {
     
 
     private static final int EXPECTED_STATUS = 409;
@@ -34,8 +37,14 @@ public class JadlerDeprecatedDefaultsConfigurationTest {
     private static final byte[] ISO_8859_2_REPRESENTATION = {(byte)0xE1, (byte)0xF8, (byte)0xBE};
     
  
+    @AfterClass
+    public static void cleanup() {
+        Executor.closeIdleConnections();
+    }
+    
+    
     /*
-     * Tests the response defaults
+     * Tests that the deprecated way of setting response defaults using the {@code that()} clause still works
      */
     @Test
     @SuppressWarnings("deprecation")
@@ -50,16 +59,12 @@ public class JadlerDeprecatedDefaultsConfigurationTest {
         try {
             onRequest().respond().withBody(STRING_WITH_DIACRITICS);
             
-            final HttpClient client = new HttpClient();
-            final GetMethod method = new GetMethod("http://localhost:" + port() + "/");
-            client.executeMethod(method);
+            final HttpResponse response = Executor.newInstance().execute(Request.Get(jadlerUri())).returnResponse();
 
-            assertThat(method.getStatusCode(), is(EXPECTED_STATUS));
-            assertThat(method.getResponseHeader("Content-Type").getValue(), is(EXPECTED_CONTENT_TYPE));
-            assertThat(method.getResponseHeader(EXPECTED_HEADER_NAME).getValue(), is(EXPECTED_HEADER_VALUE));
-            assertThat(method.getResponseBody(), is(ISO_8859_2_REPRESENTATION));
-            
-            method.releaseConnection();
+            assertThat(response.getStatusLine().getStatusCode(), is(EXPECTED_STATUS));
+            assertThat(response.getFirstHeader("Content-Type").getValue(), is(EXPECTED_CONTENT_TYPE));
+            assertThat(response.getFirstHeader(EXPECTED_HEADER_NAME).getValue(), is(EXPECTED_HEADER_VALUE));
+            assertThat(rawBodyOf(response), is(ISO_8859_2_REPRESENTATION));
         }
         finally {
             closeJadler();
@@ -68,7 +73,7 @@ public class JadlerDeprecatedDefaultsConfigurationTest {
     
    
     /*
-     * Tests the requests recording settings
+     * Tests that the deprecated way of disabling requests recording using the {@code that()} clause still works
      */
     @Test(expected = IllegalStateException.class)
     @SuppressWarnings("deprecation")
