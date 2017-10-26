@@ -2,10 +2,8 @@ package net.jadler;
 
 import net.jadler.mocking.VerificationException;
 import net.jadler.mocking.Verifying;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.methods.PostMethod;
-import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.apache.commons.lang.time.StopWatch;
+import org.apache.http.entity.ContentType;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -33,17 +31,15 @@ import static net.jadler.Jadler.onRequest;
 
 
 
-public class JadlerMockingAsyncIntegrationTest {
+public class VerificationAsyncIntegrationTest {
 
 	private StopWatch stopWatch;
-	private HttpClient client;
 	private ScheduledExecutorService exec;
 
 	@Before
 	public void init() {
 		initJadler();
 		this.stopWatch = new StopWatch();
-		this.client = new HttpClient();
 		this.exec = Executors.newSingleThreadScheduledExecutor();
 	}
 
@@ -125,8 +121,10 @@ public class JadlerMockingAsyncIntegrationTest {
 	}
 
 	private int performExpectedRequest() throws IOException {
-		final PostMethod method = new PostMethod("http://localhost:"+port()+"/expectedPath");
-		method.setRequestEntity(new StringRequestEntity("expected body", "text/plain", "UTF-8"));
-		return client.executeMethod(method);
+		return org.apache.http.client.fluent.Request
+				.Post("http://localhost:"+port()+"/expectedPath")
+				.bodyString("expected body", ContentType.DEFAULT_TEXT)
+				.execute()
+				.returnResponse().getStatusLine().getStatusCode();
 	}
 }
