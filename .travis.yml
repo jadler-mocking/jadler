@@ -3,6 +3,12 @@ jdk:
   - openjdk8
   - openjdk11
 
+# Cache Maven repo between Travis builds
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+
+# Coverity static analysis: https://scan.coverity.com/projects/jadler-mocking-jadler
 env:
   global:
    # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
