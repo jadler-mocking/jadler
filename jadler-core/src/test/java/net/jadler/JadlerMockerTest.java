@@ -12,6 +12,8 @@ import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.concurrent.*;
+
 import net.jadler.stubbing.Stubbing;
 import net.jadler.stubbing.HttpStub;
 import net.jadler.stubbing.StubResponse;
@@ -28,6 +30,9 @@ import org.apache.log4j.PatternLayout;
 import org.apache.log4j.WriterAppender;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -50,33 +55,19 @@ import static org.mockito.Mockito.doAnswer;
 import static org.hamcrest.Matchers.is;
 
 
-public class JadlerMockerTest {
-    
-    private static final int DEFAULT_STATUS = 204;
-    private static final String HEADER_NAME1 = "h1";
-    private static final String HEADER_VALUE1 = "v1";
-    private static final String HEADER_NAME2 = "h2";
-    private static final String HEADER_VALUE2 = "v2";
-    private static final Charset DEFAULT_ENCODING = Charset.forName("UTF-16");
-    private static final int PORT = 12345;
-    private static final String HTTP_STUB1_TO_STRING = "http stub 1 toString";
-    private static final String HTTP_STUB2_TO_STRING = "http stub 2 toString";
-    private static final String HTTP_STUB1_MISMATCH = "http stub 1 mismatch";
-    private static final String HTTP_STUB2_MISMATCH = "http stub 2 mismatch";
-    private static final String MATCHER1_DESCRIPTION = "M1 description";
-    private static final String MATCHER1_MISMATCH = "M1 mismatch";
-    private static final String MATCHER2_DESCRIPTION = "M2 description";
-    private static final String MATCHER2_MISMATCH = "M2 mismatch";
-    private static final String COUNT_MATCHER_DESCRIPTION = "cnt matcher description";
-    private static final String COUNT_MATCHER_MISMATCH = "cnt matcher mismatch";
-    
-    private static final Request[] REQUESTS = new Request[] {
-            Request.builder().method("GET").requestURI(URI.create("/r1")).build(),
-            Request.builder().method("GET").requestURI(URI.create("/r2")).build(),
-            Request.builder().method("GET").requestURI(URI.create("/r3")).build(),
-            Request.builder().method("GET").requestURI(URI.create("/r4")).build(),
-            Request.builder().method("GET").requestURI(URI.create("/r5")).build()};
-    
+public class JadlerMockerTest extends JadlerMockerTestBase {
+
+    private ScheduledExecutorService exec;
+
+    @Before
+    public void before() {
+        exec = Executors.newScheduledThreadPool(10);
+    }
+
+    @After
+    public void after() {
+        exec.shutdownNow();
+    }
     
     @Test(expected=IllegalArgumentException.class)
     public void constructor1() {
@@ -562,360 +553,132 @@ public class JadlerMockerTest {
         mocker.setRecordRequests(false);
         mocker.verifyThatRequest();
     }
-    
+
+    @Test(expected = IllegalArgumentException.class)
+    public void evaluateVerificationAsyncNullDuration() {
+        final JadlerMocker mocker = new JadlerMocker(mock(StubHttpServer.class));
+        mocker.evaluateVerificationAsync(
+                Collections.<Matcher<? super Request>>singleton(mock(Matcher.class)),
+                mock(Matcher.class),
+                null);
+    }
+
+    @Test
+    public void evaluateVerificationAsync_3_matching_positiveWhereTheLastRequestComesAfterCallToEvaluateVerificationAsync() throws ExecutionException, InterruptedException {
+        final JadlerMocker mocker = this.createMockerWithRequests();
+
+        final Matcher<Request> m1 = this.createRequestMatcher(MATCHER1_DESCRIPTION, MATCHER1_MISMATCH);
+        final Matcher<Request> m2 = this.createRequestMatcher(MATCHER2_DESCRIPTION, MATCHER2_MISMATCH);
+
+        final Request lateRequest = Request.builder().method("GET").requestURI(URI.create("/lateRequest")).build();
+
+        //R0 is not matched
+        when(m1.matches(eq(REQUESTS[0]))).thenReturn(false);
+        when(m2.matches(eq(REQUESTS[0]))).thenReturn(false);
+
+        //R1 is matched
+        when(m1.matches(eq(REQUESTS[1]))).thenReturn(true);
+        when(m2.matches(eq(REQUESTS[1]))).thenReturn(true);
+
+        //R2 is not matched
+        when(m1.matches(eq(REQUESTS[2]))).thenReturn(false);
+        when(m2.matches(eq(REQUESTS[2]))).thenReturn(true);
+
+        //R3 is not matched
+        when(m1.matches(eq(REQUESTS[3]))).thenReturn(true);
+        when(m2.matches(eq(REQUESTS[3]))).thenReturn(false);
+
+        //R4 is matched
+        when(m1.matches(eq(REQUESTS[4]))).thenReturn(true);
+        when(m2.matches(eq(REQUESTS[4]))).thenReturn(true);
+
+        //lateRequest is matched
+        when(m1.matches(eq(lateRequest))).thenReturn(true);
+        when(m2.matches(eq(lateRequest))).thenReturn(true);
+
+        //3 requests matching, 3 expected
+        final Matcher<Integer> countMatcher = createCountMatcherFor(3, 3, COUNT_MATCHER_DESCRIPTION,
+                COUNT_MATCHER_MISMATCH);
+
+        final Future<String> evaluateCall = exec.submit(new Callable<String>() {
+            @Override
+            public String call() throws Exception {
+                mocker.evaluateVerificationAsync(collectionOf(m1, m2), countMatcher, Duration.ofSeconds(10));
+                return "success";
+            }
+        });
+        exec.schedule(new Runnable() {
+            @Override
+            public void run() {
+                mocker.provideStubResponseFor(lateRequest);
+            }
+        }, 100, TimeUnit.MICROSECONDS);
+        evaluateCall.get();
+    }
+
+    @Test (expected = VerificationException.class)
+    public void evaluateVerificationAsync_4_matching_Negative_WhereThirdRequestComesAfterCallToEvaluateVerificationAsyncButFourthRequestNeverComes() throws Throwable {
+        final JadlerMocker mocker = this.createMockerWithRequests();
+
+        final Matcher<Request> m1 = this.createRequestMatcher(MATCHER1_DESCRIPTION, MATCHER1_MISMATCH);
+        final Matcher<Request> m2 = this.createRequestMatcher(MATCHER2_DESCRIPTION, MATCHER2_MISMATCH);
+
+        final Request lateRequest = Request.builder().method("GET").requestURI(URI.create("/lateRequest")).build();
+
+        //R0 is not matched
+        when(m1.matches(eq(REQUESTS[0]))).thenReturn(false);
+        when(m2.matches(eq(REQUESTS[0]))).thenReturn(false);
+
+        //R1 is matched
+        when(m1.matches(eq(REQUESTS[1]))).thenReturn(true);
+        when(m2.matches(eq(REQUESTS[1]))).thenReturn(true);
+
+        //R2 is not matched
+        when(m1.matches(eq(REQUESTS[2]))).thenReturn(false);
+        when(m2.matches(eq(REQUESTS[2]))).thenReturn(true);
+
+        //R3 is not matched
+        when(m1.matches(eq(REQUESTS[3]))).thenReturn(true);
+        when(m2.matches(eq(REQUESTS[3]))).thenReturn(false);
+
+        //R4 is matched
+        when(m1.matches(eq(REQUESTS[4]))).thenReturn(true);
+        when(m2.matches(eq(REQUESTS[4]))).thenReturn(true);
+
+        //lateRequest is matched
+        when(m1.matches(eq(lateRequest))).thenReturn(true);
+        when(m2.matches(eq(lateRequest))).thenReturn(true);
+
+        //3 requests matching, 3 expected
+        final Matcher<Integer> countMatcher = createCountMatcherFor(4, 4, COUNT_MATCHER_DESCRIPTION,
+                COUNT_MATCHER_MISMATCH);
+
+        final Future<String> evaluateCall = exec.submit(new Callable<String>() {
+            @Override
+            public String call() throws Exception {
+                mocker.evaluateVerificationAsync(collectionOf(m1, m2), countMatcher, Duration.ofMillis(100));
+                return "success";
+            }
+        });
+        exec.schedule(new Runnable() {
+            @Override
+            public void run() {
+                mocker.provideStubResponseFor(lateRequest);
+            }
+        }, 100, TimeUnit.MICROSECONDS);
+        try {
+            evaluateCall.get();
+        } catch (ExecutionException e) {
+            throw e.getCause();
+        }
+
+    }
     
     @Test
     public void verifyThatRequest() {
         final Verifying ongoingVerifying = new JadlerMocker(mock(StubHttpServer.class)).verifyThatRequest();
         assertThat(ongoingVerifying, is(not(nullValue())));
     }
-    
-    
-    @Test(expected = IllegalArgumentException.class)
-    @SuppressWarnings("unchecked")
-    public void evaluateVerification_illegalArgument1() {
-        new JadlerMocker(mock(StubHttpServer.class)).evaluateVerification(null, mock(Matcher.class));
-    }
-    
-    
-    @Test(expected = IllegalArgumentException.class)
-    @SuppressWarnings("unchecked")
-    public void evaluateVerification_illegalArgument2() {
-        new JadlerMocker(mock(StubHttpServer.class)).evaluateVerification(
-                Collections.<Matcher<? super Request>>singleton(mock(Matcher.class)), null);
-    }
-    
-    
-    @Test(expected = IllegalStateException.class)
-    @SuppressWarnings("unchecked")
-    public void evaluateVerification_recordingDisabled() {
-        final JadlerMocker mocker = new JadlerMocker(mock(StubHttpServer.class));
-        mocker.setRecordRequests(false);
-        
-        mocker.evaluateVerification(Collections.<Matcher<? super Request>>singleton(mock(Matcher.class)),
-                mock(Matcher.class));
-    }
-    
-    
-    @Test
-    public void evaluateVerification_2_matching_positive() {
-        final JadlerMocker mocker = this.createMockerWithRequests();
-        
-        final Matcher<Request> m1 = this.createRequestMatcher(MATCHER1_DESCRIPTION, MATCHER1_MISMATCH);
-        final Matcher<Request> m2 = this.createRequestMatcher(MATCHER2_DESCRIPTION, MATCHER2_MISMATCH);
-        
-          //R0 is not matched
-        when(m1.matches(eq(REQUESTS[0]))).thenReturn(false);
-        when(m2.matches(eq(REQUESTS[0]))).thenReturn(false);
-        
-          //R1 is matched
-        when(m1.matches(eq(REQUESTS[1]))).thenReturn(true);
-        when(m2.matches(eq(REQUESTS[1]))).thenReturn(true);
-        
-          //R2 is not matched
-        when(m1.matches(eq(REQUESTS[2]))).thenReturn(false);
-        when(m2.matches(eq(REQUESTS[2]))).thenReturn(true);
-        
-          //R3 is not matched
-        when(m1.matches(eq(REQUESTS[3]))).thenReturn(true);
-        when(m2.matches(eq(REQUESTS[3]))).thenReturn(false);
-
-          //R4 is matched
-        when(m1.matches(eq(REQUESTS[4]))).thenReturn(true);
-        when(m2.matches(eq(REQUESTS[4]))).thenReturn(true);
-        
-          //2 requests matching, 2 expected
-        final Matcher<Integer> countMatcher = this.createCountMatcherFor(2, 2, COUNT_MATCHER_DESCRIPTION,
-                COUNT_MATCHER_MISMATCH);
-                
-        mocker.evaluateVerification(collectionOf(m1, m2), countMatcher);
-    }
-    
-    
-   @Test
-    public void evaluateVerification_0_matching_positive() {
-        final JadlerMocker mocker = this.createMockerWithRequests();
-        
-        final Matcher<Request> m1 = this.createRequestMatcher(MATCHER1_DESCRIPTION, MATCHER1_MISMATCH);
-        final Matcher<Request> m2 = this.createRequestMatcher(MATCHER2_DESCRIPTION, MATCHER2_MISMATCH);
-        
-          //R0 is not matched
-        when(m1.matches(eq(REQUESTS[0]))).thenReturn(false);
-        when(m2.matches(eq(REQUESTS[0]))).thenReturn(false);
-        
-          //R1 is not matched
-        when(m1.matches(eq(REQUESTS[1]))).thenReturn(true);
-        when(m2.matches(eq(REQUESTS[1]))).thenReturn(false);
-        
-          //R2 is not matched
-        when(m1.matches(eq(REQUESTS[2]))).thenReturn(false);
-        when(m2.matches(eq(REQUESTS[2]))).thenReturn(true);
-        
-          //R3 is not matched
-        when(m1.matches(eq(REQUESTS[3]))).thenReturn(true);
-        when(m2.matches(eq(REQUESTS[3]))).thenReturn(false);
-
-          //R4 is not matched
-        when(m1.matches(eq(REQUESTS[4]))).thenReturn(false);
-        when(m2.matches(eq(REQUESTS[4]))).thenReturn(true);
-        
-          //0 requests matching, 0 expected
-        final Matcher<Integer> countMatcher = this.createCountMatcherFor(0, 0, COUNT_MATCHER_DESCRIPTION,
-                COUNT_MATCHER_MISMATCH);
-        
-        mocker.evaluateVerification(collectionOf(m1, m2), countMatcher);
-    }
-    
-    
-    @Test
-    public void evaluateVerification_0_predicates_5_matching_positive() {
-        final JadlerMocker mocker = this.createMockerWithRequests();
-        
-          //5 requests matching (=received in this case), 5 expected
-        final int actualCount = 5;
-        final Matcher<Integer> countMatcher = this.createCountMatcherFor(5, actualCount, COUNT_MATCHER_DESCRIPTION,
-                COUNT_MATCHER_MISMATCH);
-                
-        mocker.evaluateVerification(Collections.<Matcher<? super Request>>emptySet(), countMatcher);
-    }
-    
-    
-    @Test
-    public void evaluateVerification_0_requests_0_matching_positive() {
-        final JadlerMocker mocker = new JadlerMocker(mock(StubHttpServer.class));
-        final Matcher<Request> m1 = this.createRequestMatcher(MATCHER1_DESCRIPTION, MATCHER1_MISMATCH);
-        final Matcher<Request> m2 = this.createRequestMatcher(MATCHER2_DESCRIPTION, MATCHER2_MISMATCH);
-        
-          //0 requests matching (=received in this case), 0 expected
-        final Matcher<Integer> countMatcher = this.createCountMatcherFor(0, 0, COUNT_MATCHER_DESCRIPTION,
-                COUNT_MATCHER_MISMATCH);
-        
-        mocker.evaluateVerification(collectionOf(m1, m2), countMatcher);
-    }
-    
-    
-    @Test
-    public void evaluateVerification_2_matching_negative() {
-        final JadlerMocker mocker = this.createMockerWithRequests();
-        
-        final Matcher<Request> m1 = this.createRequestMatcher(MATCHER1_DESCRIPTION, MATCHER1_MISMATCH);
-        final Matcher<Request> m2 = this.createRequestMatcher(MATCHER2_DESCRIPTION, MATCHER2_MISMATCH);
-        
-          //R0 is not matched
-        when(m1.matches(eq(REQUESTS[0]))).thenReturn(false);
-        when(m2.matches(eq(REQUESTS[0]))).thenReturn(false);
-        
-          //R1 is matched
-        when(m1.matches(eq(REQUESTS[1]))).thenReturn(true);
-        when(m2.matches(eq(REQUESTS[1]))).thenReturn(true);
-        
-          //R2 is not matched
-        when(m1.matches(eq(REQUESTS[2]))).thenReturn(false);
-        when(m2.matches(eq(REQUESTS[2]))).thenReturn(true);
-        
-          //R3 is not matched
-        when(m1.matches(eq(REQUESTS[3]))).thenReturn(true);
-        when(m2.matches(eq(REQUESTS[3]))).thenReturn(false);
-
-          //R4 is matched
-        when(m1.matches(eq(REQUESTS[4]))).thenReturn(true);
-        when(m2.matches(eq(REQUESTS[4]))).thenReturn(true);
-        
-          //2 requests matching, 1 expected
-        final Matcher<Integer> countMatcher = this.createCountMatcherFor(1, 2, COUNT_MATCHER_DESCRIPTION,
-                COUNT_MATCHER_MISMATCH);
-        
-        final Writer w = this.createAppenderWriter();
-        try {
-            mocker.evaluateVerification(collectionOf(m1, m2), countMatcher);
-            fail("VerificationException is supposed to be thrown here");
-        }
-        catch (final VerificationException e) {
-            assertThat(e.getMessage(), is(expectedMessage()));
-            assertThat(w.toString(), is(format(
-                    "[INFO] Verification failed, here is a list of requests received so far:\n" +
-                    "Request #1: %s\n" +
-                    "  matching predicates: <none>\n" + 
-                    "  clashing predicates:\n" +
-                    "    %s\n" +
-                    "    %s\n" +
-                    "Request #2: %s\n" +
-                    "  matching predicates:\n" +
-                    "    %s\n" +
-                    "    %s\n" +
-                    "  clashing predicates: <none>\n" +
-                    "Request #3: %s\n" +
-                    "  matching predicates:\n" + 
-                    "    %s\n" +
-                    "  clashing predicates:\n" +
-                    "    %s\n" +
-                    "Request #4: %s\n" +
-                    "  matching predicates:\n" + 
-                    "    %s\n" +
-                    "  clashing predicates:\n" +
-                    "    %s\n" +
-                    "Request #5: %s\n" +
-                    "  matching predicates:\n" +
-                    "    %s\n" +
-                    "    %s\n" +
-                    "  clashing predicates: <none>",
-                    REQUESTS[0], MATCHER1_MISMATCH, MATCHER2_MISMATCH,
-                    REQUESTS[1], MATCHER1_DESCRIPTION, MATCHER2_DESCRIPTION,
-                    REQUESTS[2], MATCHER2_DESCRIPTION, MATCHER1_MISMATCH,
-                    REQUESTS[3], MATCHER1_DESCRIPTION, MATCHER2_MISMATCH,
-                    REQUESTS[4], MATCHER1_DESCRIPTION, MATCHER2_DESCRIPTION)));
-        }
-        finally {
-            this.clearLog4jSetup();
-        }
-    }
-    
-    
-    @Test
-    public void evaluateVerification_0_matching_negative() {
-        final JadlerMocker mocker = this.createMockerWithRequests();
-        
-        final Matcher<Request> m1 = this.createRequestMatcher(MATCHER1_DESCRIPTION, MATCHER1_MISMATCH);
-        final Matcher<Request> m2 = this.createRequestMatcher(MATCHER2_DESCRIPTION, MATCHER2_MISMATCH);
-        
-          //R0 is not matched
-        when(m1.matches(eq(REQUESTS[0]))).thenReturn(false);
-        when(m2.matches(eq(REQUESTS[0]))).thenReturn(false);
-        
-          //R1 is not matched
-        when(m1.matches(eq(REQUESTS[1]))).thenReturn(false);
-        when(m2.matches(eq(REQUESTS[1]))).thenReturn(true);
-        
-          //R2 is not matched
-        when(m1.matches(eq(REQUESTS[2]))).thenReturn(false);
-        when(m2.matches(eq(REQUESTS[2]))).thenReturn(true);
-        
-          //R3 is not matched
-        when(m1.matches(eq(REQUESTS[3]))).thenReturn(true);
-        when(m2.matches(eq(REQUESTS[3]))).thenReturn(false);
-
-          //R4 is not matched
-        when(m1.matches(eq(REQUESTS[4]))).thenReturn(true);
-        when(m2.matches(eq(REQUESTS[4]))).thenReturn(false);
-        
-          //0 requests matching, 1 expected
-        final Matcher<Integer> countMatcher = this.createCountMatcherFor(1, 0, COUNT_MATCHER_DESCRIPTION,
-                COUNT_MATCHER_MISMATCH);
-        
-        final Writer w = this.createAppenderWriter();
-        try {
-            mocker.evaluateVerification(collectionOf(m1, m2), countMatcher);
-            fail("VerificationException is supposed to be thrown here");
-        }
-        catch (final VerificationException e) {
-            assertThat(e.getMessage(), is(expectedMessage()));
-            assertThat(w.toString(), is(format(
-                    "[INFO] Verification failed, here is a list of requests received so far:\n" +
-                    "Request #1: %s\n" +
-                    "  matching predicates: <none>\n" + 
-                    "  clashing predicates:\n" +
-                    "    %s\n" +
-                    "    %s\n" +
-                    "Request #2: %s\n" +
-                    "  matching predicates:\n" +
-                    "    %s\n" +
-                    "  clashing predicates:\n" +
-                    "    %s\n" +
-                    "Request #3: %s\n" +
-                    "  matching predicates:\n" + 
-                    "    %s\n" +
-                    "  clashing predicates:\n" +
-                    "    %s\n" +
-                    "Request #4: %s\n" +
-                    "  matching predicates:\n" + 
-                    "    %s\n" +
-                    "  clashing predicates:\n" +
-                    "    %s\n" +
-                    "Request #5: %s\n" +
-                    "  matching predicates:\n" +
-                    "    %s\n" +
-                    "  clashing predicates:\n" +
-                    "    %s",
-                    REQUESTS[0], MATCHER1_MISMATCH, MATCHER2_MISMATCH,
-                    REQUESTS[1], MATCHER2_DESCRIPTION, MATCHER1_MISMATCH,
-                    REQUESTS[2], MATCHER2_DESCRIPTION, MATCHER1_MISMATCH,
-                    REQUESTS[3], MATCHER1_DESCRIPTION, MATCHER2_MISMATCH,
-                    REQUESTS[4], MATCHER1_DESCRIPTION, MATCHER2_MISMATCH)));
-        }
-        finally {
-            this.clearLog4jSetup();
-        }
-    }
-    
-    
-    @Test
-    public void evaluateVerification_0_predicates_5_matching_negative() {
-        final JadlerMocker mocker = this.createMockerWithRequests();
-                
-            //5 requests matching (=received in this case), 4 expected          
-        final Matcher<Integer> countMatcher = this.createCountMatcherFor(4, 5, COUNT_MATCHER_DESCRIPTION,
-                COUNT_MATCHER_MISMATCH);
-        
-        final Writer w = this.createAppenderWriter();
-        try {
-            mocker.evaluateVerification(Collections.<Matcher<? super Request>>emptySet(), countMatcher);
-            fail("VerificationException is supposed to be thrown here");
-        }
-        catch (final VerificationException e) {
-            assertThat(e.getMessage(), is(format("The number of http requests was expected to be %s, but %s",
-                    COUNT_MATCHER_DESCRIPTION, COUNT_MATCHER_MISMATCH)));
-            
-            assertThat(w.toString(), is(format(
-                    "[INFO] Verification failed, here is a list of requests received so far:\n" +
-                    "Request #1: %s\n" +
-                    "  matching predicates: <none>\n" +
-                    "  clashing predicates: <none>\n" +
-                    "Request #2: %s\n" +
-                    "  matching predicates: <none>\n" +
-                    "  clashing predicates: <none>\n" +
-                    "Request #3: %s\n" +
-                    "  matching predicates: <none>\n" +
-                    "  clashing predicates: <none>\n" +
-                    "Request #4: %s\n" +
-                    "  matching predicates: <none>\n" +
-                    "  clashing predicates: <none>\n" +
-                    "Request #5: %s\n" +
-                    "  matching predicates: <none>\n" +
-                    "  clashing predicates: <none>",
-                    REQUESTS[0], REQUESTS[1], REQUESTS[2], REQUESTS[3], REQUESTS[4])));
-        }
-        finally {
-            this.clearLog4jSetup();
-        }
-    }
-    
-    
-    @Test
-    public void evaluateVerification_0_requests_0_matching_negative() {
-        final JadlerMocker mocker = new JadlerMocker(mock(StubHttpServer.class));
-        final Matcher<Request> m1 = this.createRequestMatcher(MATCHER1_DESCRIPTION, MATCHER1_MISMATCH);
-        final Matcher<Request> m2 = this.createRequestMatcher(MATCHER2_DESCRIPTION, MATCHER2_MISMATCH);
-        
-          //0 requests matching (=received in this case), 0 expected
-        final Matcher<Integer> countMatcher = this.createCountMatcherFor(1, 0, COUNT_MATCHER_DESCRIPTION,
-                COUNT_MATCHER_MISMATCH);
-        
-        final Writer w = this.createAppenderWriter();
-        
-        try {
-            mocker.evaluateVerification(collectionOf(m1, m2), countMatcher);
-            fail("VerificationException is supposed to be thrown here");
-        }
-        catch (final VerificationException e) {
-            assertThat(e.getMessage(), is(expectedMessage()));
-            assertThat(w.toString(),
-                    is("[INFO] Verification failed, here is a list of requests received so far: <none>"));
-        }
-        finally {
-            this.clearLog4jSetup();
-        }
-    }
-    
     
     @Test(expected=IllegalArgumentException.class)
     @SuppressWarnings("deprecation")
@@ -1003,110 +766,6 @@ public class JadlerMockerTest {
                 .build();
     }
     
-    
-    private Matcher<Request> createRequestMatcher(final String desc, final String mismatch) {
-        @SuppressWarnings("unchecked")
-        final Matcher<Request> m = mock(Matcher.class);
-        
-        this.addDescriptionTo(m, desc);
-        
-        doAnswer(new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                final Description desc = (Description) invocation.getArguments()[1];
-                desc.appendText(mismatch);
-                
-                return null;
-            }
-        }).when(m).describeMismatch(any(Request.class), any(Description.class));
-        
-        return m;
-    }
-    
-    
-    /*
-     * Creates a Matcher<Integer> instance to be used as a matcher of a number of requests during a verification
-     * @param expectedCount expected number of requests received so far which suit the verification description
-     * @param actualCount actual number of requests received so far which suit the verification description
-     * @param desc description of the matcher
-     * @param mismatch description of a mismatch
-     * @return a configured matcher
-     */
-    private Matcher<Integer> createCountMatcherFor(final int expectedCount, final int actualCount,
-            final String desc, final String mismatch) {
-        
-        @SuppressWarnings("unchecked")
-        final Matcher<Integer> m = mock(Matcher.class);
-        
-        when(m.matches(eq(expectedCount))).thenReturn(true);
-        
-        doAnswer(new Answer<Void>() {
-            @Override
-            public Void answer(final InvocationOnMock invocation) throws Throwable {
-                final Description desc = (Description) invocation.getArguments()[1];
-                desc.appendText(mismatch);
-                
-                return null;
-            }
-        }).when(m).describeMismatch(eq(actualCount), any(Description.class));
-        
-        this.addDescriptionTo(m, desc);
-        return m;
-    }
-   
-    
-    private JadlerMocker createMockerWithRequests() {        
-        final JadlerMocker mocker = new JadlerMocker(mock(StubHttpServer.class));
-        
-          //register all requests
-        for (final Request r: REQUESTS) {
-            mocker.provideStubResponseFor(r);
-        }
-        
-        return mocker;
-    }
-    
-    
-    private void addDescriptionTo(final Matcher<?> m, final String desc) {
-        doAnswer(new Answer<Void>() {
-            @Override
-            public Void answer(final InvocationOnMock invocation) throws Throwable {
-                final Description d = (Description) invocation.getArguments()[0];
-                
-                d.appendText(desc);
-                
-                return null;
-            }
-        }).when(m).describeTo(any(Description.class));
-    }
-    
-    
-    @SuppressWarnings("unchecked")
-    private Collection<Matcher<? super Request>> collectionOf(Matcher<? super Request> m1,
-            Matcher<? super Request> m2) {
-        return Arrays.<Matcher<? super Request>>asList(m1, m2);
-    }
-    
-    
-    private String expectedMessage() {
-        return format("The number of http requests having %s AND %s was expected to be %s, but %s",
-                    MATCHER1_DESCRIPTION, MATCHER2_DESCRIPTION, COUNT_MATCHER_DESCRIPTION, COUNT_MATCHER_MISMATCH);
-    }
-    
-    
-    private Writer createAppenderWriter() {
-        final Writer w = new StringBuilderWriter();
-        
-        final WriterAppender appender = new WriterAppender();
-        appender.setLayout(new PatternLayout("[%p] %m"));
-        appender.setWriter(w);
-        
-        Logger.getRootLogger().addAppender(appender);
-        return w;
-    }
-    
-    
-    private void clearLog4jSetup() {
-        Logger.getRootLogger().getLoggerRepository().resetConfiguration();
-    }
+
+
 }

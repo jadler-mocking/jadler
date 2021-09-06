@@ -7,7 +7,6 @@ package net.jadler;
 import net.jadler.stubbing.Stubber;
 import net.jadler.stubbing.server.StubHttpServerManager;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
 import net.jadler.stubbing.RequestStubbing;
 import net.jadler.stubbing.StubbingFactory;
 import net.jadler.stubbing.Stubbing;
@@ -15,11 +14,18 @@ import net.jadler.stubbing.StubResponse;
 import net.jadler.stubbing.HttpStub;
 import net.jadler.exception.JadlerException;
 import net.jadler.stubbing.server.StubHttpServer;
+
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Deque;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+
 import net.jadler.mocking.Mocker;
 import net.jadler.mocking.VerificationException;
 import net.jadler.mocking.Verifying;
@@ -56,6 +62,7 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, RequestMana
     private final List<Stubbing> stubbings;
     private Deque<HttpStub> httpStubs;
     private final List<Request> receivedRequests;
+    private final Set<AsyncVerificator> asyncVerificators;
 
     private MultiMap defaultHeaders;
     private int defaultStatus;
@@ -75,7 +82,20 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, RequestMana
     }
     
     private static final Logger logger = LoggerFactory.getLogger(JadlerMocker.class);
-    
+
+    /**
+     * The meaning of this class, is to wrpap the BlockingQueue inside an object,
+     * where the equals method only equals on exactly the same objects, so that each
+     * queue can be added to a set, and later removed again.
+     */
+    private static final class AsyncVerificator {
+        private final BlockingQueue<Request> requestqueue;
+
+        public AsyncVerificator() {
+            this.requestqueue = new LinkedBlockingQueue<Request>();
+        }
+    }
+
     
     /**
      * Creates new JadlerMocker instance bound to the given http stub server.
@@ -109,6 +129,7 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, RequestMana
         this.httpStubs = new LinkedList<HttpStub>();
         
         this.receivedRequests = new ArrayList<Request>();
+        this.asyncVerificators = new HashSet<AsyncVerificator>();
     }
 
     /**
@@ -237,6 +258,9 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, RequestMana
 
             if (this.recordRequests) {
                 this.receivedRequests.add(request);
+                for (AsyncVerificator asyncVerificator : this.asyncVerificators) {
+                    asyncVerificator.requestqueue.offer(request);
+                }
             }
         }
         
@@ -305,15 +329,12 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, RequestMana
     @Override
     public void evaluateVerification(final Collection<Matcher<? super Request>> requestPredicates,
             final Matcher<Integer> nrRequestsPredicate) {
-        
-        Validate.notNull(requestPredicates, "requestPredicates cannot be null");
-        Validate.notNull(nrRequestsPredicate, "nrRequestsPredicate cannot be null");
-        
-        this.checkRequestRecording();
-        
+
+        validateEvaluateVerificationArgsAndState(requestPredicates, nrRequestsPredicate);
+
         synchronized(this) {
             final int cnt = this.numberOfRequestsMatching(requestPredicates);
-        
+
             if (!nrRequestsPredicate.matches(cnt)) {
                 this.logReceivedRequests(requestPredicates);
                 throw new VerificationException(this.mismatchDescription(cnt, requestPredicates, nrRequestsPredicate));
@@ -321,7 +342,79 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, RequestMana
         }
     }
 
-    
+    @Override
+    public void evaluateVerificationAsync(
+            final Collection<Matcher<? super Request>> requestPredicates,
+            final Matcher<Integer> nrRequestsPredicate,
+            final Duration timeOut) {
+
+        validateEvaluateVerificationArgsAndState(requestPredicates, nrRequestsPredicate);
+        Validate.notNull(timeOut, "timeUnit cannot be null");
+
+        final long startTime = System.nanoTime();
+        final AsyncVerificator myQueue = new AsyncVerificator();
+        int cnt = 0;
+
+        cnt = this.numberOfRequestsMatching(requestPredicates);
+        if (nrRequestsPredicate.matches(cnt)) {
+            return;
+        }
+        synchronized(this) { this.asyncVerificators.add(myQueue); }
+
+        Duration timeLeft = calculateTimeLeft(startTime, timeOut);
+
+        while (!timeLeft.isZero()) {
+            try {
+                myQueue.requestqueue.poll(timeLeft.getValue(), timeLeft.getTimeUnit());
+                cnt = this.numberOfRequestsMatching(requestPredicates);
+                if (nrRequestsPredicate.matches(cnt)) {
+                    return;
+                } else {
+                    timeLeft = calculateTimeLeft(startTime, timeOut);
+                }
+            } catch (InterruptedException e) {
+                timeLeft = calculateTimeLeft(startTime, timeOut);
+            }
+        }
+
+        // If it reach here, then the time is up, and we should fail.
+        failAsyncVerification(myQueue, requestPredicates, cnt, nrRequestsPredicate);
+    }
+
+    private void validateEvaluateVerificationArgsAndState(
+            final Collection<Matcher<? super Request>> requestPredicates,
+            final Matcher<Integer> nrRequestsPredicate) {
+        Validate.notNull(requestPredicates, "requestPredicates cannot be null");
+        Validate.notNull(nrRequestsPredicate, "nrRequestsPredicate cannot be null");
+        this.checkRequestRecording();
+    }
+
+    private void failAsyncVerification(
+            final AsyncVerificator a,
+            final Collection<Matcher<? super Request>> requestPredicates,
+            final int cnt,
+            final Matcher<Integer> nrRequestsPredicate) {
+        removeFromAsyncVerificators(a);
+        this.logReceivedRequests(requestPredicates);
+        throw new VerificationException(this.mismatchDescription(cnt, requestPredicates, nrRequestsPredicate));
+    }
+
+    private synchronized void removeFromAsyncVerificators(final AsyncVerificator a) {
+        this.asyncVerificators.remove(a);
+    }
+
+    private Duration calculateTimeLeft(
+            final long startTimeInNanos,
+            final Duration dur) {
+        final long now = System.nanoTime();
+        if (startTimeInNanos + dur.toNanos() < now)
+            return Duration.zero();
+        else {
+            final long left = (startTimeInNanos + dur.toNanos()) - now;
+            return Duration.ofNanos(left);
+        }
+    }
+
     /**
      * <p>Resets this mocker instance so it can be reused. This method clears all previously created stubs as well as
      * stored received requests (for mocking purpose,
@@ -427,30 +520,29 @@ public class JadlerMocker implements StubHttpServerManager, Stubber, RequestMana
     
     private void logReceivedRequests(final Collection<Matcher<? super Request>> requestPredicates) {
         final StringBuilder sb = new StringBuilder("Verification failed, here is a list of requests received so far:");
-        this.appendNoneIfEmpty(this.receivedRequests, sb);
         
         int pos = 1;
-        for (final Request req: this.receivedRequests) {
-            sb.append("\n");
-            final Collection<Matcher<? super Request>> matching = new ArrayList<Matcher<? super Request>>();
-            final Collection<Matcher<? super Request>> clashing = new ArrayList<Matcher<? super Request>>();
-            
-            for (final Matcher<? super Request> pred: requestPredicates) {
-                if (pred.matches(req)) {
-                    matching.add(pred);
-                }
-                else {
-                    clashing.add(pred);
-                }
-            }
-            
-            this.appendReason(sb, req, pos, matching, clashing);
-            
-            pos++;
-        }
-        
+        synchronized (this) {
+            this.appendNoneIfEmpty(this.receivedRequests, sb);
+            for (final Request req: this.receivedRequests) {
+                sb.append("\n");
+                final Collection<Matcher<? super Request>> matching = new ArrayList<Matcher<? super Request>>();
+                final Collection<Matcher<? super Request>> clashing = new ArrayList<Matcher<? super Request>>();
 
-        
+                for (final Matcher<? super Request> pred: requestPredicates) {
+                    if (pred.matches(req)) {
+                        matching.add(pred);
+                    }
+                    else {
+                        clashing.add(pred);
+                    }
+                }
+
+                this.appendReason(sb, req, pos, matching, clashing);
+
+                pos++;
+            }
+        }
         logger.info(sb.toString());
     }
 
