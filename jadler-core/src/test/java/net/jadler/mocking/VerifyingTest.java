@@ -11,13 +11,13 @@ import net.jadler.RequestManager;
 import org.hamcrest.Matcher;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.junit.Before;
 import org.hamcrest.core.IsEqual;
 
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.anyCollection;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.eq;
 import static org.junit.Assert.fail;
@@ -36,7 +36,8 @@ public class VerifyingTest {
     @SuppressWarnings("unchecked")
     public void setUp() {
         doThrow(new VerificationException(""))
-                .when(this.requestManager).evaluateVerification(anyCollection(), any(Matcher.class));
+                .when(this.requestManager)
+                .evaluateVerification(Mockito.<Matcher<? super Request>>anyCollection(), any(Matcher.class));
     }
 
     

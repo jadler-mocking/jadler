@@ -24,10 +24,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.argThat;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
 
@@ -146,7 +146,7 @@ public class JdkHandlerTest {
         new JdkHandler(mockManager).handle(httpExchange);
 
         verify(httpExchange).sendResponseHeaders(RESPONSE_STATUS, -1);
-        verifyZeroInteractions(mockResponseStream);
+        verifyNoInteractions(mockResponseStream);
     }
     
     
@@ -155,7 +155,7 @@ public class JdkHandlerTest {
     }
     
     
-    private static class RequestMatcher extends ArgumentMatcher<Request> {
+    private static class RequestMatcher implements ArgumentMatcher<Request> {
 
         private final Request expected;
         
@@ -164,7 +164,7 @@ public class JdkHandlerTest {
         }
         
         @Override
-        public boolean matches(final Object argument) {
+        public boolean matches(final Request argument) {
             final Request arg = (Request) argument;
 
             if (!this.expected.getMethod().equals(arg.getMethod())) {
