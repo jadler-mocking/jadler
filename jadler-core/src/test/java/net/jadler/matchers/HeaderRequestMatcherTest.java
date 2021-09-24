@@ -9,12 +9,12 @@ import org.junit.Test;
 import org.hamcrest.Matcher;
 import java.util.List;
 import org.junit.runner.RunWith;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.Mock;
 import net.jadler.KeyValues;
 
-import static org.junit.Assert.assertThat;
 import static net.jadler.matchers.HeaderRequestMatcher.requestHeader;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;

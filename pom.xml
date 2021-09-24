@@ -137,8 +137,8 @@ This program is made available under the terms of the MIT License.
             </dependency>
             <dependency>
                 <groupId>org.mockito</groupId>
-                <artifactId>mockito-all</artifactId>
-                <version>1.9.5</version>
+                <artifactId>mockito-core</artifactId>
+                <version>3.12.4</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
