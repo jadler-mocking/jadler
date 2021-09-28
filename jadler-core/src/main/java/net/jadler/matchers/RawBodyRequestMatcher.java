@@ -6,7 +6,6 @@ package net.jadler.matchers;
 
 import net.jadler.Request;
 import org.apache.commons.io.IOUtils;
-import org.hamcrest.Factory;
 import org.hamcrest.Matcher;
 
 
@@ -25,7 +24,7 @@ public class RawBodyRequestMatcher extends RequestMatcher<byte[]> {
         super(pred);        
     }
 
-    
+
     /**
      * Retrieves the body of the given request
      * @param req request to retrieve the body from
@@ -35,8 +34,8 @@ public class RawBodyRequestMatcher extends RequestMatcher<byte[]> {
     protected byte[] retrieveValue(final Request req) throws Exception {
         return IOUtils.toByteArray(req.getBodyAsStream());
     }
-    
-    
+
+
     /**
      * {@inheritDoc} 
      */
@@ -51,7 +50,6 @@ public class RawBodyRequestMatcher extends RequestMatcher<byte[]> {
      * @param pred a predicate to be applied on the request body
      * @return new instance of this matcher
      */
-    @Factory
     public static RawBodyRequestMatcher requestRawBody(final Matcher<byte[]> pred) {
         return new RawBodyRequestMatcher(pred);
     }

@@ -8,7 +8,6 @@ import java.util.List;
 
 import net.jadler.Request;
 import org.apache.commons.lang.Validate;
-import org.hamcrest.Factory;
 import org.hamcrest.Matcher;
 
 
@@ -32,7 +31,7 @@ public class HeaderRequestMatcher extends RequestMatcher<List<String>> {
 
         Validate.notEmpty(headerName, "headerName cannot be empty");
         this.headerName = headerName;
-        
+
         this.desc = "header \"" + headerName + "\" is";
     }
 
@@ -47,7 +46,7 @@ public class HeaderRequestMatcher extends RequestMatcher<List<String>> {
     protected List<String> retrieveValue(final Request req) {
         return req.getHeaders().getValues(this.headerName);
     }
-    
+
 
     /**
      * {@inheritDoc} 
@@ -64,9 +63,8 @@ public class HeaderRequestMatcher extends RequestMatcher<List<String>> {
      * @param pred a predicate to be applied on the request header
      * @return new instance of this matcher
      */
-    @Factory
     public static HeaderRequestMatcher requestHeader(final String headerName,
             final Matcher<? super List<String>> pred) {
         return new HeaderRequestMatcher(pred, headerName);
-    }    
+    }
 }

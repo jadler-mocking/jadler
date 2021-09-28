@@ -5,7 +5,6 @@
 package net.jadler.matchers;
 
 import net.jadler.Request;
-import org.hamcrest.Factory;
 import org.hamcrest.Matcher;
 
 
@@ -23,7 +22,7 @@ public class QueryStringRequestMatcher extends RequestMatcher<String> {
         super(pred);
     }
 
-    
+
     /**
      * Retrieves the query string value of the given request. The value is percent-encoded.
      * @param req request to retrieve the query string from
@@ -39,8 +38,8 @@ public class QueryStringRequestMatcher extends RequestMatcher<String> {
     public String retrieveValue(final Request req) {
         return req.getURI().getRawQuery();
     }
-    
-    
+
+
     /**
      * {@inheritDoc} 
      */
@@ -55,7 +54,6 @@ public class QueryStringRequestMatcher extends RequestMatcher<String> {
      * @param pred a predicate to be applied on the request query string
      * @return new instance of this matcher
      */
-    @Factory
     public static QueryStringRequestMatcher requestQueryString(final Matcher<? super String> pred) {
         return new QueryStringRequestMatcher(pred);
     }
