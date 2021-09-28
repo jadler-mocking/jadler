@@ -8,7 +8,6 @@ import java.util.List;
 
 import net.jadler.Request;
 import org.apache.commons.lang.Validate;
-import org.hamcrest.Factory;
 import org.hamcrest.Matcher;
 
 
@@ -32,7 +31,7 @@ public class ParameterRequestMatcher extends RequestMatcher<List<String>> {
 
         Validate.notEmpty(paramName, "paramName cannot be empty");
         this.paramName = paramName;
-        
+
         this.desc = "parameter \"" + paramName + "\" is";
     }
 
@@ -47,8 +46,8 @@ public class ParameterRequestMatcher extends RequestMatcher<List<String>> {
     protected List<String> retrieveValue(final Request req) {
         return req.getParameters().getValues(this.paramName);
     }
-    
-    
+
+
     /**
      * {@inheritDoc} 
      */
@@ -64,7 +63,6 @@ public class ParameterRequestMatcher extends RequestMatcher<List<String>> {
      * @param pred a predicate to be applied on the request parameter
      * @return new instance of this matcher
      */
-    @Factory
     public static ParameterRequestMatcher requestParameter(final String paramName, 
             final Matcher<? super List<String>> pred) {
         return new ParameterRequestMatcher(pred, paramName);

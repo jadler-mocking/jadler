@@ -5,7 +5,6 @@
 package net.jadler.matchers;
 
 import net.jadler.Request;
-import org.hamcrest.Factory;
 import org.hamcrest.Matcher;
 
 
@@ -24,7 +23,7 @@ public class BodyRequestMatcher extends RequestMatcher<String> {
         super(pred);
     }
 
-    
+
     /**
      * Retrieves the body of the given request
      * @param req request to retrieve the body from
@@ -34,8 +33,8 @@ public class BodyRequestMatcher extends RequestMatcher<String> {
     protected String retrieveValue(final Request req) {
         return req.getBodyAsString();
     }
-    
-    
+
+
     /**
      * {@inheritDoc} 
      */
@@ -50,7 +49,6 @@ public class BodyRequestMatcher extends RequestMatcher<String> {
      * @param pred a predicate to be applied on the request body
      * @return new instance of this matcher
      */
-    @Factory
     public static BodyRequestMatcher requestBody(final Matcher<? super String> pred) {
         return new BodyRequestMatcher(pred);
     }

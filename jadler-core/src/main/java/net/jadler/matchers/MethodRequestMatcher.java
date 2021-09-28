@@ -5,7 +5,6 @@
 package net.jadler.matchers;
 
 import net.jadler.Request;
-import org.hamcrest.Factory;
 import org.hamcrest.Matcher;
 
 
@@ -34,8 +33,8 @@ public class MethodRequestMatcher extends RequestMatcher<String> {
     protected String retrieveValue(final Request req) {
         return req.getMethod();
     }
-    
-    
+
+
     /**
      * {@inheritDoc}
      */
@@ -50,7 +49,6 @@ public class MethodRequestMatcher extends RequestMatcher<String> {
      * @param pred a predicate to be applied on the request method
      * @return new instance of this matcher
      */
-    @Factory
     public static MethodRequestMatcher requestMethod(final Matcher<? super String> pred) {
         return new MethodRequestMatcher(pred);
     }

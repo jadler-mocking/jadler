@@ -5,7 +5,6 @@
 package net.jadler.matchers;
 
 import net.jadler.Request;
-import org.hamcrest.Factory;
 import org.hamcrest.Matcher;
 
 
@@ -52,7 +51,6 @@ public class PathRequestMatcher extends RequestMatcher<String> {
      * @param pred a predicate to be applied on the request path
      * @return new instance of this matcher
      */
-    @Factory
     public static PathRequestMatcher requestPath(final Matcher<? super String> pred) {
         return new PathRequestMatcher(pred);
     }
