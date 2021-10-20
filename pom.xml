@@ -139,13 +139,13 @@ This program is made available under the terms of the MIT License.
             <dependency>
                 <groupId>org.springframework</groupId>
                 <artifactId>spring-test</artifactId>
-                <version>5.3.10</version>
+                <version>5.3.11</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.springframework</groupId>
                 <artifactId>spring-core</artifactId>
-                <version>5.3.10</version>
+                <version>5.3.11</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
