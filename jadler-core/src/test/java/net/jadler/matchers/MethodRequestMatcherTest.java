@@ -5,27 +5,27 @@
 package net.jadler.matchers;
 
 import net.jadler.Request;
+import org.hamcrest.Matcher;
 import org.junit.Before;
 import org.junit.Test;
-import org.hamcrest.Matcher;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static net.jadler.matchers.MethodRequestMatcher.requestMethod;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 
 @RunWith(MockitoJUnitRunner.class)
 public class MethodRequestMatcherTest {
-    
+
     private static final String METHOD = "GET";
 
     private Request request;
-    
+
     @Mock
     Matcher<String> mockMatcher;
 
@@ -36,11 +36,11 @@ public class MethodRequestMatcherTest {
     }
 
     @Test
-    public void retrieveValue() throws Exception {
+    public void retrieveValue() {
         assertThat(requestMethod(mockMatcher).retrieveValue(request), is(METHOD));
     }
-    
-    
+
+
     @Test
     public void provideDescription() {
         assertThat(requestMethod(mockMatcher).provideDescription(), is("method is"));

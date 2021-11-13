@@ -11,7 +11,7 @@ import net.jadler.stubbing.server.StubHttpServer;
  * For testing purposes only.
  */
 public interface StubHttpServerFactory {
-    
+
     /**
      * @return new server instance
      */

@@ -7,25 +7,26 @@ package net.jadler.stubbing.server.jetty;
 import net.jadler.Request;
 import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
+
 import java.io.IOException;
 import java.net.URI;
 
-import static org.junit.Assert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.is;
 
 
 public class RequestUtilsTest {
-    
+
     @Test
     public void method() throws IOException {
         final MockHttpServletRequest httpRequest = prepareEmptyRequest();
         Request req = RequestUtils.convert(httpRequest);
         assertThat(req.getMethod(), is("POST"));
     }
-    
-    
+
+
     @Test
     public void body() throws IOException {
         final MockHttpServletRequest httpRequest = prepareEmptyRequest();
@@ -34,7 +35,7 @@ public class RequestUtilsTest {
         final Request req = RequestUtils.convert(httpRequest);
         assertThat(req.getBodyAsString(), is("abcd"));
     }
-    
+
 
     @Test
     public void headers() throws IOException {
@@ -44,13 +45,13 @@ public class RequestUtilsTest {
         httpRequest.addHeader("header2", "value22");
 
         final Request req = RequestUtils.convert(httpRequest);
-        
+
         assertThat(req.getHeaders().getKeys(), containsInAnyOrder("header1", "header2"));
         assertThat(req.getHeaders().getValues("header1"), contains("value11"));
         assertThat(req.getHeaders().getValues("header2"), contains("value21", "value22"));
     }
 
-    
+
     @Test
     public void parameters() throws IOException {
         final MockHttpServletRequest httpRequest = prepareEmptyRequest();
@@ -63,8 +64,8 @@ public class RequestUtilsTest {
         assertThat(req.getParameters().getValues("a"), contains("1", "2"));
         assertThat(req.getParameters().getValues("b"), contains("3"));
     }
-    
-    
+
+
     @Test
     public void parametersURLEncoded() throws IOException {
         final MockHttpServletRequest httpRequest = prepareEmptyRequest();
@@ -77,7 +78,7 @@ public class RequestUtilsTest {
         assertThat(req.getParameters().getValues("param1%20name"), contains("param1%20value"));
         assertThat(req.getParameters().getValues("param2%20name"), contains("param2%20value"));
     }
-    
+
 
     @Test
     public void uri() throws IOException {
@@ -90,8 +91,8 @@ public class RequestUtilsTest {
         Request req = RequestUtils.convert(httpRequest);
         assertThat(req.getURI(), is(URI.create("https://example.com:1234/test/a/b?a=1")));
     }
-    
-    
+
+
     @Test
     public void uriURLEncoded() throws IOException {
         final MockHttpServletRequest httpRequest = prepareEmptyRequest();
@@ -101,15 +102,16 @@ public class RequestUtilsTest {
         httpRequest.setRequestURI("/te%20st/a/%20/b?a=1&param%20name=param%20value");
 
         Request req = RequestUtils.convert(httpRequest);
-        assertThat(req.getURI(), is(URI.create("https://example.com:1234/te%20st/a/%20/b?a=1&param%20name=param%20value")));
+        assertThat(req.getURI(),
+                is(URI.create("https://example.com:1234/te%20st/a/%20/b?a=1&param%20name=param%20value")));
     }
-    
-    
+
+
     private MockHttpServletRequest prepareEmptyRequest() {
         final MockHttpServletRequest res = new MockHttpServletRequest();
         res.setMethod("POST");
         res.setContent(new byte[0]);
-        
+
         return res;
     }
 }
