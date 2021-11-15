@@ -141,7 +141,6 @@ public class StubbingTest {
 
 
     @Test(expected = JadlerException.class)
-    @SuppressWarnings("unchecked")
     public void withBodyInputStreamThrowingIOE() throws Exception {
         final InputStream is = mock(InputStream.class);
 

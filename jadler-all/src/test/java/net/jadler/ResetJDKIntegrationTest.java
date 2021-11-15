@@ -13,7 +13,7 @@ import static net.jadler.Jadler.initJadlerUsing;
  * Tests that it is possible to reset the {@link JdkStubHttpServer} implementation.
  */
 public class ResetJDKIntegrationTest extends AbstractResetIntegrationTest {
-    
+
     @BeforeClass
     public static void configureMocker() {
         initJadlerUsing(new JdkStubHttpServer())
