@@ -133,7 +133,7 @@ This program is made available under the terms of the MIT License.
             <dependency>
                 <groupId>org.mockito</groupId>
                 <artifactId>mockito-core</artifactId>
-                <version>4.3.0</version>
+                <version>4.3.1</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
