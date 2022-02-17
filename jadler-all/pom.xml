@@ -33,8 +33,8 @@ This program is made available under the terms of the MIT License.
             <groupId>net.jadler</groupId>
             <artifactId>jadler-junit</artifactId>
         </dependency>
-        
-        <!-- TEST -->
+
+        <!-- TEST dependencies -->
         <dependency>
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest</artifactId>
@@ -45,14 +45,9 @@ This program is made available under the terms of the MIT License.
             <artifactId>jadler-jdk</artifactId>
             <scope>test</scope>
         </dependency>
-        <dependency> 
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency> 
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

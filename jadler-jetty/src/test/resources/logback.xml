@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright (c) 2022 Jadler contributors
+  ~ This program is made available under the terms of the MIT License.
+  -->
+
+<configuration>
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>[%thread] %-5level %file\(%line\): %msg%n</pattern>
+        </encoder>
+    </appender>
+    <logger name="org.eclipse" level="WARN"/>
+    <root level="INFO">
+        <appender-ref ref="console"/>
+    </root>
+</configuration>

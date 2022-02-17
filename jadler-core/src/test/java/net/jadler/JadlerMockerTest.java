@@ -1,9 +1,14 @@
 /*
- * Copyright (c) 2012 - 2016 Jadler contributors
+ * Copyright (c) 2012 - 2022 Jadler contributors
  * This program is made available under the terms of the MIT License.
  */
 package net.jadler;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.OutputStreamAppender;
 import net.jadler.exception.JadlerException;
 import net.jadler.mocking.VerificationException;
 import net.jadler.mocking.Verifying;
@@ -15,17 +20,15 @@ import net.jadler.stubbing.server.StubHttpServer;
 import net.jadler.stubbing.server.StubHttpServerManager;
 import org.apache.commons.collections.MultiMap;
 import org.apache.commons.collections.map.MultiValueMap;
-import org.apache.commons.io.output.StringBuilderWriter;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
-import org.apache.log4j.WriterAppender;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.slf4j.LoggerFactory;
 
-import java.io.Writer;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.util.Arrays;
@@ -430,7 +433,7 @@ public class JadlerMockerTest {
 
 
     @Test
-    public void provideStubResponseFor2() {
+    public void provideStubResponseFor2() throws IOException {
         final Request req = prepareEmptyMockRequest();
 
         //neither rule1 nor rule2 matches, default not-found response must be returned
@@ -460,7 +463,7 @@ public class JadlerMockerTest {
         mocker.onRequest();
         mocker.onRequest();
 
-        final Writer w = this.createAppenderWriter();
+        final ByteArrayOutputStream os = addAppenderToStream();
         try {
             final StubResponse res = mocker.provideStubResponseFor(req);
 
@@ -472,14 +475,15 @@ public class JadlerMockerTest {
 
             final KeyValues expectedHeaders = new KeyValues().add("Content-Type", "text/plain; charset=utf-8");
             assertThat(res.getHeaders(), is(expectedHeaders));
-        } finally {
-            this.clearLog4jSetup();
-        }
 
-        assertThat(w.toString(), is(format("[INFO] No suitable rule found. Reason:\n"
-                        + "The rule '%s' cannot be applied. Mismatch:\n%s\n"
-                        + "The rule '%s' cannot be applied. Mismatch:\n%s\n",
-                HTTP_STUB1_TO_STRING, HTTP_STUB1_MISMATCH, HTTP_STUB2_TO_STRING, HTTP_STUB2_MISMATCH)));
+            assertThat(os.toString(), is(format("[INFO] No suitable rule found. Reason:\n"
+                            + "The rule '%s' cannot be applied. Mismatch:\n%s\n"
+                            + "The rule '%s' cannot be applied. Mismatch:\n%s\n",
+                    HTTP_STUB1_TO_STRING, HTTP_STUB1_MISMATCH, HTTP_STUB2_TO_STRING, HTTP_STUB2_MISMATCH)));
+        } finally {
+            resetLoggerContext();
+            os.close();
+        }
     }
 
 
@@ -691,7 +695,7 @@ public class JadlerMockerTest {
 
 
     @Test
-    public void evaluateVerification_2_matching_negative() {
+    public void evaluateVerification_2_matching_negative() throws IOException {
         final JadlerMocker mocker = this.createMockerWithRequests();
 
         final Matcher<Request> m1 = this.createRequestMatcher(MATCHER1_DESCRIPTION, MATCHER1_MISMATCH);
@@ -721,13 +725,13 @@ public class JadlerMockerTest {
         final Matcher<Integer> countMatcher = this.createCountMatcherFor(1, 2, COUNT_MATCHER_DESCRIPTION,
                 COUNT_MATCHER_MISMATCH);
 
-        final Writer w = this.createAppenderWriter();
+        final ByteArrayOutputStream os = addAppenderToStream();
         try {
             mocker.evaluateVerification(collectionOf(m1, m2), countMatcher);
             fail("VerificationException is supposed to be thrown here");
         } catch (final VerificationException e) {
             assertThat(e.getMessage(), is(expectedMessage()));
-            assertThat(w.toString(), is(format(
+            assertThat(os.toString(), is(format(
                     "[INFO] Verification failed, here is a list of requests received so far:\n" +
                             "Request #1: %s\n" +
                             "  matching predicates: <none>\n" +
@@ -760,13 +764,14 @@ public class JadlerMockerTest {
                     REQUESTS[3], MATCHER1_DESCRIPTION, MATCHER2_MISMATCH,
                     REQUESTS[4], MATCHER1_DESCRIPTION, MATCHER2_DESCRIPTION)));
         } finally {
-            this.clearLog4jSetup();
+            resetLoggerContext();
+            os.close();
         }
     }
 
 
     @Test
-    public void evaluateVerification_0_matching_negative() {
+    public void evaluateVerification_0_matching_negative() throws IOException {
         final JadlerMocker mocker = this.createMockerWithRequests();
 
         final Matcher<Request> m1 = this.createRequestMatcher(MATCHER1_DESCRIPTION, MATCHER1_MISMATCH);
@@ -796,13 +801,13 @@ public class JadlerMockerTest {
         final Matcher<Integer> countMatcher = this.createCountMatcherFor(1, 0, COUNT_MATCHER_DESCRIPTION,
                 COUNT_MATCHER_MISMATCH);
 
-        final Writer w = this.createAppenderWriter();
+        final ByteArrayOutputStream os = addAppenderToStream();
         try {
             mocker.evaluateVerification(collectionOf(m1, m2), countMatcher);
             fail("VerificationException is supposed to be thrown here");
         } catch (final VerificationException e) {
             assertThat(e.getMessage(), is(expectedMessage()));
-            assertThat(w.toString(), is(format(
+            assertThat(os.toString(), is(format(
                     "[INFO] Verification failed, here is a list of requests received so far:\n" +
                             "Request #1: %s\n" +
                             "  matching predicates: <none>\n" +
@@ -835,20 +840,21 @@ public class JadlerMockerTest {
                     REQUESTS[3], MATCHER1_DESCRIPTION, MATCHER2_MISMATCH,
                     REQUESTS[4], MATCHER1_DESCRIPTION, MATCHER2_MISMATCH)));
         } finally {
-            this.clearLog4jSetup();
+            resetLoggerContext();
+            os.close();
         }
     }
 
 
     @Test
-    public void evaluateVerification_0_predicates_5_matching_negative() {
+    public void evaluateVerification_0_predicates_5_matching_negative() throws IOException {
         final JadlerMocker mocker = this.createMockerWithRequests();
 
         //5 requests matching (=received in this case), 4 expected          
         final Matcher<Integer> countMatcher = this.createCountMatcherFor(4, 5, COUNT_MATCHER_DESCRIPTION,
                 COUNT_MATCHER_MISMATCH);
 
-        final Writer w = this.createAppenderWriter();
+        final ByteArrayOutputStream os = addAppenderToStream();
         try {
             mocker.evaluateVerification(Collections.<Matcher<? super Request>>emptySet(), countMatcher);
             fail("VerificationException is supposed to be thrown here");
@@ -856,7 +862,7 @@ public class JadlerMockerTest {
             assertThat(e.getMessage(), is(format("The number of http requests was expected to be %s, but %s",
                     COUNT_MATCHER_DESCRIPTION, COUNT_MATCHER_MISMATCH)));
 
-            assertThat(w.toString(), is(format(
+            assertThat(os.toString("UTF-8"), is(format(
                     "[INFO] Verification failed, here is a list of requests received so far:\n" +
                             "Request #1: %s\n" +
                             "  matching predicates: <none>\n" +
@@ -875,7 +881,8 @@ public class JadlerMockerTest {
                             "  clashing predicates: <none>",
                     REQUESTS[0], REQUESTS[1], REQUESTS[2], REQUESTS[3], REQUESTS[4])));
         } finally {
-            this.clearLog4jSetup();
+            resetLoggerContext();
+            os.close();
         }
     }
 
@@ -890,17 +897,17 @@ public class JadlerMockerTest {
         final Matcher<Integer> countMatcher = this.createCountMatcherFor(1, 0, COUNT_MATCHER_DESCRIPTION,
                 COUNT_MATCHER_MISMATCH);
 
-        final Writer w = this.createAppenderWriter();
+        final ByteArrayOutputStream os = addAppenderToStream();
 
         try {
             mocker.evaluateVerification(collectionOf(m1, m2), countMatcher);
             fail("VerificationException is supposed to be thrown here");
         } catch (final VerificationException e) {
             assertThat(e.getMessage(), is(expectedMessage()));
-            assertThat(w.toString(),
+            assertThat(os.toString(),
                     is("[INFO] Verification failed, here is a list of requests received so far: <none>"));
         } finally {
-            this.clearLog4jSetup();
+            resetLoggerContext();
         }
     }
 
@@ -1076,20 +1083,32 @@ public class JadlerMockerTest {
                 MATCHER1_DESCRIPTION, MATCHER2_DESCRIPTION, COUNT_MATCHER_DESCRIPTION, COUNT_MATCHER_MISMATCH);
     }
 
+    /**
+     * Do not forget to close returned OutputStream.
+     */
+    private ByteArrayOutputStream addAppenderToStream() {
+        final ByteArrayOutputStream os = new ByteArrayOutputStream();
 
-    private Writer createAppenderWriter() {
-        final Writer w = new StringBuilderWriter();
+        LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
+        PatternLayoutEncoder ple = new PatternLayoutEncoder();
+        ple.setPattern("[%level] %msg");
+        ple.setContext(lc);
+        ple.start();
 
-        final WriterAppender appender = new WriterAppender();
-        appender.setLayout(new PatternLayout("[%p] %m"));
-        appender.setWriter(w);
+        final OutputStreamAppender<ILoggingEvent> osAppender = new OutputStreamAppender<ILoggingEvent>();
+        osAppender.setContext(lc);
+        osAppender.setEncoder(ple);
+        osAppender.setOutputStream(os);
+        osAppender.start();
 
-        Logger.getRootLogger().addAppender(appender);
-        return w;
+        Logger logbackLogger = (Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+        logbackLogger.addAppender(osAppender);
+
+        return os;
     }
 
-
-    private void clearLog4jSetup() {
-        Logger.getRootLogger().getLoggerRepository().resetConfiguration();
+    private void resetLoggerContext() {
+        LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
+        lc.reset();
     }
 }
