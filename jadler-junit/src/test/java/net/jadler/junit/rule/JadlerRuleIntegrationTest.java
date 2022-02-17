@@ -56,19 +56,20 @@ public class JadlerRuleIntegrationTest {
             .withDefaultResponseHeader(HEADER_NAME1, HEADER_VALUE1_2)
             .withDefaultResponseHeader(HEADER_NAME2, HEADER_VALUE2);
 
+    @AfterClass
+    public static void cleanup() {
+        Executor.closeIdleConnections();
+    }
+
+    private static HeaderMatcher header(final String name, final String value) {
+        return new HeaderMatcher(name, value);
+    }
 
     @Before
     public void setUp() {
         //send a default response on any request
         onRequest().respond().withBody(STRING_WITH_DIACRITICS);
     }
-
-
-    @AfterClass
-    public static void cleanup() {
-        Executor.closeIdleConnections();
-    }
-
 
     @Test
     public void testWithDefaultPort() {
@@ -114,11 +115,6 @@ public class JadlerRuleIntegrationTest {
     private String jadlerUri() {
         return "http://localhost:" + port();
     }
-
-    private static HeaderMatcher header(final String name, final String value) {
-        return new HeaderMatcher(name, value);
-    }
-
 
     private static class HeaderMatcher extends BaseMatcher<Header> {
 

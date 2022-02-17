@@ -6,10 +6,11 @@ package net.jadler.stubbing.server.jdk;
 
 import com.sun.net.httpserver.HttpServer;
 import net.jadler.RequestManager;
+import net.jadler.exception.JadlerException;
 import net.jadler.stubbing.server.StubHttpServer;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import net.jadler.exception.JadlerException;
 
 import static org.apache.commons.lang.Validate.isTrue;
 import static org.apache.commons.lang.Validate.notNull;
@@ -19,12 +20,12 @@ import static org.apache.commons.lang.Validate.notNull;
  * Stub server implementation based on {@link HttpServer} which is part of JDK.
  */
 public class JdkStubHttpServer implements StubHttpServer {
-    
+
     private final HttpServer server;
 
     public JdkStubHttpServer(final int port) {
         isTrue(port >= 0, "port cannot be a negative number");
-        
+
         try {
             server = HttpServer.create(new InetSocketAddress(port), 0);
         } catch (final IOException e) {

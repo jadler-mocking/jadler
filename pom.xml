@@ -4,7 +4,8 @@ Copyright (c) 2012 - 2016 Jadler contributors
 This program is made available under the terms of the MIT License.
 -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>net.jadler</groupId>
@@ -14,33 +15,33 @@ This program is made available under the terms of the MIT License.
     <description>jadler - http services stubbing and mocking library</description>
     <url>http://jadler.net</url>
     <packaging>pom</packaging>
-    
+
     <parent>
         <groupId>org.sonatype.oss</groupId>
         <artifactId>oss-parent</artifactId>
         <version>7</version>
     </parent>
- 
+
     <developers>
         <developer>
             <name>Jan Dudek</name>
             <email>jan.dudek.jr@gmail.com</email>
         </developer>
     </developers>
-    
+
     <licenses>
         <license>
             <name>MIT license</name>
             <url>http://www.opensource.org/licenses/mit-license.php</url>
         </license>
     </licenses>
-    
+
     <scm>
         <connection>scm:git:https://github.com/jadler-mocking/jadler.git</connection>
         <developerConnection>scm:git:https://github.com/jadler-mocking/jadler.git</developerConnection>
         <url>https://github.com/jadler-mocking/jadler</url>
     </scm>
-    
+
     <modules>
         <module>jadler-all</module>
         <module>jadler-core</module>
@@ -48,7 +49,7 @@ This program is made available under the terms of the MIT License.
         <module>jadler-jdk</module>
         <module>jadler-junit</module>
     </modules>
-    
+
 
     <dependencyManagement>
         <dependencies>
@@ -73,7 +74,7 @@ This program is made available under the terms of the MIT License.
                 <artifactId>jadler-jdk</artifactId>
                 <version>${project.version}</version>
             </dependency>
-            
+
             <!-- MISC -->
             <dependency>
                 <groupId>org.slf4j</groupId>
@@ -162,8 +163,8 @@ This program is made available under the terms of the MIT License.
             </dependency>
         </dependencies>
     </dependencyManagement>
-    
-    
+
+
     <build>
         <plugins>
             <plugin>
@@ -178,7 +179,7 @@ This program is made available under the terms of the MIT License.
                     <fork>true</fork>
                 </configuration>
             </plugin>
-            
+
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>animal-sniffer-maven-plugin</artifactId>
@@ -203,7 +204,7 @@ This program is made available under the terms of the MIT License.
                     </execution>
                 </executions>
             </plugin>
-            
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
@@ -217,7 +218,7 @@ This program is made available under the terms of the MIT License.
                     </execution>
                 </executions>
             </plugin>
-            
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
@@ -253,7 +254,7 @@ This program is made available under the terms of the MIT License.
             </plugins>
         </pluginManagement>
     </build>
-    
+
     <profiles>
         <profile>
             <id>gpg</id>
@@ -276,7 +277,7 @@ This program is made available under the terms of the MIT License.
                 </plugins>
             </build>
         </profile>
-  
+
         <profile>
             <!-- disables javadoc reference checks in doclint in Java 8-->
             <!--TODO fix the javadocs and remove this profile-->
@@ -289,7 +290,7 @@ This program is made available under the terms of the MIT License.
             </properties>
         </profile>
     </profiles>
-    
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>

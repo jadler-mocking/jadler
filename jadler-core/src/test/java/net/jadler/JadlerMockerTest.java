@@ -1101,7 +1101,7 @@ public class JadlerMockerTest {
         osAppender.setOutputStream(os);
         osAppender.start();
 
-        Logger logbackLogger = (Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+        Logger logbackLogger = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
         logbackLogger.addAppender(osAppender);
 
         return os;

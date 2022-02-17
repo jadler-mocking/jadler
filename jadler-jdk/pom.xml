@@ -3,15 +3,17 @@
 Copyright (c) 2012 - 2016 Jadler contributors
 This program is made available under the terms of the MIT License.
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    
+
     <artifactId>jadler-jdk</artifactId>
     <name>${project.artifactId}</name>
     <description>An alternative implementation of the stub http server component using the
-    com.sun.net.httpserver.HttpServer component which is bundled with major Java implementations.</description>
+        com.sun.net.httpserver.HttpServer component which is bundled with major Java implementations.
+    </description>
     <packaging>jar</packaging>
-    
+
     <parent>
         <groupId>net.jadler</groupId>
         <artifactId>jadler-pom</artifactId>

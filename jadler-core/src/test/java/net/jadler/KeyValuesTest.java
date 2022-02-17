@@ -20,16 +20,14 @@ import static org.hamcrest.Matchers.sameInstance;
 
 public class KeyValuesTest {
 
-    private KeyValues keyValues;
-
     private static final String HEADER1_NAME = "name_1";
     private static final String HEADER2_NAME = "name_2";
     private static final String HEADER3_NAME = "name_3";
-
     private static final String HEADER1_VALUE1 = "value_1_1";
     private static final String HEADER2_VALUE1 = "value_2_1";
     private static final String HEADER2_VALUE2 = "";
     private static final String HEADER3_VALUE1 = "value_3_1";
+    private KeyValues keyValues;
 
     @Before
     public void setUp() {

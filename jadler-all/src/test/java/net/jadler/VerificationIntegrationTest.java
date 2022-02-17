@@ -53,21 +53,17 @@ public class VerificationIntegrationTest {
             {(byte) 0xC3, (byte) 0xA1, (byte) 0xC5, (byte) 0x99, (byte) 0xC5, (byte) 0xBE};
     private static final byte[] ISO_8859_2_REPRESENTATION = {(byte) 0xE1, (byte) 0xF8, (byte) 0xBE};
     private static final byte[] BINARY_BODY = {1, 2, 3};
-
-
-    @Parameters
-    public static Iterable<StubHttpServerFactory[]> parameters() {
-        return new TestParameters().provide();
-    }
+    @Rule
+    public final JadlerRule jadlerRule;
 
     public VerificationIntegrationTest(final StubHttpServerFactory serverFactory) {
         this.jadlerRule = new JadlerRule(serverFactory.createServer());
     }
 
-
-    @Rule
-    public final JadlerRule jadlerRule;
-
+    @Parameters
+    public static Iterable<StubHttpServerFactory[]> parameters() {
+        return new TestParameters().provide();
+    }
 
     @AfterClass
     public static void cleanup() {
