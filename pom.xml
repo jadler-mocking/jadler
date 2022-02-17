@@ -144,6 +144,12 @@ This program is made available under the terms of the MIT License.
                 <scope>test</scope>
             </dependency>
             <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-inline</artifactId>
+                <version>4.3.1</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
                 <groupId>org.springframework</groupId>
                 <artifactId>spring-test</artifactId>
                 <version>5.3.15</version>

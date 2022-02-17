@@ -784,7 +784,7 @@ public class Jadler {
     private static StubHttpServer getJettyServer() {
         final Class<?> clazz = getJettyStubHttpServerClass();
         try {
-            return (StubHttpServer) clazz.newInstance();
+            return (StubHttpServer) clazz.getDeclaredConstructor().newInstance();
         } catch (final Exception e) {
             throw new JadlerException("Cannot instantiate default Jetty stub server", e);
         }

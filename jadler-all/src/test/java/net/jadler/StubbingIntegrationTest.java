@@ -43,6 +43,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.anything;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.emptyOrNullString;
+import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
@@ -50,8 +52,6 @@ import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.isEmptyOrNullString;
-import static org.hamcrest.Matchers.isEmptyString;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
@@ -136,7 +136,7 @@ public class StubbingIntegrationTest {
 
         onRequest()
                 .havingBodyEqualTo(body)
-                .havingBody(not(isEmptyOrNullString()))
+                .havingBody(not(emptyOrNullString()))
                 .respond()
                 .withStatus(201);
 
@@ -156,7 +156,7 @@ public class StubbingIntegrationTest {
         onRequest()
                 .havingBodyEqualTo("")
                 .havingBody(notNullValue())
-                .havingBody(isEmptyString())
+                .havingBody(is(emptyString()))
                 .respond()
                 .withStatus(201);
 
@@ -258,7 +258,7 @@ public class StubbingIntegrationTest {
                 .havingHeaderEqualTo("hdr1", "h1v1")
                 .havingHeader("hdr1", not(empty()))
                 .havingHeader("hDR1", hasSize(1))
-                .havingHeader("hdr1", everyItem(not(isEmptyOrNullString())))
+                .havingHeader("hdr1", everyItem(not(emptyOrNullString())))
                 .havingHeader("hdr1", contains("h1v1"))
                 //hdr2 has two values, h2v1 and h2v2
                 .havingHeader("HDr2")
@@ -292,7 +292,7 @@ public class StubbingIntegrationTest {
         onRequest()
                 .havingHeaderEqualTo("empty", "")
                 .havingHeader("empty")
-                .havingHeader("empty", everyItem(isEmptyString()))
+                .havingHeader("empty", everyItem(emptyString()))
                 .respond()
                 .withStatus(201);
 
@@ -312,7 +312,7 @@ public class StubbingIntegrationTest {
         onRequest()
                 .havingMethodEqualTo("POST")
                 .havingMethodEqualTo("poSt")
-                .havingMethod(not(isEmptyOrNullString()))
+                .havingMethod(not(emptyOrNullString()))
                 .respond()
                 .withStatus(201);
 
@@ -337,7 +337,7 @@ public class StubbingIntegrationTest {
                 .havingParameter("p1")
                 .havingParameterEqualTo("p1", "p1v1")
                 .havingParameter("p1", hasSize(1))
-                .havingParameter("p1", everyItem(not(isEmptyOrNullString())))
+                .havingParameter("p1", everyItem(not(emptyOrNullString())))
                 .havingParameter("p1", contains("p1v1"))
                 //p2 has two values, p2v1 and p2v2
                 .havingParameter("p2")
@@ -376,7 +376,7 @@ public class StubbingIntegrationTest {
      * Request parameters stubbing scenario.
      *
      * Since it's a POST request with the application/x-www-form-urlencoded content type, both query string and
-     * request body values are considered http parameters sources for such an http request.
+     * request body values are considered http parameters sources for such a http request.
      */
     @Test
     public void havingParameterPOST() throws Exception {
@@ -387,7 +387,7 @@ public class StubbingIntegrationTest {
                 .havingParameter("p1")
                 .havingParameterEqualTo("p1", "p1v1")
                 .havingParameter("p1", hasSize(1))
-                .havingParameter("p1", everyItem(not(isEmptyOrNullString())))
+                .havingParameter("p1", everyItem(not(emptyOrNullString())))
                 .havingParameter("p1", contains("p1v1"))
                 //p2 has three values, two from the body (p2v1 and p2v2) and one (p2v3) from the query string
                 .havingParameter("p2")
@@ -459,7 +459,7 @@ public class StubbingIntegrationTest {
     public void havingQueryString_empty() throws Exception {
         onRequest()
                 .havingQueryStringEqualTo("")
-                .havingQueryString(isEmptyString())
+                .havingQueryString(is(emptyString()))
                 .respond()
                 .withStatus(201);
 
@@ -519,7 +519,7 @@ public class StubbingIntegrationTest {
     public void havingPath_root() throws IOException {
         onRequest()
                 .havingPath(equalTo("/"))
-                .havingPath(not(isEmptyOrNullString()))
+                .havingPath(not(emptyOrNullString()))
                 .respond()
                 .withStatus(201);
 
@@ -564,7 +564,7 @@ public class StubbingIntegrationTest {
 
 
     /*
-     * Explicitely defined response status scenario. Must override the default status set in the Jadler initialization.
+     * Explicitly defined response status scenario. Must override the default status set in the Jadler initialization.
      */
     @Test
     public void withStatus() throws Exception {
@@ -619,7 +619,7 @@ public class StubbingIntegrationTest {
         //the content type header set to the specified value
         assertThat(response.getFirstHeader("Content-Type").getValue(), is(UTF_8_TYPE));
 
-        //however the applied encoding is ISO-8859-2
+        //however, the applied encoding is ISO-8859-2
         assertThat(rawBodyOf(response), is(ISO_8859_2_BODY_REPRESENTATION));
     }
 
@@ -700,7 +700,7 @@ public class StubbingIntegrationTest {
 
 
     /*
-     * More possible stubbings to use scenario. The latter one must be used.
+     * Scenario with more possible rules. The latter one must be used.
      */
     @Test
     public void rulesOrdering() throws IOException {
@@ -716,7 +716,7 @@ public class StubbingIntegrationTest {
 
 
     /*
-     * More subsequent responses scenario. First response with 200 status, all subsequent responses with 201.
+     * Scenario with more subsequent responses. First response with 200 status, all subsequent responses with 201.
      */
     @Test
     public void multipleStubResponses() throws IOException {
@@ -751,7 +751,7 @@ public class StubbingIntegrationTest {
 
 
     /*
-     * Defaults scenario. In case no status is explicitely defined during the stubbing, the default status is used.
+     * Defaults scenario. In case no status is explicitly defined during the stubbing, the default status is used.
      * The same for the default encoding and default content-type header values. And a default header is added to
      * every stub response. All of these values are set in the setUp phase during jadler initialization.
      */
