@@ -45,6 +45,12 @@ This program is made available under the terms of the MIT License.
             <artifactId>commons-io</artifactId>
         </dependency>
 
+        <!-- TEST dependencies -->
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest</artifactId>
