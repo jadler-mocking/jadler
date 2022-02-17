@@ -10,9 +10,10 @@ import net.jadler.KeyValues;
 import net.jadler.Request;
 import net.jadler.RequestManager;
 import net.jadler.stubbing.StubResponse;
+import org.apache.commons.lang.Validate;
+
 import java.io.IOException;
 import java.io.OutputStream;
-import org.apache.commons.lang.Validate;
 
 
 /**
@@ -23,7 +24,7 @@ class JdkHandler implements HttpHandler {
 
     public JdkHandler(final RequestManager requestManager) {
         Validate.notNull(requestManager, "requestManager cannot be null");
-        
+
         this.requestManager = requestManager;
     }
 
@@ -37,11 +38,11 @@ class JdkHandler implements HttpHandler {
         this.processDelay(stubResponse.getDelay());
 
         final KeyValues headers = stubResponse.getHeaders();
-        for (final String key: headers.getKeys()) {
-             for (final String value: headers.getValues(key)) {
-                 httpExchange.getResponseHeaders().add(key, value);
-             }
-         }
+        for (final String key : headers.getKeys()) {
+            for (final String value : headers.getValues(key)) {
+                httpExchange.getResponseHeaders().add(key, value);
+            }
+        }
 
         httpExchange.sendResponseHeaders(stubResponse.getStatus(), body.length > 0 ? body.length : -1);
 

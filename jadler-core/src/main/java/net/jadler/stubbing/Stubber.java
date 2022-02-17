@@ -11,7 +11,8 @@ package net.jadler.stubbing;
 public interface Stubber {
     /**
      * Starts new stubbing (definition of a <em>WHEN</em>-<em>THEN</em> rule).
+     *
      * @return stubbing object to continue the stubbing
      */
-    RequestStubbing onRequest(); 
+    RequestStubbing onRequest();
 }

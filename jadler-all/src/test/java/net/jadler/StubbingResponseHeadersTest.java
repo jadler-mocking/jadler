@@ -35,33 +35,29 @@ public class StubbingResponseHeadersTest {
 
     private final StubHttpServerFactory serverFactory;
 
-    @Parameterized.Parameters
-    public static Iterable<StubHttpServerFactory[]> parameters() {
-        return new TestParameters().provide();
-    }
-
     public StubbingResponseHeadersTest(final StubHttpServerFactory serverFactory) {
         this.serverFactory = serverFactory;
     }
 
-
-    @Before
-    public void setUp() {
-        initJadlerUsing(serverFactory.createServer());
+    @Parameterized.Parameters
+    public static Iterable<StubHttpServerFactory[]> parameters() {
+        return new TestParameters().provide();
     }
-
-
-    @After
-    public void tearDown() {
-        closeJadler();
-    }
-
 
     @AfterClass
     public static void cleanup() {
         Executor.closeIdleConnections();
     }
 
+    @Before
+    public void setUp() {
+        initJadlerUsing(serverFactory.createServer());
+    }
+
+    @After
+    public void tearDown() {
+        closeJadler();
+    }
 
     /*
      * Checks that exactly two default headers (Date and Content-Lenght) are sent in a stub response.

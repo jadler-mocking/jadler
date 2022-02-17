@@ -9,10 +9,11 @@ package net.jadler.mocking;
  * An implementation of this interface provides a way to create new ongoing verification process.
  */
 public interface Mocker {
-    
+
     /**
      * Starts new verification process.
-     * @return verifying object to continue the ongoing verifying 
+     *
+     * @return verifying object to continue the ongoing verifying
      */
     Verifying verifyThatRequest();
 }

@@ -7,9 +7,9 @@ package net.jadler.mocking;
 
 /**
  * A runtime exception signalizing a failure of verification.
- * 
- * @see net.jadler.Jadler#verifyThatRequest() 
- * @see Mocker#verifyThatRequest() 
+ *
+ * @see net.jadler.Jadler#verifyThatRequest()
+ * @see Mocker#verifyThatRequest()
  */
 public class VerificationException extends AssertionError {
 
@@ -19,5 +19,5 @@ public class VerificationException extends AssertionError {
     public VerificationException(final String message) {
         super(message);
     }
-    
+
 }

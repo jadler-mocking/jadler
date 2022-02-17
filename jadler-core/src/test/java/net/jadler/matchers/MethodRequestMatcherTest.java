@@ -23,11 +23,9 @@ import static org.mockito.Mockito.when;
 public class MethodRequestMatcherTest {
 
     private static final String METHOD = "GET";
-
-    private Request request;
-
     @Mock
     Matcher<String> mockMatcher;
+    private Request request;
 
     @Before
     public void setUp() throws Exception {

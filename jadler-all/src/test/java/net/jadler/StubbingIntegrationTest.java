@@ -97,15 +97,19 @@ public class StubbingIntegrationTest {
     private final StubHttpServerFactory serverFactory;
 
 
+    public StubbingIntegrationTest(final StubHttpServerFactory serverFactory) {
+        this.serverFactory = serverFactory;
+    }
+
     @Parameters
     public static Iterable<StubHttpServerFactory[]> parameters() {
         return new TestParameters().provide();
     }
 
-    public StubbingIntegrationTest(final StubHttpServerFactory serverFactory) {
-        this.serverFactory = serverFactory;
+    @AfterClass
+    public static void cleanup() {
+        Executor.closeIdleConnections();
     }
-
 
     @Before
     public void setUp() {
@@ -118,18 +122,10 @@ public class StubbingIntegrationTest {
                 .withDefaultResponseContentType(DEFAULT_CONTENT_TYPE);
     }
 
-
     @After
     public void tearDown() {
         closeJadler();
     }
-
-
-    @AfterClass
-    public static void cleanup() {
-        Executor.closeIdleConnections();
-    }
-
 
     /*
      * Nonempty body stubbing scenario

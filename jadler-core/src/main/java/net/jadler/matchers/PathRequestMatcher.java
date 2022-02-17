@@ -23,6 +23,15 @@ public class PathRequestMatcher extends RequestMatcher<String> {
         super(pred);
     }
 
+    /**
+     * Factory method to create new instance of this matcher.
+     *
+     * @param pred a predicate to be applied on the request path
+     * @return new instance of this matcher
+     */
+    public static PathRequestMatcher requestPath(final Matcher<? super String> pred) {
+        return new PathRequestMatcher(pred);
+    }
 
     /**
      * Retrieves the path of the given request. The value is percent-encoded.
@@ -35,23 +44,11 @@ public class PathRequestMatcher extends RequestMatcher<String> {
         return req.getURI().getRawPath();
     }
 
-
     /**
      * {@inheritDoc}
      */
     @Override
     protected String provideDescription() {
         return "Path is";
-    }
-
-
-    /**
-     * Factory method to create new instance of this matcher.
-     *
-     * @param pred a predicate to be applied on the request path
-     * @return new instance of this matcher
-     */
-    public static PathRequestMatcher requestPath(final Matcher<? super String> pred) {
-        return new PathRequestMatcher(pred);
     }
 }

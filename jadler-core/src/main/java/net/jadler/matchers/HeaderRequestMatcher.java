@@ -4,11 +4,11 @@
  */
 package net.jadler.matchers;
 
-import java.util.List;
-
 import net.jadler.Request;
 import org.apache.commons.lang.Validate;
 import org.hamcrest.Matcher;
+
+import java.util.List;
 
 
 /**
@@ -21,9 +21,10 @@ public class HeaderRequestMatcher extends RequestMatcher<List<String>> {
 
 
     /**
-     * Protected constructor useful only when subtyping. For creating instances of this class use 
+     * Protected constructor useful only when subtyping. For creating instances of this class use
      * {@link #requestHeader(java.lang.String, org.hamcrest.Matcher)} instead.
-     * @param pred a predicate to be applied on the given request header
+     *
+     * @param pred       a predicate to be applied on the given request header
      * @param headerName name of a request header (case insensitive)
      */
     protected HeaderRequestMatcher(final Matcher<? super List<String>> pred, final String headerName) {
@@ -35,10 +36,22 @@ public class HeaderRequestMatcher extends RequestMatcher<List<String>> {
         this.desc = "header \"" + headerName + "\" is";
     }
 
+    /**
+     * Factory method to create new instance of this matcher.
+     *
+     * @param headerName name of a request header
+     * @param pred       a predicate to be applied on the request header
+     * @return new instance of this matcher
+     */
+    public static HeaderRequestMatcher requestHeader(final String headerName,
+                                                     final Matcher<? super List<String>> pred) {
+        return new HeaderRequestMatcher(pred, headerName);
+    }
 
     /**
      * Retrieves a header (defined in {@link #HeaderRequestMatcher(org.hamcrest.Matcher, java.lang.String)})
      * of the given request.
+     *
      * @param req request to retrieve the header from
      * @return the request header as a list of values or {@code null} if there is no such a header in the request
      */
@@ -47,24 +60,11 @@ public class HeaderRequestMatcher extends RequestMatcher<List<String>> {
         return req.getHeaders().getValues(this.headerName);
     }
 
-
     /**
-     * {@inheritDoc} 
+     * {@inheritDoc}
      */
     @Override
     protected String provideDescription() {
         return this.desc;
-    }
-
-
-    /**
-     * Factory method to create new instance of this matcher.
-     * @param headerName name of a request header
-     * @param pred a predicate to be applied on the request header
-     * @return new instance of this matcher
-     */
-    public static HeaderRequestMatcher requestHeader(final String headerName,
-            final Matcher<? super List<String>> pred) {
-        return new HeaderRequestMatcher(pred, headerName);
     }
 }

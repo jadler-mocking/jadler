@@ -14,17 +14,28 @@ import org.hamcrest.Matcher;
 public class QueryStringRequestMatcher extends RequestMatcher<String> {
 
     /**
-     * Protected constructor useful only when subtyping. For creating instances of this class use 
+     * Protected constructor useful only when subtyping. For creating instances of this class use
      * {@link #requestQueryString(org.hamcrest.Matcher)} instead.
+     *
      * @param pred a predicate to be applied on the query string
      */
     protected QueryStringRequestMatcher(final Matcher<? super String> pred) {
         super(pred);
     }
 
+    /**
+     * Factory method to create new instance of this matcher.
+     *
+     * @param pred a predicate to be applied on the request query string
+     * @return new instance of this matcher
+     */
+    public static QueryStringRequestMatcher requestQueryString(final Matcher<? super String> pred) {
+        return new QueryStringRequestMatcher(pred);
+    }
 
     /**
      * Retrieves the query string value of the given request. The value is percent-encoded.
+     *
      * @param req request to retrieve the query string from
      * @return query string value:
      * <ul>
@@ -39,22 +50,11 @@ public class QueryStringRequestMatcher extends RequestMatcher<String> {
         return req.getURI().getRawQuery();
     }
 
-
     /**
-     * {@inheritDoc} 
+     * {@inheritDoc}
      */
     @Override
     protected String provideDescription() {
         return "query string is";
-    }
-
-
-    /**
-     * Factory method to create new instance of this matcher.
-     * @param pred a predicate to be applied on the request query string
-     * @return new instance of this matcher
-     */
-    public static QueryStringRequestMatcher requestQueryString(final Matcher<? super String> pred) {
-        return new QueryStringRequestMatcher(pred);
     }
 }
