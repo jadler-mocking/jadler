@@ -31,23 +31,20 @@ public class SuperDefaultsIntegrationTest {
 
     private static final String STRING_WITH_DIACRITICS = "\u00e1\u0159\u017e";
 
-    @Before
-    public void setUp() {
-        initJadler(); //no defaults for the response status nor encoding set here
-    }
-
-
-    @After
-    public void tearDown() {
-        closeJadler();
-    }
-
-
     @AfterClass
     public static void cleanup() {
         Executor.closeIdleConnections();
     }
 
+    @Before
+    public void setUp() {
+        initJadler(); //no defaults for the response status nor encoding set here
+    }
+
+    @After
+    public void tearDown() {
+        closeJadler();
+    }
 
     /*
      * When no defaults (response status and encoding) are set during Jadler initialization nor the status and encoding

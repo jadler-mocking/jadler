@@ -4,13 +4,14 @@
  */
 package net.jadler.junit.rule;
 
-import java.nio.charset.Charset;
 import net.jadler.Jadler;
 import net.jadler.Jadler.OngoingConfiguration;
 import net.jadler.JadlerConfiguration;
 import net.jadler.KeyValues;
 import net.jadler.stubbing.server.StubHttpServer;
 import org.junit.rules.ExternalResource;
+
+import java.nio.charset.Charset;
 
 import static org.apache.commons.lang.Validate.isTrue;
 import static org.apache.commons.lang.Validate.notNull;
@@ -24,10 +25,10 @@ import static org.apache.commons.lang.Validate.notNull;
 public class JadlerRule extends ExternalResource implements JadlerConfiguration {
 
     private static final int DEFAULT_PORT = -1;
-    
+
     private final int port;
     private final StubHttpServer server;
-    
+
     private String defaultContentType;
     private Charset defaultEncoding;
     private int defaultStatus = -1;
@@ -37,7 +38,7 @@ public class JadlerRule extends ExternalResource implements JadlerConfiguration 
     /**
      * Instructs Jadler to use a default stub server {@link net.jadler.stubbing.server.jetty.JettyStubHttpServer}
      * serving the http protocol listening on any free port.
-     *
+     * <p>
      * See also {@link net.jadler.Jadler#initJadler()}
      */
     public JadlerRule() {
@@ -48,28 +49,28 @@ public class JadlerRule extends ExternalResource implements JadlerConfiguration 
     /**
      * Instructs Jadler to use a default stub server {@link net.jadler.stubbing.server.jetty.JettyStubHttpServer}
      * serving the http protocol listening on the given port.
-     *
+     * <p>
      * See also {@link net.jadler.Jadler#initJadlerListeningOn(int)}
-     * 
+     *
      * @param port port the stub server should be listening on (must be bigger than 0)
      */
     public JadlerRule(final int port) {
         isTrue(port > 0, "port must be an integer bigger than 0");
-        
+
         this.port = port;
         this.server = null;
     }
-    
+
     /**
      * Instructs Jadler to use use the given stub server instance.
-     * 
+     * <p>
      * See also {@link net.jadler.Jadler#initJadlerUsing(net.jadler.stubbing.server.StubHttpServer)}
-     * 
+     *
      * @param server stub server to use
      */
     public JadlerRule(final StubHttpServer server) {
         notNull(server, "server cannot be null");
-        
+
         this.port = DEFAULT_PORT;
         this.server = server;
     }
@@ -77,37 +78,35 @@ public class JadlerRule extends ExternalResource implements JadlerConfiguration 
     @Override
     protected void before() {
         final OngoingConfiguration conf;
-        
+
         if (port == DEFAULT_PORT) {
             if (server == null) {
                 conf = Jadler.initJadler();
-            }
-            else {
+            } else {
                 conf = Jadler.initJadlerUsing(server);
             }
-        }
-        else {
+        } else {
             conf = Jadler.initJadlerListeningOn(port);
         }
-        
+
         if (this.defaultContentType != null) {
             conf.withDefaultResponseContentType(defaultContentType);
         }
-        
+
         if (this.defaultEncoding != null) {
             conf.withDefaultResponseEncoding(defaultEncoding);
         }
-        
+
         if (this.defaultStatus > -1) {
             conf.withDefaultResponseStatus(defaultStatus);
         }
-        
-        for (final String name: this.defaultHeaders.getKeys()) {
-            for (final String value: this.defaultHeaders.getValues(name)) {
+
+        for (final String name : this.defaultHeaders.getKeys()) {
+            for (final String value : this.defaultHeaders.getValues(name)) {
                 conf.withDefaultResponseHeader(name, value);
             }
         }
-        
+
         if (this.skipsRequestsRecording) {
             conf.withRequestsRecordingDisabled();
         }

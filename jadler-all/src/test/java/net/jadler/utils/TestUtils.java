@@ -24,23 +24,12 @@ public class TestUtils {
      */
     public static final StatusRetriever STATUS_RETRIEVER = new StatusRetriever();
 
-    public static class StatusRetriever implements ResponseHandler<Integer> {
-
-        @Override
-        public Integer handleResponse(final HttpResponse response) {
-            return response.getStatusLine().getStatusCode();
-        }
-
-    }
-
-
     /**
      * @return URI of the Jadler stub server
      */
     public static String jadlerUri() {
         return "http://localhost:" + port();
     }
-
 
     /**
      * Reads the body of an http response. Please use this function if and only if the {@code Content-Type} header is
@@ -57,7 +46,6 @@ public class TestUtils {
         return IOUtils.toString(body.getContent(), charset);
     }
 
-
     /**
      * @param response an http response to read the raw body from
      * @return raw body retrieved from the response
@@ -65,5 +53,14 @@ public class TestUtils {
      */
     public static byte[] rawBodyOf(final HttpResponse response) throws IOException {
         return IOUtils.toByteArray(response.getEntity().getContent());
+    }
+
+    public static class StatusRetriever implements ResponseHandler<Integer> {
+
+        @Override
+        public Integer handleResponse(final HttpResponse response) {
+            return response.getStatusLine().getStatusCode();
+        }
+
     }
 }

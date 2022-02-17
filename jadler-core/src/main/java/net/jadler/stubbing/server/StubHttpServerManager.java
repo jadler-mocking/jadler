@@ -9,23 +9,25 @@ package net.jadler.stubbing.server;
  * An implementation of this interface can manage an underlying stub http server.
  */
 public interface StubHttpServerManager {
-        
+
     /**
      * Starts the underlying stub http server
+     *
      * @throws net.jadler.exception.JadlerException if an error occurred while starting the stub http server.
-     * @throws IllegalStateException if the stub server has been started already.
+     * @throws IllegalStateException                if the stub server has been started already.
      */
     void start();
-    
-    
+
+
     /**
      * Stops the underlying stub http server.
+     *
      * @throws net.jadler.exception.JadlerException if an error occurred while stopping the stub http server.
-     * @throws IllegalStateException if the stub server hasn't been started yet or has been stopped already.
+     * @throws IllegalStateException                if the stub server hasn't been started yet or has been stopped already.
      */
     void close();
-    
-    
+
+
     /**
      * @return true, if the stub server has already been started, otherwise false
      */

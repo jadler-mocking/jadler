@@ -8,6 +8,7 @@ import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import net.jadler.Request;
 import org.apache.commons.io.IOUtils;
+
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
@@ -38,8 +39,7 @@ class RequestUtils {
             if (matcher.matches()) {
                 try {
                     builder.encoding(Charset.forName(matcher.group(1)));
-                }
-                catch (UnsupportedCharsetException e) {
+                } catch (UnsupportedCharsetException e) {
                     //just ignore, fallback encoding will be used instead
                 }
             }

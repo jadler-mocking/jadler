@@ -28,6 +28,10 @@ public class MutableStubResponseTest {
     private static final String STRING_BODY = "string_body";
     private static final byte[] BYTES_BODY = "bytes_body".getBytes(CHARSET);
     private static final MultiMap HEADERS_MAP;
+    private static final KeyValues HEADERS = new KeyValues()
+            .add("header1", "value1_1")
+            .add("header2", "value2_1")
+            .add("header3", "value3_1");
 
     static {
         HEADERS_MAP = new MultiValueMap();
@@ -35,11 +39,6 @@ public class MutableStubResponseTest {
         HEADERS_MAP.put("header2", "value2_1");
         HEADERS_MAP.put("header3", "value3_1");
     }
-
-    private static final KeyValues HEADERS = new KeyValues()
-            .add("header1", "value1_1")
-            .add("header2", "value2_1")
-            .add("header3", "value3_1");
 
     private MutableStubResponse msr;
 

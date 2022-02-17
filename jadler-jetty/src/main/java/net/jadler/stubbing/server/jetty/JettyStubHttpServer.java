@@ -6,12 +6,12 @@ package net.jadler.stubbing.server.jetty;
 
 import net.jadler.RequestManager;
 import net.jadler.stubbing.server.StubHttpServer;
-import org.eclipse.jetty.server.Server;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.apache.commons.lang.Validate;
 import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.nio.SelectChannelConnector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -26,18 +26,18 @@ public class JettyStubHttpServer implements StubHttpServer {
     public JettyStubHttpServer() {
         this(0);
     }
-    
+
 
     public JettyStubHttpServer(final int port) {
         this.server = new Server();
         this.server.setSendServerVersion(false);
         this.server.setSendDateHeader(true);
-        
+
         this.httpConnector = new SelectChannelConnector();
         this.httpConnector.setPort(port);
         server.addConnector(this.httpConnector);
     }
-    
+
 
     /**
      * {@inheritDoc}
@@ -48,7 +48,7 @@ public class JettyStubHttpServer implements StubHttpServer {
 
         server.setHandler(new JadlerHandler(ruleProvider));
     }
-    
+
 
     /**
      * {@inheritDoc}
@@ -70,7 +70,7 @@ public class JettyStubHttpServer implements StubHttpServer {
         server.stop();
         logger.debug("jetty stopped");
     }
-    
+
 
     /**
      * {@inheritDoc}

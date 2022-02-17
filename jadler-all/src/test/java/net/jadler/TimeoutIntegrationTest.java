@@ -45,23 +45,20 @@ public class TimeoutIntegrationTest {
         return new TestParameters().provide();
     }
 
-    @Before
-    public void setUp() {
-        initJadlerUsing(this.serverFactory.createServer());
-    }
-
-
-    @After
-    public void tearDown() {
-        closeJadler();
-    }
-
-
     @AfterClass
     public static void cleanup() {
         Executor.closeIdleConnections();
     }
 
+    @Before
+    public void setUp() {
+        initJadlerUsing(this.serverFactory.createServer());
+    }
+
+    @After
+    public void tearDown() {
+        closeJadler();
+    }
 
     @Test(timeout = 10000L)
     public void timeout() throws IOException {
