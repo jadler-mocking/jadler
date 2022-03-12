@@ -1,3 +1,7 @@
+## 1.3.1
+* replace vulnerable log4j 1.x logging library with logback
+* bump dependencies
+
 ## 1.3.0
 * when a requests [verification](https://github.com/jadler-mocking/jadler/blob/662704e1d5521972d4b0cf0f596e1c3dae68314f/jadler-core/src/main/java/net/jadler/Jadler.java#L756) fails the exact reason (a list of matching/clashing predicates for each request received so far) is logged on the INFO level
 * the Jadler facade and the jUnit [rule](https://github.com/jadler-mocking/jadler/blob/662704e1d5521972d4b0cf0f596e1c3dae68314f/jadler-junit/src/main/java/net/jadler/junit/rule/JadlerRule.java) now provide the same defaults configuration options (response status, content type, encoding and headers defaults and the requests recording settings)
