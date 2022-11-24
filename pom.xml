@@ -163,7 +163,7 @@ This program is made available under the terms of the MIT License.
             <dependency>
                 <groupId>org.springframework</groupId>
                 <artifactId>spring-web</artifactId>
-                <version>5.3.23</version>
+                <version>6.0.1</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
